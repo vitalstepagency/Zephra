@@ -8,11 +8,11 @@ const createEventSchema = z.object({
   event_type: z.string().min(1, 'Event type is required'),
   event_data: z.record(z.any()),
   user_id: z.string().optional(),
-  session_id: z.string().optional(),
+  session_id: z.string().nullable().optional(),
   page_url: z.string().url().optional(),
   referrer: z.string().optional(),
-  user_agent: z.string().optional(),
-  ip_address: z.string().optional(),
+  user_agent: z.string().nullable().optional(),
+  ip_address: z.string().nullable().optional(),
 })
 
 const analyticsQuerySchema = z.object({
@@ -90,12 +90,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createEventSchema.parse(body)
 
+    // Convert undefined values to null for Supabase insert
+    const insertData = {
+      ...validatedData,
+      user_id: session.user.id,
+      session_id: validatedData.session_id ?? null,
+      user_agent: validatedData.user_agent ?? null,
+      ip_address: validatedData.ip_address ?? null,
+    }
+
     const { data: event, error } = await supabaseAdmin
       .from('analytics_events')
-      .insert({
-        ...validatedData,
-        user_id: session.user.id,
-      })
+      .insert(insertData)
       .select()
       .single()
 
