@@ -10,7 +10,6 @@ const createCampaignSchema = z.object({
   target_audience: z.string().optional(),
   budget: z.number().positive().optional(),
   status: z.enum(['draft', 'active', 'paused', 'completed']).default('draft'),
-  type: z.enum(['email', 'sms', 'social', 'ads', 'funnel']).default('email'),
   goals: z.array(z.string()).optional(),
   settings: z.record(z.any()).optional(),
 })
