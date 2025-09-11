@@ -54,37 +54,52 @@ export interface Database {
       campaigns: {
         Row: {
           id: string
+          organization_id: string
           user_id: string
           name: string
           description: string | null
           status: 'draft' | 'active' | 'paused' | 'completed'
-          type: 'email' | 'sms' | 'social' | 'ads' | 'funnel'
+          target_audience: Json
+          budget_total: number | null
+          budget_spent: number
+          start_date: string | null
+          end_date: string | null
+          goals: Json
           settings: Json
-          metrics: Json
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
+          organization_id?: string
           user_id: string
           name: string
           description?: string | null
           status?: 'draft' | 'active' | 'paused' | 'completed'
-          type: 'email' | 'sms' | 'social' | 'ads' | 'funnel'
+          target_audience?: Json
+          budget_total?: number | null
+          budget_spent?: number
+          start_date?: string | null
+          end_date?: string | null
+          goals?: Json
           settings?: Json
-          metrics?: Json
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
+          organization_id?: string
           user_id?: string
           name?: string
           description?: string | null
           status?: 'draft' | 'active' | 'paused' | 'completed'
-          type?: 'email' | 'sms' | 'social' | 'ads' | 'funnel'
+          target_audience?: Json
+          budget_total?: number | null
+          budget_spent?: number
+          start_date?: string | null
+          end_date?: string | null
+          goals?: Json
           settings?: Json
-          metrics?: Json
           created_at?: string
           updated_at?: string
         }
