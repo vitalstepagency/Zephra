@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { stripe } from '@/lib/stripe/config'
+import { getStripe } from '@/lib/stripe/config'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
@@ -31,6 +31,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 export async function POST(req: NextRequest) {
   const body = await req.text()
   const signature = headers().get('stripe-signature')!
+  const stripe = getStripe()
 
   let event: Stripe.Event
 
