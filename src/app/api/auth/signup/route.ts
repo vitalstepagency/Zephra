@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '../../../../lib/supabase/server'
 import { z } from 'zod'
+
+// Force dynamic rendering to prevent build-time execution
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import bcrypt from 'bcryptjs'
 
 const signupSchema = z.object({

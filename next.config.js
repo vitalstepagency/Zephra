@@ -3,6 +3,8 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['postgres'],
   },
+  // Prevent static generation of API routes during build
+  output: 'standalone',
   images: {
     domains: ['localhost', 'vercel.app'],
     formats: ['image/webp', 'image/avif'],

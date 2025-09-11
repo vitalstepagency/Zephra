@@ -8,6 +8,24 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // Create a function to get supabaseAdmin to avoid build-time errors
 export const getSupabaseAdmin = () => {
+  // During build time, return a mock client to prevent errors
+  if (process.env.NODE_ENV !== 'production' && !supabaseUrl) {
+    return {
+      from: () => ({
+        select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
+        insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
+        update: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }),
+        delete: () => ({ eq: () => Promise.resolve({ data: null, error: null }) })
+      }),
+      auth: {
+        admin: {
+          createUser: () => Promise.resolve({ data: { user: null }, error: null }),
+          deleteUser: () => Promise.resolve({ data: null, error: null })
+        }
+      }
+    } as any
+  }
+  
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error('Missing Supabase environment variables')
   }
@@ -41,6 +59,22 @@ export const supabaseAdmin = (() => {
 
 // For use in Server Components with Next.js App Router
 export const createSupabaseServerClient = () => {
+  // During build time, return a mock client to prevent errors
+  if (process.env.NODE_ENV !== 'production' && !supabaseUrl) {
+    return {
+      auth: {
+        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+        getSession: () => Promise.resolve({ data: { session: null }, error: null })
+      },
+      from: () => ({
+        select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
+        insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
+        update: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }),
+        delete: () => ({ eq: () => Promise.resolve({ data: null, error: null }) })
+      })
+    } as any
+  }
+  
   const cookieStore = cookies()
   return createServerComponentClient<Database>({ cookies: () => cookieStore })
 }

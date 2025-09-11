@@ -4,6 +4,10 @@ import { authOptions } from '../../../lib/auth/config'
 import { getSupabaseAdmin } from '../../../lib/supabase/server'
 import { z } from 'zod'
 
+// Force dynamic rendering to prevent build-time execution
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 const createCampaignSchema = z.object({
   name: z.string().min(1, 'Campaign name is required'),
   description: z.string().nullable().optional(),

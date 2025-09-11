@@ -5,6 +5,10 @@ import { stripe } from '@/lib/stripe/config'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
+// Force dynamic rendering to prevent build-time execution
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // Only create Supabase client if environment variables are properly configured
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
