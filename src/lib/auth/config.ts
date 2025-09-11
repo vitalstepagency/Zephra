@@ -52,7 +52,7 @@ export const authOptions: NextAuthOptions = {
           return {
             id: authData.user.id,
             email: authData.user.email!,
-            name: profile?.name || authData.user.user_metadata?.name || null,
+            name: profile?.full_name || authData.user.user_metadata?.name || null,
             image: profile?.avatar_url || authData.user.user_metadata?.avatar_url || null
           }
         } catch (error) {
