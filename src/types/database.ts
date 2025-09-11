@@ -16,7 +16,7 @@ export interface Database {
           full_name: string | null
           avatar_url: string | null
           subscription_tier: 'free' | 'starter' | 'pro' | 'enterprise'
-          subscription_status: 'active' | 'canceled' | 'past_due' | 'trialing'
+          subscription_status: 'active' | 'canceled' | 'past_due' | 'trialing' | 'inactive'
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           trial_ends_at: string | null
@@ -29,7 +29,7 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           subscription_tier?: 'free' | 'starter' | 'pro' | 'enterprise'
-          subscription_status?: 'active' | 'canceled' | 'past_due' | 'trialing'
+          subscription_status?: 'active' | 'canceled' | 'past_due' | 'trialing' | 'inactive'
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           trial_ends_at?: string | null
