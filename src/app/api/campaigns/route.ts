@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../../../lib/auth/config'
-import { supabaseAdmin } from '../../../lib/supabase/server'
+import { getSupabaseAdmin } from '../../../lib/supabase/server'
 import { z } from 'zod'
 
 const createCampaignSchema = z.object({
@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: campaigns, error } = await supabaseAdmin
       .from('campaigns')
       .select('*')
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
       settings: validatedData.settings ?? {},
     }
 
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: campaign, error } = await supabaseAdmin
       .from('campaigns')
       .insert(insertData)

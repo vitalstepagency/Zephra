@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../../../lib/auth/config'
-import { supabaseAdmin } from '../../../lib/supabase/server'
+import { getSupabaseAdmin } from '../../../lib/supabase/server'
 import { z } from 'zod'
 
 const createEventSchema = z.object({
@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
     const queryParams = Object.fromEntries(searchParams.entries())
     const validatedQuery = analyticsQuerySchema.parse(queryParams)
 
+    const supabaseAdmin = getSupabaseAdmin()
     let query = supabaseAdmin
       .from('analytics_events')
       .select('*')
@@ -99,6 +100,7 @@ export async function POST(request: NextRequest) {
       ip_address: validatedData.ip_address ?? null,
     }
 
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: event, error } = await supabaseAdmin
       .from('analytics_events')
       .insert(insertData)

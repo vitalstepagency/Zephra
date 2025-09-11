@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '../../../../lib/supabase/server'
+import { getSupabaseAdmin } from '../../../../lib/supabase/server'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
 
@@ -11,6 +11,7 @@ const signupSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin()
     const body = await request.json()
     const { email, password, name } = signupSchema.parse(body)
 

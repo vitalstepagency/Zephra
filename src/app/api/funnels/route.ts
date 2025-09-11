@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../../../lib/auth/config'
-import { supabaseAdmin } from '../../../lib/supabase/server'
+import { getSupabaseAdmin } from '../../../lib/supabase/server'
 import { z } from 'zod'
 
 const createFunnelSchema = z.object({
@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const campaignId = searchParams.get('campaign_id')
 
+    const supabaseAdmin = getSupabaseAdmin()
     let query = supabaseAdmin
       .from('funnels')
       .select('*')
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
       revenue: validatedData.revenue ?? 0,
     }
 
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: funnel, error } = await supabaseAdmin
       .from('funnels')
       .insert(insertData)
