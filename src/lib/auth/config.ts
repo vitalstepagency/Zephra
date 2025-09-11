@@ -3,7 +3,7 @@ import GoogleProvider from 'next-auth/providers/google'
 import GitHubProvider from 'next-auth/providers/github'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { SupabaseAdapter } from '@auth/supabase-adapter'
-import { supabaseAdmin } from '../supabase/server'
+import { getSupabaseAdmin } from '../supabase/server'
 import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
@@ -32,6 +32,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
+          const supabaseAdmin = getSupabaseAdmin()
+          
           // Get user from Supabase Auth
           const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
             email: credentials.email,
