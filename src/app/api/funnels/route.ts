@@ -6,17 +6,14 @@ import { z } from 'zod'
 
 const createFunnelSchema = z.object({
   name: z.string().min(1, 'Funnel name is required'),
-  description: z.string().optional(),
-  campaign_id: z.string().uuid().optional(),
-  status: z.enum(['draft', 'active', 'paused', 'archived']).default('draft'),
-  steps: z.array(z.object({
-    id: z.string(),
-    type: z.enum(['landing_page', 'opt_in', 'sales_page', 'checkout', 'thank_you']),
-    name: z.string(),
-    content: z.record(z.any()).optional(),
-    settings: z.record(z.any()).optional(),
-  })).optional(),
-  settings: z.record(z.any()).optional(),
+  description: z.string().nullable().optional(),
+  campaign_id: z.string().uuid().nullable().optional(),
+  status: z.enum(['draft', 'active', 'paused']).default('draft'),
+  steps: z.record(z.any()).optional(),
+  conversion_rates: z.record(z.any()).optional(),
+  total_visitors: z.number().optional(),
+  total_conversions: z.number().optional(),
+  revenue: z.number().optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -62,12 +59,23 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createFunnelSchema.parse(body)
 
+    // Transform data to match database types
+    const insertData = {
+      user_id: session.user.id,
+      name: validatedData.name,
+      description: validatedData.description ?? null,
+      campaign_id: validatedData.campaign_id ?? null,
+      status: validatedData.status,
+      steps: validatedData.steps ?? {},
+      conversion_rates: validatedData.conversion_rates ?? {},
+      total_visitors: validatedData.total_visitors ?? 0,
+      total_conversions: validatedData.total_conversions ?? 0,
+      revenue: validatedData.revenue ?? 0,
+    }
+
     const { data: funnel, error } = await supabaseAdmin
       .from('funnels')
-      .insert({
-        ...validatedData,
-        user_id: session.user.id,
-      })
+      .insert(insertData)
       .select()
       .single()
 
