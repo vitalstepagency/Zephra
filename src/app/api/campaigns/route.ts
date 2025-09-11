@@ -6,11 +6,14 @@ import { z } from 'zod'
 
 const createCampaignSchema = z.object({
   name: z.string().min(1, 'Campaign name is required'),
-  description: z.string().optional(),
-  target_audience: z.string().optional(),
-  budget: z.number().positive().optional(),
+  description: z.string().nullable().optional(),
+  target_audience: z.record(z.any()).optional(),
+  budget_total: z.number().positive().nullable().optional(),
+  budget_spent: z.number().optional(),
+  start_date: z.string().nullable().optional(),
+  end_date: z.string().nullable().optional(),
   status: z.enum(['draft', 'active', 'paused', 'completed']).default('draft'),
-  goals: z.array(z.string()).optional(),
+  goals: z.record(z.any()).optional(),
   settings: z.record(z.any()).optional(),
 })
 
@@ -49,12 +52,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createCampaignSchema.parse(body)
 
+    // Transform data to match database types
+    const insertData = {
+      user_id: session.user.id,
+      name: validatedData.name,
+      description: validatedData.description ?? null,
+      status: validatedData.status,
+      target_audience: validatedData.target_audience ?? {},
+      budget_total: validatedData.budget_total ?? null,
+      budget_spent: validatedData.budget_spent ?? 0,
+      start_date: validatedData.start_date ?? null,
+      end_date: validatedData.end_date ?? null,
+      goals: validatedData.goals ?? {},
+      settings: validatedData.settings ?? {},
+    }
+
     const { data: campaign, error } = await supabaseAdmin
       .from('campaigns')
-      .insert({
-        ...validatedData,
-        user_id: session.user.id,
-      })
+      .insert(insertData)
       .select()
       .single()
 
