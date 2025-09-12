@@ -59,6 +59,9 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@/components/ui': require('path').resolve(__dirname, 'src/components/ui/index.ts'),
+      '@/lib/utils': require('path').resolve(__dirname, 'src/lib/utils.ts'),
+      '@/lib/stripe/config': require('path').resolve(__dirname, 'src/lib/stripe/config.ts'),
+      '@/components/landing-page': require('path').resolve(__dirname, 'src/components/landing-page.tsx'),
     };
     
     if (!isServer) {
