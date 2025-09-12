@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ['postgres'],
-  // Prevent static generation of API routes during build
-  output: 'standalone',
   images: {
     domains: ['localhost', 'vercel.app'],
     formats: ['image/webp', 'image/avif'],
@@ -57,6 +55,12 @@ const nextConfig = {
   },
   // Webpack optimization
   webpack: (config, { isServer }) => {
+    // Add path aliases for better module resolution
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@/components/ui': require('path').resolve(__dirname, 'src/components/ui/index.ts'),
+    };
+    
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
