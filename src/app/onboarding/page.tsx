@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -69,7 +69,7 @@ const slideVariants = {
   })
 }
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -273,10 +273,10 @@ export default function OnboardingPage() {
               <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-700/50 shadow-2xl">
                 <CardHeader className="text-center pb-6">
                   <CardTitle className="text-2xl text-white">
-                    {steps[currentStep - 1].title}
+                    {steps[currentStep - 1]?.title}
                   </CardTitle>
                   <CardDescription className="text-slate-400 text-lg">
-                    {steps[currentStep - 1].description}
+                    {steps[currentStep - 1]?.description}
                   </CardDescription>
                 </CardHeader>
                 
@@ -512,5 +512,13 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OnboardingContent />
+    </Suspense>
   )
 }

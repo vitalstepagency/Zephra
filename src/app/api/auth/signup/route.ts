@@ -60,6 +60,13 @@ function isValidEmailDomain(email: string): boolean {
   return domainRegex.test(domain)
 }
 
+// Validate phone number format
+function isValidPhoneNumber(phone: string): boolean {
+  // Basic phone number validation - accepts various formats
+  const phoneRegex = /^[\+]?[1-9][\d\s\-\(\)]{7,15}$/
+  return phoneRegex.test(phone.replace(/\s/g, ''))
+}
+
 // Check for common password patterns
 function isWeakPassword(password: string, email: string, firstName: string, lastName: string): boolean {
   const lowerPassword = password.toLowerCase()
@@ -70,7 +77,7 @@ function isWeakPassword(password: string, email: string, firstName: string, last
   // Check if password contains personal information
   if (lowerPassword.includes(lowerFirstName) || 
       lowerPassword.includes(lowerLastName) ||
-      lowerPassword.includes(lowerEmail.split('@')[0])) {
+      lowerPassword.includes(lowerEmail.split('@')[0] || '')) {
     return true
   }
   

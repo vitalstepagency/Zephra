@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       const userAgent = req.headers.get('user-agent')
         const logEvent: any = {
           type: 'UNAUTHORIZED_ACCESS',
-          ip: req.ip || 'unknown',
+          ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
           path: '/api/admin/refund',
           details: { endpoint: '/api/admin/refund' }
         }
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get('user-agent')
       const logEvent: any = {
         type: 'SUSPICIOUS_REQUEST',
-        ip: req.ip || 'unknown',
+        ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
         path: '/api/admin/refund',
         details: {
           action: 'refund_processed',
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get('user-agent')
       const logEvent: any = {
         type: 'SUSPICIOUS_REQUEST',
-        ip: req.ip || 'unknown',
+        ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
         path: '/api/admin/refund',
         details: { error: String(error) }
       }

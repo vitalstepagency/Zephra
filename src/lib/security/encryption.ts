@@ -92,6 +92,7 @@ export function hashData(data: string, salt?: string): string {
 export function verifyHash(data: string, hashedData: string): boolean {
   try {
     const [salt, hash] = hashedData.split(':')
+    if (!salt || !hash) return false
     const newHash = crypto.pbkdf2Sync(data, salt, 100000, 64, 'sha512')
     return hash === newHash.toString('base64')
   } catch (error) {

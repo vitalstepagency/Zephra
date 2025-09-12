@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle, Shield, Lock, CreditCard, User, Mail, Phone, Building, MapPin, Calendar, ArrowRight, Star } from 'lucide-react';
@@ -37,7 +37,7 @@ const staggerContainer = {
   }
 };
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams();
   const planParam = searchParams.get('plan') || 'professional';
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan>(() => {
@@ -136,7 +136,7 @@ export default function CheckoutPage() {
           phone: formData.phone?.trim() || undefined,
           company: formData.company?.trim() || undefined,
           planId: selectedPlan.id,
-          priceId: 'price_1RDnUnFCKuRbOGyzto5CVIee' // Using the specified price ID
+          priceId: selectedPlan.priceId // Use the price ID from the selected plan
         }),
       });
       
@@ -635,4 +635,12 @@ export default function CheckoutPage() {
       </div>
     </div>
   );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CheckoutContent />
+    </Suspense>
+  )
 }

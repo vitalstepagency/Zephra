@@ -69,7 +69,7 @@ export async function ratelimit(
 }
 
 export async function webhookRateLimit(req: NextRequest): Promise<RateLimitResult> {
-  const ip = req.ip || req.headers.get('x-forwarded-for') || 'unknown'
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
   const userAgent = req.headers.get('user-agent') || 'unknown'
   
   // Create composite identifier for webhook rate limiting

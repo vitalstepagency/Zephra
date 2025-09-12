@@ -57,7 +57,7 @@ export async function logSecurityEvent(
     const event: SecurityEvent = {
       event_type: eventType,
       severity,
-      source_ip: req?.ip || req?.headers.get('x-forwarded-for') || 'unknown',
+      source_ip: req?.headers.get('x-forwarded-for') || req?.headers.get('x-real-ip') || 'unknown',
       user_agent: req?.headers.get('user-agent') || 'unknown',
       request_id: req?.headers.get('x-request-id') || crypto.randomUUID(),
       ...(userId && { user_id: userId }),

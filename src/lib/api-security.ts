@@ -15,7 +15,7 @@ export function withSecurity(
   } = {}
 ) {
   return async function secureHandler(req: NextRequest) {
-    const ip = req.ip || req.headers.get('x-forwarded-for') || 'unknown'
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
     const userAgent = req.headers.get('user-agent') || ''
     const method = req.method
     const pathname = new URL(req.url).pathname

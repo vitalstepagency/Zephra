@@ -30,7 +30,7 @@ async function createCheckoutSessionHandler(request: NextRequest) {
     // Rate limiting
     const forwarded = request.headers.get('x-forwarded-for');
     const realIp = request.headers.get('x-real-ip');
-    const ip = forwarded ? forwarded.split(',')[0].trim() : realIp || '127.0.0.1';
+    const ip = forwarded ? (forwarded.split(',')[0]?.trim() || '127.0.0.1') : realIp || '127.0.0.1';
     const { success } = await limiter.check(5, ip); // 5 requests per minute per IP
     
     if (!success) {
@@ -51,11 +51,11 @@ async function createCheckoutSessionHandler(request: NextRequest) {
       email: validatedData.email.trim().toLowerCase(),
       firstName: validatedData.firstName.trim().replace(/[<>"'&]/g, ''),
       lastName: validatedData.lastName.trim().replace(/[<>"'&]/g, ''),
-      phone: validatedData.phone ? validatedData.phone.trim().replace(/[<>"'&]/g, '') : undefined,
-      company: validatedData.company ? validatedData.company.trim().replace(/[<>"'&]/g, '') : undefined,
+      phone: validatedData.phone ? validatedData.phone.trim().replace(/[<>"'&]/g, '') : '',
+      company: validatedData.company ? validatedData.company.trim().replace(/[<>"'&]/g, '') : '',
       planId: validatedData.planId.trim(),
       priceId: validatedData.priceId.trim(),
-      userId: validatedData.userId ? validatedData.userId.trim() : undefined
+      userId: validatedData.userId ? validatedData.userId.trim() : ''
     };
 
     // Validate price ID against allowed values

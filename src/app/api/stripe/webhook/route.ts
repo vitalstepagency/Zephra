@@ -103,7 +103,7 @@ async function webhookHandler(req: NextRequest) {
           const { data: userData } = await supabase
             .from('users')
             .select('id, subscription_status')
-            .eq('email', customer.email)
+            .eq('email', customer.email || '')
             .single()
           
           if (userData) {

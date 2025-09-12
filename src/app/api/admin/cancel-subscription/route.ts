@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       const userAgent = req.headers.get('user-agent')
       const logEvent: any = {
         type: 'UNAUTHORIZED_ACCESS',
-        ip: req.ip || 'unknown',
+        ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
         path: '/api/admin/cancel-subscription',
         details: { endpoint: '/api/admin/cancel-subscription' }
       }
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get('user-agent')
     const logEvent: any = {
       type: 'SUSPICIOUS_REQUEST',
-      ip: req.ip || 'unknown',
+      ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
       path: '/api/admin/cancel-subscription',
       details: {
         action: 'subscription_cancelled',
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get('user-agent')
     const logEvent: any = {
       type: 'SUSPICIOUS_REQUEST',
-      ip: req.ip || 'unknown',
+      ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
       path: '/api/admin/cancel-subscription',
       details: { error: String(error) }
     }

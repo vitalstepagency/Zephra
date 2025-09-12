@@ -187,7 +187,7 @@ export function getClientIP(request: Request): string {
   const remoteAddr = headers.get('remote-addr')
   
   if (forwarded && typeof forwarded === 'string') {
-    return forwarded.split(',')[0].trim()
+    return forwarded.split(',')[0]?.trim() || 'unknown'
   }
   
   return realIP || remoteAddr || 'unknown'
