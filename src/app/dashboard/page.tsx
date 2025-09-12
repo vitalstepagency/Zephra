@@ -1,8 +1,8 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,17 +13,32 @@ import {
   TrendingUp, 
   Plus,
   Settings,
-  Crown
+  Crown,
+  CheckCircle,
+  X
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  
+  const success = searchParams.get('success')
+  const plan = searchParams.get('plan')
 
   useEffect(() => {
     if (status === 'loading') return // Still loading
     if (!session) router.push('/auth/signin')
-  }, [session, status, router])
+    
+    // Show success message if user just completed payment
+    if (success === 'true' && plan) {
+      setShowSuccessMessage(true)
+      // Remove query params from URL
+      router.replace('/dashboard', { scroll: false })
+    }
+  }, [session, status, router, success, plan])
 
   if (status === 'loading') {
     return (
@@ -39,6 +54,42 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Success Message */}
+      <AnimatePresence>
+        {showSuccessMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -100 }}
+            className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4"
+          >
+            <Card className="bg-gradient-to-r from-emerald-500 to-green-500 border-0 text-white shadow-2xl">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="w-6 h-6" />
+                    <div>
+                      <h3 className="font-semibold">Welcome to Zephra!</h3>
+                      <p className="text-sm opacity-90">
+                        Your {plan} plan is now active. Let's start growing your business!
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowSuccessMessage(false)}
+                    className="text-white hover:bg-white/20 p-1 h-auto"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

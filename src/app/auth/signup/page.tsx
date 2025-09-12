@@ -1,14 +1,15 @@
 'use client'
 
-import { signIn, getSession } from 'next-auth/react'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { signIn, getSession } from 'next-auth/react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Github, Mail, Chrome, ArrowRight, Zap, Shield } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Github, Mail, Chrome, ArrowRight, Sparkles, Shield, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -36,11 +37,14 @@ const cardVariants = {
   }
 }
 
-export default function SignInPage() {
+export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
-  const [errors, setErrors] = useState<{email?: string}>({})
+  const [name, setName] = useState('')
+  const [errors, setErrors] = useState<{email?: string, name?: string}>({})
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const plan = searchParams.get('plan') || 'starter'
 
   useEffect(() => {
     const checkSession = async () => {
@@ -52,8 +56,8 @@ export default function SignInPage() {
     checkSession()
   }, [router])
 
-  const validateEmail = () => {
-    const newErrors: {email?: string} = {}
+  const validateForm = () => {
+    const newErrors: {email?: string, name?: string} = {}
     
     if (!email) {
       newErrors.email = 'Email is required'
@@ -61,38 +65,42 @@ export default function SignInPage() {
       newErrors.email = 'Please enter a valid email address'
     }
     
+    if (!name || name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters'
+    }
+    
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleEmailSignIn = async (e: React.FormEvent) => {
+  const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!validateEmail()) return
+    if (!validateForm()) return
     
     setIsLoading(true)
     try {
       await signIn('email', { 
         email,
-        callbackUrl: '/dashboard',
+        callbackUrl: `/onboarding?plan=${plan}&name=${encodeURIComponent(name)}`,
         redirect: true 
       })
     } catch (error) {
-      console.error('Sign in error:', error)
+      console.error('Sign up error:', error)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleSocialSignIn = async (provider: string) => {
+  const handleSocialSignUp = async (provider: string) => {
     setIsLoading(true)
     try {
       await signIn(provider, { 
-        callbackUrl: '/dashboard',
+        callbackUrl: `/onboarding?plan=${plan}`,
         redirect: true 
       })
     } catch (error) {
-      console.error('Sign in error:', error)
+      console.error('Sign up error:', error)
     } finally {
       setIsLoading(false)
     }
@@ -129,7 +137,7 @@ export default function SignInPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            Welcome Back
+            Create Your Account
           </motion.h1>
           
           <motion.p 
@@ -138,25 +146,38 @@ export default function SignInPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            Sign in to continue building amazing campaigns
+            Start your journey to marketing success
           </motion.p>
+          
+          {plan && plan !== 'starter' && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+            >
+              <Badge className="mt-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-0">
+                <Sparkles className="w-3 h-3 mr-1" />
+                {plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Selected
+              </Badge>
+            </motion.div>
+          )}
         </div>
 
-        {/* Sign In Card */}
+        {/* Sign Up Card */}
         <motion.div variants={cardVariants}>
           <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-700/50 shadow-2xl">
             <CardHeader className="space-y-1 pb-6">
-              <CardTitle className="text-xl text-white">Welcome Back</CardTitle>
+              <CardTitle className="text-xl text-white">Get Started</CardTitle>
               <CardDescription className="text-slate-400">
-                Choose your preferred sign-in method
+                Choose your preferred sign-up method
               </CardDescription>
             </CardHeader>
             
             <CardContent className="space-y-6">
-              {/* Social Sign In */}
+              {/* Social Sign Up */}
               <div className="space-y-3">
                 <Button
-                  onClick={() => handleSocialSignIn('google')}
+                  onClick={() => handleSocialSignUp('google')}
                   disabled={isLoading}
                   className="w-full bg-white hover:bg-gray-50 text-gray-900 border-0 py-6"
                   variant="outline"
@@ -166,7 +187,7 @@ export default function SignInPage() {
                 </Button>
                 
                 <Button
-                  onClick={() => handleSocialSignIn('github')}
+                  onClick={() => handleSocialSignUp('github')}
                   disabled={isLoading}
                   className="w-full bg-slate-800 hover:bg-slate-700 text-white border-slate-600 py-6"
                   variant="outline"
@@ -187,8 +208,26 @@ export default function SignInPage() {
                 </div>
               </div>
               
-              {/* Email Sign In Form */}
-              <form onSubmit={handleEmailSignIn} className="space-y-4">
+              {/* Email Sign Up Form */}
+              <form onSubmit={handleEmailSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-slate-300 font-medium">
+                    Full Name
+                  </Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500 py-6"
+                    disabled={isLoading}
+                  />
+                  {errors.name && (
+                    <p className="text-red-400 text-sm">{errors.name}</p>
+                  )}
+                </div>
+                
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-slate-300 font-medium">
                     Email Address
@@ -215,12 +254,12 @@ export default function SignInPage() {
                   {isLoading ? (
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-                      Signing In...
+                      Creating Account...
                     </div>
                   ) : (
                     <div className="flex items-center">
                       <Mail className="w-5 h-5 mr-2" />
-                      Sign In
+                      Create Account
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </div>
                   )}
@@ -244,12 +283,12 @@ export default function SignInPage() {
             </div>
             <div className="flex items-center text-slate-400 text-sm">
               <Zap className="w-4 h-4 mr-2 text-indigo-400" />
-              Quick Access
+              Instant Setup
             </div>
           </div>
           
           <p className="text-xs text-slate-500 mb-4">
-            By signing in, you agree to our{' '}
+            By creating an account, you agree to our{' '}
             <Link href="/terms" className="text-indigo-400 hover:text-indigo-300 underline">
               Terms of Service
             </Link>{' '}
@@ -260,12 +299,12 @@ export default function SignInPage() {
           </p>
           
           <p className="text-slate-400 text-sm">
-            Don't have an account?{' '}
+            Already have an account?{' '}
             <Link 
-              href="/auth/signup" 
+              href="/auth/signin" 
               className="text-indigo-400 hover:text-indigo-300 font-medium underline"
             >
-              Sign up here
+              Sign in here
             </Link>
           </p>
         </motion.div>

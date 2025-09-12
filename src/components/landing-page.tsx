@@ -43,6 +43,35 @@ const textReveal = {
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  const scrollToPricing = () => {
+    const pricingSection = document.getElementById('pricing');
+    if (pricingSection) {
+      // Use faster custom scroll animation
+      const startPosition = window.pageYOffset;
+      const targetPosition = pricingSection.offsetTop - 80; // 80px offset for header
+      const distance = targetPosition - startPosition;
+      const duration = 800; // Slightly slower duration
+      let start: number | null = null;
+      
+      const animation = (currentTime: number) => {
+        if (start === null) start = currentTime;
+        const timeElapsed = currentTime - start;
+        const run = ease(timeElapsed, startPosition, distance, duration);
+        window.scrollTo(0, run);
+        if (timeElapsed < duration) requestAnimationFrame(animation);
+      };
+      
+      const ease = (t: number, b: number, c: number, d: number) => {
+        t /= d / 2;
+        if (t < 1) return c / 2 * t * t + b;
+        t--;
+        return -c / 2 * (t * (t - 2) - 1) + b;
+      };
+      
+      requestAnimationFrame(animation);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Premium Header */}
@@ -62,10 +91,11 @@ export default function LandingPage() {
             
             <nav className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-slate-300 hover:text-white transition-colors duration-200">Features</a>
-              <a href="#pricing" className="text-slate-300 hover:text-white transition-colors duration-200">Pricing</a>
+              <button onClick={scrollToPricing} className="text-slate-300 hover:text-white transition-colors duration-200">Pricing</button>
               <a href="#faq" className="text-slate-300 hover:text-white transition-colors duration-200">FAQ</a>
-              <button className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl font-medium hover:from-indigo-700 hover:to-blue-700 transition-all duration-300">
-                Get Started
+              <a href="/auth/signin" className="text-slate-300 hover:text-white transition-colors duration-200">Sign In</a>
+              <button onClick={scrollToPricing} className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl font-medium hover:from-indigo-700 hover:to-blue-700 transition-all duration-300">
+                Join Zephra
               </button>
             </nav>
 
@@ -115,11 +145,12 @@ export default function LandingPage() {
               variants={textReveal}
             >
               <motion.button
+                onClick={scrollToPricing}
                 className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Get Started for Free
+                Join Zephra Free
               </motion.button>
             </motion.div>
             
@@ -182,17 +213,7 @@ export default function LandingPage() {
               Turn your business goals into stunning, automated marketing campaigns with Zephra's AI marketing platform. Personalize your approach with AI-powered strategies, campaign optimization, and flexible automation tools to create pro-level marketing on demand.
             </p>
             
-            <motion.button
-              className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Get Started For Free
-            </motion.button>
-            
-            <div className="mt-8 text-slate-400 text-sm">
-              Fastest Growing Product 2025
-            </div>
+
           </motion.div>
         </div>
       </section>
@@ -386,11 +407,12 @@ export default function LandingPage() {
               variants={textReveal}
             >
               <motion.button
+                onClick={scrollToPricing}
                 className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Get Started For Free
+                Create My Success Story
               </motion.button>
             </motion.div>
           </motion.div>
@@ -621,13 +643,13 @@ export default function LandingPage() {
             </motion.h3>
 
             <div className="grid md:grid-cols-3 gap-8">
-              {/* Starter Plan */}
+              {/* Basic Plan */}
               <motion.div
                 className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-700/30 p-8"
                 variants={fadeInUp}
                 whileHover={{ y: -5, scale: 1.02 }}
               >
-                <h4 className="text-2xl font-bold text-white mb-4">Starter - $149/month</h4>
+                <h4 className="text-2xl font-bold text-white mb-4">Basic - $149/month</h4>
                 <ul className="text-slate-300 space-y-3 mb-8">
                   <li className="flex items-center">
                     <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
@@ -651,12 +673,12 @@ export default function LandingPage() {
                   </li>
                 </ul>
                 <p className="text-slate-400 text-sm mb-6">Perfect for: Solo entrepreneurs ready to automate</p>
-                <button className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300">
-                  Start Free Trial
-                </button>
+                <a href="/checkout?plan=starter" className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300 inline-block text-center">
+                   Get Started
+                 </a>
               </motion.div>
 
-              {/* Professional Plan */}
+              {/* Pro Plan */}
               <motion.div
                 className="bg-gradient-to-b from-indigo-600/20 to-blue-600/20 backdrop-blur-xl rounded-3xl border border-indigo-500/30 p-8 relative"
                 variants={fadeInUp}
@@ -667,7 +689,7 @@ export default function LandingPage() {
                     ⭐ Most Popular
                   </span>
                 </div>
-                <h4 className="text-2xl font-bold text-white mb-4">Professional - $297/month</h4>
+                <h4 className="text-2xl font-bold text-white mb-4">Pro - $297/month</h4>
                 <ul className="text-slate-300 space-y-3 mb-8">
                   <li className="flex items-center">
                     <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
@@ -695,18 +717,18 @@ export default function LandingPage() {
                   </li>
                 </ul>
                 <p className="text-slate-400 text-sm mb-6">Perfect for: Growing businesses that need results</p>
-                <button className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl font-medium hover:from-indigo-700 hover:to-blue-700 transition-all duration-300">
-                  Start Free Trial
-                </button>
+                <a href="/checkout?plan=professional" className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl font-medium hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 inline-block text-center">
+                   Get Started
+                 </a>
               </motion.div>
 
-              {/* Enterprise Plan */}
+              {/* Elite Plan */}
               <motion.div
                 className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-700/30 p-8"
                 variants={fadeInUp}
                 whileHover={{ y: -5, scale: 1.02 }}
               >
-                <h4 className="text-2xl font-bold text-white mb-4">Enterprise - $497/month</h4>
+                <h4 className="text-2xl font-bold text-white mb-4">Elite - $497/month</h4>
                 <ul className="text-slate-300 space-y-3 mb-8">
                   <li className="flex items-center">
                     <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
@@ -734,9 +756,9 @@ export default function LandingPage() {
                   </li>
                 </ul>
                 <p className="text-slate-400 text-sm mb-6">Perfect for: Established businesses ready to dominate</p>
-                <button className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300">
-                  Contact Sales
-                </button>
+                <a href="/checkout?plan=elite" className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300 inline-block text-center">
+                   Get Started
+                 </a>
               </motion.div>
             </div>
           </motion.div>
@@ -780,7 +802,7 @@ export default function LandingPage() {
                 },
                 {
                   question: "How much does Zephra's AI marketing platform cost?",
-                  answer: "Free Trial: Full access for 14 days, Starter Plan: $149/month, Professional Plan: $297/month, Enterprise Plans: $497/month. All plans include access to campaign strategy, ad copy generation, funnel building, and email automation."
+                  answer: "Free Trial: Full access for 14 days, Basic Plan: $149/month, Pro Plan: $297/month, Elite Plans: $497/month. All plans include access to campaign strategy, ad copy generation, funnel building, and email automation."
                 },
                 {
                   question: "How does Zephra handle video content creation?",
@@ -882,11 +904,12 @@ export default function LandingPage() {
                     The question isn't whether you need better marketing. The question is: How much longer will you wait to get it?
                   </p>
                   <motion.button
-                    className="w-full px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25"
+                    onClick={scrollToPricing}
+                    className="w-full px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25 text-center"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    Start Your Free Trial
+                    Begin My Success Story
                   </motion.button>
                 </div>
               </div>

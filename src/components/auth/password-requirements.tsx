@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, X, Shield, Lock, Eye, AlertTriangle } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { validatePasswordStrength, type PasswordStrength } from '../../lib/validation'
 
 interface PasswordRequirement {
   id: string
@@ -12,36 +13,42 @@ interface PasswordRequirement {
   icon: React.ReactNode
 }
 
-const requirements: PasswordRequirement[] = [
+const getRequirements = (passwordStrength: PasswordStrength): PasswordRequirement[] => [
   {
     id: 'length',
     label: 'At least 8 characters',
-    test: (password) => password.length >= 8,
+    test: () => passwordStrength.requirements.length,
     icon: <Lock className="w-3 h-3" />
   },
   {
     id: 'uppercase',
     label: 'One uppercase letter',
-    test: (password) => /[A-Z]/.test(password),
+    test: () => passwordStrength.requirements.uppercase,
     icon: <Shield className="w-3 h-3" />
   },
   {
     id: 'lowercase',
     label: 'One lowercase letter',
-    test: (password) => /[a-z]/.test(password),
+    test: () => passwordStrength.requirements.lowercase,
     icon: <Shield className="w-3 h-3" />
   },
   {
     id: 'number',
     label: 'One number',
-    test: (password) => /\d/.test(password),
+    test: () => passwordStrength.requirements.number,
     icon: <AlertTriangle className="w-3 h-3" />
   },
   {
     id: 'special',
     label: 'One special character',
-    test: (password) => /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    test: () => passwordStrength.requirements.special,
     icon: <Eye className="w-3 h-3" />
+  },
+  {
+    id: 'noCommon',
+    label: 'Not a common password',
+    test: () => passwordStrength.requirements.noCommon,
+    icon: <Shield className="w-3 h-3" />
   }
 ]
 
@@ -52,34 +59,39 @@ interface PasswordRequirementsProps {
 }
 
 export function PasswordRequirements({ password, isVisible, className }: PasswordRequirementsProps) {
-  const [strengthScore, setStrengthScore] = useState(0)
-  const [strengthLabel, setStrengthLabel] = useState('Weak')
+  const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({
+    score: 0,
+    label: 'Very Weak',
+    isValid: false,
+    requirements: {
+      length: false,
+      uppercase: false,
+      lowercase: false,
+      number: false,
+      special: false,
+      noCommon: false
+    }
+  })
   const [strengthColor, setStrengthColor] = useState('bg-red-500')
 
   useEffect(() => {
-    const score = requirements.reduce((acc, req) => {
-      return acc + (req.test(password) ? 1 : 0)
-    }, 0)
+    const strength = validatePasswordStrength(password)
+    setPasswordStrength(strength)
     
-    setStrengthScore(score)
-    
-    if (score <= 1) {
-      setStrengthLabel('Very Weak')
+    if (strength.score <= 1) {
       setStrengthColor('bg-red-500')
-    } else if (score <= 2) {
-      setStrengthLabel('Weak')
+    } else if (strength.score <= 2) {
       setStrengthColor('bg-orange-500')
-    } else if (score <= 3) {
-      setStrengthLabel('Fair')
+    } else if (strength.score <= 3) {
       setStrengthColor('bg-yellow-500')
-    } else if (score <= 4) {
-      setStrengthLabel('Good')
+    } else if (strength.score <= 4) {
       setStrengthColor('bg-blue-500')
     } else {
-      setStrengthLabel('Excellent')
       setStrengthColor('bg-green-500')
     }
   }, [password])
+
+  const requirements = getRequirements(passwordStrength)
 
   return (
     <AnimatePresence>
@@ -118,20 +130,20 @@ export function PasswordRequirements({ password, isVisible, className }: Passwor
               <span className="text-xs font-medium text-gray-700">Strength</span>
               <span className={cn(
                 "text-xs font-semibold px-2 py-1 rounded-full",
-                strengthScore <= 1 ? "text-red-700 bg-red-100" :
-                strengthScore <= 2 ? "text-orange-700 bg-orange-100" :
-                strengthScore <= 3 ? "text-yellow-700 bg-yellow-100" :
-                strengthScore <= 4 ? "text-blue-700 bg-blue-100" :
+                passwordStrength.score <= 1 ? "text-red-700 bg-red-100" :
+                passwordStrength.score <= 2 ? "text-orange-700 bg-orange-100" :
+                passwordStrength.score <= 3 ? "text-yellow-700 bg-yellow-100" :
+                passwordStrength.score <= 4 ? "text-blue-700 bg-blue-100" :
                 "text-green-700 bg-green-100"
               )}>
-                {strengthLabel}
+                {passwordStrength.label}
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
               <motion.div
                 className={cn("h-full rounded-full", strengthColor)}
                 initial={{ width: 0 }}
-                animate={{ width: `${(strengthScore / 5) * 100}%` }}
+                animate={{ width: `${(passwordStrength.score / 6) * 100}%` }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
               />
             </div>

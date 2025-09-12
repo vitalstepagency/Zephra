@@ -15,17 +15,49 @@ export function getStripe() {
 // Pricing configuration
 export const PRICING_PLANS = {
   starter: {
-    name: 'Starter',
-    description: 'Perfect for small businesses getting started',
-    price: 29,
+    name: 'Basic',
+    description: 'Perfect for solo entrepreneurs ready to automate',
+    price: 149,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_STARTER!,
     features: [
-      'Up to 5 campaigns',
-      'Basic analytics',
-      'Email support',
-      '1,000 contacts',
-      'Basic templates'
+      '90-Day Marketing Blueprint with step-by-step implementation guide',
+      '25 high-converting ad variations with proven templates',
+      'Complete sales funnel with 7-email sequence',
+      'High-converting landing page templates',
+      'Lead magnets that attract ideal customers',
+      'Priority chat support for perfect setup'
     ],
+    detailedFeatures: {
+      blueprint: {
+        title: '90-Day Marketing Blueprint',
+        description: 'Your complete roadmap to marketing success - no guesswork, just results',
+        items: [
+          'Step-by-step implementation guide with weekly milestones',
+          'Proven campaign templates that convert at 15%+ rates',
+          'Monthly optimization checkpoints to maximize ROI'
+        ]
+      },
+      content: {
+        title: 'High-Converting Ad Arsenal',
+        description: '25 battle-tested ad variations that stop the scroll and drive action',
+        items: [
+          'High-retention video scripts with shot-by-shot breakdowns',
+          'Scroll-stopping headlines that generate 3x more clicks',
+          'Platform-specific variations for Facebook, Instagram & Google',
+          'A/B testing framework to identify your best performers'
+        ]
+      },
+      automation: {
+        title: 'Set-and-Forget Sales System',
+        description: 'Complete funnel that nurtures leads while you sleep',
+        items: [
+          '7-email sequence that converts 25% of leads into customers',
+          'High-converting landing page templates with proven copy',
+          'Lead magnets that attract your ideal customers',
+          'Priority support to get everything set up perfectly'
+        ]
+      }
+    },
     limits: {
       campaigns: 5,
       contacts: 1000,
@@ -35,18 +67,49 @@ export const PRICING_PLANS = {
   },
   pro: {
     name: 'Pro',
-    description: 'For growing businesses that need more power',
-    price: 99,
+    description: 'Perfect for growing businesses that need results',
+    price: 297,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO!,
+    popular: true,
     features: [
-      'Unlimited campaigns',
-      'Advanced analytics',
-      'Priority support',
-      '10,000 contacts',
-      'Custom templates',
-      'A/B testing',
-      'Automation workflows'
+      'Everything in Basic +',
+      'Advanced Market Intelligence with 3 detailed customer personas',
+      '100 unique ad variations across all major platforms',
+      '5 custom sales funnels with 12-email nurture sequences',
+      'SMS campaigns for immediate engagement',
+      'Weekly strategy calls with performance optimization'
     ],
+    detailedFeatures: {
+      intelligence: {
+        title: 'Advanced Market Intelligence',
+        description: 'Deep competitor analysis that reveals exactly how to dominate your market',
+        items: [
+          '3 detailed customer personas with psychological triggers',
+          'Competitor weakness analysis with positioning strategies',
+          'Market gap identification for untapped opportunities'
+        ]
+      },
+      domination: {
+        title: 'Multi-Platform Ad Domination',
+        description: '100 unique ad variations that flood every platform with your message',
+        items: [
+          'Platform-optimized creatives for Facebook, Instagram, Google & YouTube',
+          'Weekly creative refreshes to prevent ad fatigue',
+          'Advanced targeting strategies for maximum reach',
+          'Cross-platform retargeting sequences'
+        ]
+      },
+      ecosystem: {
+        title: 'Complete Sales Ecosystem',
+        description: '5 custom funnels that convert traffic into paying customers automatically',
+        items: [
+          'High-converting landing pages with conversion tracking',
+          '12-email nurture sequences with 90%+ open rates',
+          'SMS campaigns for immediate engagement',
+          'Weekly performance optimization and strategy calls'
+        ]
+      }
+    },
     limits: {
       campaigns: -1, // unlimited
       contacts: 10000,
@@ -55,20 +118,59 @@ export const PRICING_PLANS = {
     }
   },
   enterprise: {
-    name: 'Enterprise',
-    description: 'For large organizations with custom needs',
-    price: 299,
+    name: 'Elite',
+    description: 'Perfect for established businesses ready to dominate',
+    price: 497,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ENTERPRISE!,
     features: [
-      'Everything in Pro',
-      'White-label solution',
-      'Dedicated support',
-      'Unlimited contacts',
-      'Custom integrations',
-      'Advanced reporting',
-      'Team collaboration',
-      'API access'
+      'Everything in Pro +',
+      'Enterprise Market Domination with 5 customer segments',
+      'Unlimited ad creatives across all platforms including LinkedIn & TikTok',
+      'AI-Powered Marketing Intelligence with custom models',
+      'Dedicated senior marketing strategist',
+      'Weekly strategy calls with direct founder access'
     ],
+    detailedFeatures: {
+      domination: {
+        title: 'Enterprise Market Domination',
+        description: 'Complete competitive landscape control with brand authority campaigns',
+        items: [
+          '5 detailed customer segments with psychological profiling',
+          'Competitive landscape mapping and positioning strategy',
+          'Brand authority campaigns that establish market leadership',
+          'Industry-specific growth opportunity identification'
+        ]
+      },
+      creative: {
+        title: 'Unlimited Creative Domination',
+        description: 'Flood every platform with fresh, high-converting content daily',
+        items: [
+          'Unlimited ad creatives across all major platforms including LinkedIn & TikTok',
+          'Daily creative optimization and performance enhancement',
+          'Advanced audience research and custom targeting strategies',
+          'Cross-platform retargeting and lookalike audience scaling'
+        ]
+      },
+      intelligence: {
+        title: 'AI-Powered Marketing Intelligence',
+        description: 'Predictive modeling that optimizes campaigns before you even launch',
+        items: [
+          'Custom AI models trained on your business data',
+          'Predictive campaign performance modeling',
+          'Automated optimization based on real-time data',
+          'Executive-level reporting with actionable insights'
+        ]
+      },
+      support: {
+        title: 'Executive-Level Support',
+        description: 'Direct access to senior strategists and founder-level expertise',
+        items: [
+          'Dedicated senior marketing strategist assigned to your account',
+          'Weekly strategy calls with direct founder access',
+          'Custom business integrations and technical implementation'
+        ]
+      }
+    },
     limits: {
       campaigns: -1, // unlimited
       contacts: -1, // unlimited

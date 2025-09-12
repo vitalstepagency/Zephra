@@ -282,6 +282,39 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Security audit log table for tracking security events
+CREATE TABLE security_audit_log (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  event_type TEXT NOT NULL,
+  severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+  source_ip TEXT NOT NULL,
+  user_agent TEXT NOT NULL,
+  request_id TEXT NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  metadata JSONB DEFAULT '{}',
+  message TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for efficient querying of security events
+CREATE INDEX idx_security_audit_log_event_type ON security_audit_log(event_type);
+CREATE INDEX idx_security_audit_log_severity ON security_audit_log(severity);
+CREATE INDEX idx_security_audit_log_created_at ON security_audit_log(created_at);
+CREATE INDEX idx_security_audit_log_user_id ON security_audit_log(user_id);
+CREATE INDEX idx_security_audit_log_source_ip ON security_audit_log(source_ip);
+
+-- RLS policy for security audit log (admin access only)
+ALTER TABLE security_audit_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admin can view security audit logs" ON security_audit_log
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE users.id = auth.uid() 
+      AND users.subscription_tier = 'enterprise'
+    )
+  );
+
 -- Trigger to create user profile on signup
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
