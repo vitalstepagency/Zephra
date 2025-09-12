@@ -1,9 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import { Check, Star, Zap, Shield, Users, BarChart3 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
