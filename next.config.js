@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['postgres'],
-  },
+  serverExternalPackages: ['postgres'],
   // Prevent static generation of API routes during build
   output: 'standalone',
   images: {
