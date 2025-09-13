@@ -60,6 +60,7 @@ const nextConfig = {
       ...config.resolve.alias,
       '@/components/ui': require('path').resolve(__dirname, 'src/components/ui/index.ts'),
       '@/components/ui/toast': require('path').resolve(__dirname, 'src/components/ui/toast.tsx'),
+      '@/components/ui/toaster': require('path').resolve(__dirname, 'src/components/ui/toaster.tsx'),
       '@/hooks/use-toast': require('path').resolve(__dirname, 'src/hooks/use-toast.ts'),
       '@/lib/utils': require('path').resolve(__dirname, 'src/lib/utils.ts'),
       '@/lib/stripe/config': require('path').resolve(__dirname, 'src/lib/stripe/config.ts'),
