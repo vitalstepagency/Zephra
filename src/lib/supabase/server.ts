@@ -30,7 +30,17 @@ export const getSupabaseAdmin = () => {
     throw new Error('Missing Supabase environment variables')
   }
   
-  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
+  // Clean and validate the URL
+  const cleanUrl = supabaseUrl.replace(/["'`]/g, '').trim()
+  
+  // Validate URL format
+  try {
+    new URL(cleanUrl)
+  } catch (error) {
+    throw new Error(`Invalid Supabase URL format: ${cleanUrl}`)
+  }
+  
+  return createClient<Database>(cleanUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
@@ -42,12 +52,26 @@ export const getSupabaseAdmin = () => {
 export const supabaseAdmin = (() => {
   // Only create the client if environment variables are available
   if (supabaseUrl && supabaseServiceKey) {
-    return createClient<Database>(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
+    // Clean and validate the URL
+    const cleanUrl = supabaseUrl.replace(/["'`]/g, '').trim()
+    
+    try {
+      new URL(cleanUrl)
+      return createClient<Database>(cleanUrl, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    } catch (error) {
+      console.error('Invalid Supabase URL format:', cleanUrl)
+      // Return a proxy that throws an error when accessed
+      return new Proxy({} as any, {
+        get() {
+          throw new Error(`Invalid Supabase URL format: ${cleanUrl}`)
+        }
+      })
+    }
   }
   // Return a proxy that throws an error when accessed during build
   return new Proxy({} as any, {
