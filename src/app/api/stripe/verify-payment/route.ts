@@ -54,11 +54,12 @@ export async function GET(req: NextRequest) {
     
     let status = 'pending'
     let subscriptionStatus = null
+    let subscription = null
     
     if (checkoutSession.payment_status === 'paid' && checkoutSession.status === 'complete') {
       // Payment is complete, check subscription status
       if (checkoutSession.subscription) {
-        const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription as string)
+        subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription as string)
         subscriptionStatus = subscription.status
         
         if (subscription.status === 'active' || subscription.status === 'trialing') {
