@@ -124,19 +124,15 @@ function CheckoutContent() {
     
     try {
       // Create checkout session
-      const response = await fetch('/api/stripe/create-checkout-session', {
+      const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: formData.email.trim().toLowerCase(),
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
-          phone: formData.phone?.trim() || undefined,
-          company: formData.company?.trim() || undefined,
-          planId: selectedPlan.id,
-          priceId: selectedPlan.priceId // Use the price ID from the selected plan
+          priceId: selectedPlan.priceId,
+          successUrl: `${window.location.origin}/dashboard?success=true`,
+          cancelUrl: `${window.location.origin}/pricing?canceled=true`
         }),
       });
       
@@ -146,7 +142,7 @@ function CheckoutContent() {
         throw new Error(data.error || 'Failed to create checkout session');
       }
       
-      if (data.success && data.url) {
+      if (data.url) {
         // First create the user account
         const signupResponse = await fetch('/api/auth/signup', {
           method: 'POST',
@@ -156,12 +152,9 @@ function CheckoutContent() {
           body: JSON.stringify({
             email: formData.email.trim().toLowerCase(),
             password: formData.password,
-            firstName: formData.firstName.trim(),
-            lastName: formData.lastName.trim(),
+            name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
             phone: formData.phone?.trim(),
-            company: formData.company?.trim(),
-            planId: selectedPlan.id,
-            stripeCustomerId: data.customerId
+            company: formData.company?.trim()
           }),
         });
         
