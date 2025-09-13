@@ -7,7 +7,7 @@ import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitl
 import { Mail, ArrowRight, Sparkles, Shield, Zap, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { useToast } from '@/components/ui/use-toast'
+import { useToast } from '@/hooks/use-toast'
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
