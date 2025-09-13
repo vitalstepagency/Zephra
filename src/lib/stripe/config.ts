@@ -17,8 +17,12 @@ export const PRICING_PLANS = {
   starter: {
     name: 'Basic',
     description: 'Perfect for solo entrepreneurs ready to automate',
-    price: 149,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_STARTER!,
+    monthlyPrice: 197,
+    yearlyPrice: 1970,
+    priceIds: {
+      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_BASIC_MONTHLY!,
+      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_BASIC_YEARLY!
+    },
     features: [
       '90-Day Marketing Blueprint with step-by-step implementation guide',
       '25 high-converting ad variations with proven templates',
@@ -68,8 +72,12 @@ export const PRICING_PLANS = {
   pro: {
     name: 'Pro',
     description: 'Perfect for growing businesses that need results',
-    price: 297,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO!,
+    monthlyPrice: 297,
+    yearlyPrice: 2970,
+    priceIds: {
+      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY!,
+      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY!
+    },
     popular: true,
     features: [
       'Everything in Basic +',
@@ -120,8 +128,12 @@ export const PRICING_PLANS = {
   enterprise: {
     name: 'Elite',
     description: 'Perfect for established businesses ready to dominate',
-    price: 497,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE!,
+    monthlyPrice: 497,
+    yearlyPrice: 4970,
+    priceIds: {
+      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE_MONTHLY!,
+      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE_YEARLY!
+    },
     features: [
       'Everything in Pro +',
       'Enterprise Market Domination with 5 customer segments',

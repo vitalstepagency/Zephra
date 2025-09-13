@@ -248,10 +248,16 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   const priceId = subscription.items.data[0]?.price.id
   let tier: 'starter' | 'pro' | 'enterprise' = 'starter'
   
-  if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO) {
+  // Map price IDs to tiers (both monthly and yearly)
+  if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || 
+      priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY) {
     tier = 'pro'
-  } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ENTERPRISE) {
+  } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE_MONTHLY || 
+             priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE_YEARLY) {
     tier = 'enterprise'
+  } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_BASIC_MONTHLY || 
+             priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_BASIC_YEARLY) {
+    tier = 'starter'
   }
 
   // Map Stripe status to our database status
@@ -465,10 +471,15 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     
     // Determine subscription tier
     let tier: 'starter' | 'pro' | 'enterprise' = 'starter'
-    if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO) {
+    if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || 
+        priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY) {
       tier = 'pro'
-    } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ENTERPRISE) {
+    } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE_MONTHLY || 
+               priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE_YEARLY) {
       tier = 'enterprise'
+    } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_BASIC_MONTHLY || 
+               priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_BASIC_YEARLY) {
+      tier = 'starter'
     }
     
     // Calculate trial end date (14 days from now)

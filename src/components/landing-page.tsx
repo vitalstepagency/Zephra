@@ -8,6 +8,7 @@ import {
   BarChart3, Sparkles, Globe, MessageSquare, Mail, Smartphone,
   Eye, MousePointer, Layers, Gauge, ChevronDown, Plus, Minus
 } from 'lucide-react';
+import { PRICING_PLANS } from '@/lib/stripe/config';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
@@ -42,6 +43,7 @@ const textReveal = {
 
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [billingFrequency, setBillingFrequency] = useState<'monthly' | 'yearly'>('monthly');
 
   const scrollToPricing = () => {
     const pricingSection = document.getElementById('pricing');
@@ -636,11 +638,43 @@ export default function LandingPage() {
             </motion.h2>
 
             <motion.h3
-              className="text-3xl md:text-4xl font-bold text-slate-300 mb-16"
+              className="text-3xl md:text-4xl font-bold text-slate-300 mb-8"
               variants={textReveal}
             >
               Choose Your Marketing Automation Level
             </motion.h3>
+
+            {/* Billing Frequency Toggle */}
+            <motion.div
+              className="flex items-center justify-center mb-16"
+              variants={textReveal}
+            >
+              <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl p-2 border border-slate-700/30">
+                <button
+                  onClick={() => setBillingFrequency('monthly')}
+                  className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                    billingFrequency === 'monthly'
+                      ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg'
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingFrequency('yearly')}
+                  className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                    billingFrequency === 'yearly'
+                      ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg'
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  Yearly
+                  <span className="ml-2 text-xs bg-emerald-500 text-white px-2 py-1 rounded-full">
+                    Save 20%
+                  </span>
+                </button>
+              </div>
+            </motion.div>
 
             <div className="grid md:grid-cols-3 gap-8">
               {/* Basic Plan */}
@@ -649,33 +683,33 @@ export default function LandingPage() {
                 variants={fadeInUp}
                 whileHover={{ y: -5, scale: 1.02 }}
               >
-                <h4 className="text-2xl font-bold text-white mb-4">Basic - $149/month</h4>
+                <h4 className="text-2xl font-bold text-white mb-2">{PRICING_PLANS.starter.name}</h4>
+                <div className="mb-4">
+                  <span className="text-4xl font-black text-white">
+                    ${billingFrequency === 'monthly' ? PRICING_PLANS.starter.monthlyPrice : PRICING_PLANS.starter.yearlyPrice}
+                  </span>
+                  <span className="text-slate-400 ml-2">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
+                  {billingFrequency === 'yearly' && (
+                    <div className="text-sm text-emerald-400 mt-1">
+                      Save ${(PRICING_PLANS.starter.monthlyPrice * 12) - PRICING_PLANS.starter.yearlyPrice} per year
+                    </div>
+                  )}
+                </div>
+                <p className="text-slate-400 text-sm mb-6">{PRICING_PLANS.starter.description}</p>
                 <ul className="text-slate-300 space-y-3 mb-8">
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Campaign strategy and planning
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    25 ad copy variations per month
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Basic funnel creation
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Email sequence automation
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Chat support
-                  </li>
+                  {PRICING_PLANS.starter.features.map((feature, index) => (
+                    <li key={index} className="flex items-center">
+                      <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
+                      {feature}
+                    </li>
+                  ))}
                 </ul>
-                <p className="text-slate-400 text-sm mb-6">Perfect for: Solo entrepreneurs ready to automate</p>
-                <a href="/checkout?plan=starter" className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300 inline-block text-center">
-                   Get Started
-                 </a>
+                <a 
+                  href={`/checkout?plan=starter&frequency=${billingFrequency}`} 
+                  className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300 inline-block text-center"
+                >
+                  Start 7-Day Free Trial
+                </a>
               </motion.div>
 
               {/* Pro Plan */}
@@ -689,37 +723,33 @@ export default function LandingPage() {
                     ⭐ Most Popular
                   </span>
                 </div>
-                <h4 className="text-2xl font-bold text-white mb-4">Pro - $297/month</h4>
+                <h4 className="text-2xl font-bold text-white mb-2">{PRICING_PLANS.pro.name}</h4>
+                <div className="mb-4">
+                  <span className="text-4xl font-black text-white">
+                    ${billingFrequency === 'monthly' ? PRICING_PLANS.pro.monthlyPrice : PRICING_PLANS.pro.yearlyPrice}
+                  </span>
+                  <span className="text-slate-400 ml-2">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
+                  {billingFrequency === 'yearly' && (
+                    <div className="text-sm text-emerald-400 mt-1">
+                      Save ${(PRICING_PLANS.pro.monthlyPrice * 12) - PRICING_PLANS.pro.yearlyPrice} per year
+                    </div>
+                  )}
+                </div>
+                <p className="text-slate-400 text-sm mb-6">{PRICING_PLANS.pro.description}</p>
                 <ul className="text-slate-300 space-y-3 mb-8">
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Everything in Starter
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    100 ad copy variations per month
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Advanced funnel creation
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Multi-channel automation workflows
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Weekly optimization reports
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Priority support + monthly strategy calls
-                  </li>
+                  {PRICING_PLANS.pro.features.map((feature, index) => (
+                    <li key={index} className="flex items-center">
+                      <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
+                      {feature}
+                    </li>
+                  ))}
                 </ul>
-                <p className="text-slate-400 text-sm mb-6">Perfect for: Growing businesses that need results</p>
-                <a href="/checkout?plan=professional" className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl font-medium hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 inline-block text-center">
-                   Get Started
-                 </a>
+                <a 
+                  href={`/checkout?plan=pro&frequency=${billingFrequency}`} 
+                  className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl font-medium hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 inline-block text-center"
+                >
+                  Start 7-Day Free Trial
+                </a>
               </motion.div>
 
               {/* Elite Plan */}
@@ -728,39 +758,61 @@ export default function LandingPage() {
                 variants={fadeInUp}
                 whileHover={{ y: -5, scale: 1.02 }}
               >
-                <h4 className="text-2xl font-bold text-white mb-4">Elite - $497/month</h4>
+                <h4 className="text-2xl font-bold text-white mb-2">{PRICING_PLANS.enterprise.name}</h4>
+                <div className="mb-4">
+                  <span className="text-4xl font-black text-white">
+                    ${billingFrequency === 'monthly' ? PRICING_PLANS.enterprise.monthlyPrice : PRICING_PLANS.enterprise.yearlyPrice}
+                  </span>
+                  <span className="text-slate-400 ml-2">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
+                  {billingFrequency === 'yearly' && (
+                    <div className="text-sm text-emerald-400 mt-1">
+                      Save ${(PRICING_PLANS.enterprise.monthlyPrice * 12) - PRICING_PLANS.enterprise.yearlyPrice} per year
+                    </div>
+                  )}
+                </div>
+                <p className="text-slate-400 text-sm mb-6">{PRICING_PLANS.enterprise.description}</p>
                 <ul className="text-slate-300 space-y-3 mb-8">
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Everything in Professional
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Unlimited ad copy variations
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Multi-channel campaign orchestration
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Dedicated success manager
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Quarterly business planning sessions
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                    Custom integrations and workflows
-                  </li>
+                  {PRICING_PLANS.enterprise.features.map((feature, index) => (
+                    <li key={index} className="flex items-center">
+                      <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
+                      {feature}
+                    </li>
+                  ))}
                 </ul>
-                <p className="text-slate-400 text-sm mb-6">Perfect for: Established businesses ready to dominate</p>
-                <a href="/checkout?plan=elite" className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300 inline-block text-center">
-                   Get Started
-                 </a>
+                <a 
+                  href={`/checkout?plan=elite&frequency=${billingFrequency}`} 
+                  className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300 inline-block text-center"
+                >
+                  Start 7-Day Free Trial
+                </a>
               </motion.div>
             </div>
+
+            {/* Additional Info */}
+            <motion.div
+              className="text-center mt-12"
+              variants={textReveal}
+            >
+              <p className="text-slate-400 mb-4">All plans include:</p>
+              <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-300">
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  7-day free trial
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  No setup fees
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  Cancel anytime
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  24/7 AI monitoring
+                </span>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>

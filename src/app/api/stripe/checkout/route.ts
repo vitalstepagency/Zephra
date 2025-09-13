@@ -14,7 +14,8 @@ export const runtime = 'nodejs'
 const checkoutSchema = z.object({
   priceId: z.string().min(1, 'Price ID is required'),
   successUrl: z.string().url('Valid success URL required').optional(),
-  cancelUrl: z.string().url('Valid cancel URL required').optional()
+  cancelUrl: z.string().url('Valid cancel URL required').optional(),
+  trialDays: z.number().min(0).max(30).default(7)
 })
 
 export const POST = withSecurity(
@@ -32,9 +33,12 @@ export const POST = withSecurity(
       console.log('Checkout API received:', {
         body,
         envVars: {
-          starter: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_STARTER,
-          pro: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO,
-          elite: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE
+          basicMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_BASIC_MONTHLY,
+          basicYearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_BASIC_YEARLY,
+          proMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY,
+          proYearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY,
+          eliteMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE_MONTHLY,
+          eliteYearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE_YEARLY
         }
       })
       
@@ -49,7 +53,7 @@ export const POST = withSecurity(
         )
       }
       
-      const { priceId, successUrl, cancelUrl } = validationResult
+      const { priceId, successUrl, cancelUrl, trialDays } = validationResult
       
       // Log payment attempt
       logSecurityEvent({
@@ -78,7 +82,7 @@ export const POST = withSecurity(
         })
       }
 
-      // Create checkout session
+      // Create checkout session with trial
       const checkoutSession = await stripe.checkout.sessions.create({
         customer: customer!.id,
         payment_method_types: ['card'],
@@ -89,6 +93,12 @@ export const POST = withSecurity(
           },
         ],
         mode: 'subscription',
+        subscription_data: {
+          trial_period_days: trialDays,
+          metadata: {
+            userId: userId
+          }
+        },
         success_url: successUrl || `${req.nextUrl.origin}/onboarding?success=true&plan=${priceId}`,
         cancel_url: cancelUrl || `${req.nextUrl.origin}/?canceled=true`,
         metadata: {
