@@ -169,6 +169,8 @@ async function signupHandler(request: NextRequest) {
     }
 
     // Execute signup with transaction rollback capability
+    let createdUserId: string | null = null
+    
     const result = await TransactionManager.executeWithRollback(
       requestId,
       async () => {
@@ -197,13 +199,16 @@ async function signupHandler(request: NextRequest) {
           })
         }
 
+        // Store the user ID for potential rollback
+        createdUserId = authUser?.user?.id || null
+
         return { authUser, fullName }
       },
       async () => {
          // Rollback: Delete created auth user if profile creation fails
          try {
-           if (result?.authUser?.user?.id) {
-             await supabaseAdmin.auth.admin.deleteUser(result.authUser.user.id)
+           if (createdUserId) {
+             await supabaseAdmin.auth.admin.deleteUser(createdUserId)
            }
          } catch (rollbackError) {
            console.error('Failed to rollback auth user creation:', rollbackError)

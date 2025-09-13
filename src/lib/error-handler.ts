@@ -147,15 +147,18 @@ export class ErrorLogger {
     try {
       const batch = this.errorQueue.splice(0, 10) // Process 10 at a time
 
-      // Insert errors into database
-      const { error } = await supabaseAdmin
+      const { error: insertError } = await supabaseAdmin
         .from('error_logs')
         .insert(batch)
-
-      if (error) {
-        console.error('Failed to insert error logs:', error)
-        // Re-add to queue for retry
-        this.errorQueue.unshift(...batch)
+      
+      if (insertError) {
+        console.error('Failed to insert error logs:', insertError)
+        // Re-add failed logs to queue for retry
+        this.errorQueue.push(...batch)
+        // Also log to console as fallback
+        batch.forEach(error => {
+          console.error('Error Log (DB Insert Failed):', error)
+        })
       }
     } catch (error) {
       console.error('Error processing error queue:', error)
