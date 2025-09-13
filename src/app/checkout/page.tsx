@@ -2,10 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { CheckCircle, Shield, Lock, CreditCard, User, Mail, Phone, Building, MapPin, Calendar, ArrowRight, Star, Eye, EyeOff } from 'lucide-react';
-import { signIn } from 'next-auth/react';
+import { createSupabaseClient, getCurrentUser } from '@/lib/supabase/client';
 import { PRICING_PLANS } from '@/lib/stripe/config';
 
 interface PricingPlan {
@@ -47,7 +46,22 @@ const staggerContainer = {
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
-  const { data: session, status } = useSession();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.error('Error checking user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkUser();
+  }, []);
   const planParam = searchParams.get('plan') || 'professional';
   const billingParam = searchParams.get('billing') || 'monthly';
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan>(() => {
@@ -144,19 +158,20 @@ function CheckoutContent() {
     setIsLoading(true);
     
     try {
-      let signInResult;
       
       if (authMode === 'signin') {
-        // Sign in existing user
-        signInResult = await signIn('credentials', {
+        // Sign in existing user with Supabase
+        const supabase = createSupabaseClient();
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email.trim().toLowerCase(),
-          password: formData.password,
-          redirect: false
+          password: formData.password
         });
         
-        if (signInResult?.error) {
+        if (error) {
           throw new Error('Invalid email or password. Please check your credentials.');
         }
+        
+        setUser(data.user);
       } else {
         // Sign up new user
         const signupResponse = await fetch('/api/auth/signup', {
@@ -185,16 +200,18 @@ function CheckoutContent() {
           }
         }
         
-        // Account created successfully, now sign in
-        signInResult = await signIn('credentials', {
+        // Account created successfully, now sign in with Supabase
+        const supabase = createSupabaseClient();
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email.trim().toLowerCase(),
-          password: formData.password,
-          redirect: false
+          password: formData.password
         });
 
-        if (signInResult?.error) {
+        if (error) {
           throw new Error('Account created but failed to sign in. Please try again.');
         }
+        
+        setUser(data.user);
       }
 
       // Validate priceId before sending
