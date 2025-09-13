@@ -89,7 +89,8 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
         })
         
         if (result?.error) {
-          throw new Error('Invalid email or password')
+          // Display the specific error message from the credentials provider
+          throw new Error(result.error)
         }
         
         setStep('success')

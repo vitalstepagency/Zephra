@@ -28,7 +28,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          throw new Error('Email and password are required')
         }
 
         try {
@@ -40,8 +40,23 @@ export const authOptions: NextAuthOptions = {
             password: credentials.password
           })
 
-          if (authError || !authData.user) {
-            return null
+          if (authError) {
+            // Handle specific error cases
+            if (authError.message?.toLowerCase().includes('invalid login credentials')) {
+              throw new Error('Invalid email or password')
+            }
+            if (authError.message?.toLowerCase().includes('email not confirmed')) {
+              throw new Error('Please check your email and click the confirmation link')
+            }
+            if (authError.message?.toLowerCase().includes('too many requests')) {
+              throw new Error('Too many login attempts. Please try again later')
+            }
+            // Generic fallback
+            throw new Error(authError.message || 'Authentication failed')
+          }
+
+          if (!authData.user) {
+            throw new Error('Authentication failed')
           }
 
           // Get user profile
@@ -59,7 +74,8 @@ export const authOptions: NextAuthOptions = {
           }
         } catch (error) {
           console.error('Auth error:', error)
-          return null
+          // Re-throw the error so NextAuth can handle it properly
+          throw error
         }
       }
     })
