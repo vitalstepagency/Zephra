@@ -66,59 +66,57 @@ async function webhookHandler(req: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
         
-        if (session.mode === 'subscription') {
-          // Handle subscription creation
-          const customerId = session.customer as string
-          const subscriptionId = session.subscription as string
+        if (session.mode === 'subscription' && session.subscription) {
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+          const userId = session.metadata?.userId
           
-          // Get customer details
-          const customer = await stripe.customers.retrieve(customerId)
-          
-          if (customer.deleted) {
-            throw new Error('Customer was deleted')
-          }
-          
-          // Update user subscription in database
-          if (!customer.metadata?.userId) {
-            throw new Error('No user ID in customer metadata')
-          }
-          
-          const { error } = await supabase
-            .from('users')
-            .update({
-              stripe_customer_id: customerId,
-              stripe_subscription_id: subscriptionId,
-              subscription_status: 'active',
-              payment_confirmed: true,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', customer.metadata.userId)
+          if (userId) {
+            // Update user's subscription information using session metadata
+            const { error } = await supabase
+              .from('users')
+              .update({
+                stripe_customer_id: session.customer as string,
+                stripe_subscription_id: subscription.id,
+                subscription_status: subscription.status as 'active' | 'canceled' | 'past_due' | 'trialing',
+                plan_id: subscription.items.data[0]?.price.id,
+                trial_ends_at: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+                payment_confirmed: true,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', userId)
             
-          if (error) {
-            console.error('Database update error:', error)
-            throw error
+            if (error) {
+              console.error('Error updating user subscription:', error)
+              throw error
+            } else {
+              console.log(`Subscription activated for user ${userId}:`, subscription.id)
+            }
+          } else {
+            // Fallback: try to find user by customer email
+            const customer = await stripe.customers.retrieve(session.customer as string)
+            if (!customer.deleted && customer.email) {
+              const { data: userData } = await supabase
+                .from('users')
+                .select('id')
+                .eq('email', customer.email)
+                .single()
+              
+              if (userData) {
+                await supabase
+                  .from('users')
+                  .update({
+                    stripe_customer_id: session.customer as string,
+                    stripe_subscription_id: subscription.id,
+                    subscription_status: subscription.status as 'active' | 'canceled' | 'past_due' | 'trialing',
+                    plan_id: subscription.items.data[0]?.price.id,
+                    trial_ends_at: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+                    payment_confirmed: true,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', userData.id)
+              }
+            }
           }
-          
-          // Check if user exists and update their subscription status
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id, subscription_status')
-            .eq('email', customer.email || '')
-            .single()
-          
-          if (userData) {
-            // Update user's subscription status to active
-             await supabase
-               .from('users')
-               .update({ 
-                 subscription_status: 'active',
-                 stripe_customer_id: customer.id || null,
-                 updated_at: new Date().toISOString()
-               })
-               .eq('id', userData.id)
-          }
-          
-          console.log('Payment confirmed for user:', customer.metadata?.userId || 'unknown')
         }
         break
       }

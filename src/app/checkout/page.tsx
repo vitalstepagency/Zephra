@@ -174,7 +174,7 @@ function CheckoutContent() {
         setUser(data.user);
       } else {
         // Sign up new user
-        const signupResponse = await fetch('/api/auth/signup', {
+        const signupResponse = await fetch('/api/auth/simple-signup', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -182,12 +182,7 @@ function CheckoutContent() {
           body: JSON.stringify({
             email: formData.email.trim().toLowerCase(),
             password: formData.password,
-            firstName: formData.firstName.trim(),
-            lastName: formData.lastName.trim(),
-            phone: formData.phone?.trim(),
-            company: formData.company?.trim(),
-            planId: selectedPlan.id,
-            stripeCustomerId: 'temp_customer_id' // Will be updated after Stripe checkout
+            name: `${formData.firstName.trim()} ${formData.lastName.trim()}`
           }),
         });
         
@@ -235,7 +230,7 @@ function CheckoutContent() {
         },
         body: JSON.stringify({
           priceId: currentPriceId,
-          successUrl: `${window.location.origin}/dashboard?success=true`,
+          successUrl: `${window.location.origin}/payment-verification?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/pricing?canceled=true`
         }),
       });
