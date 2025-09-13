@@ -13,7 +13,7 @@ import {
   generateCSRFToken,
   validateCSRFToken
 } from '../../../../lib/validation'
-import { withErrorHandler, ErrorFactories, TransactionManager, ErrorLogger } from '../../../../lib/error-handler'
+import { withErrorHandler, ErrorFactories, TransactionManager, ErrorLogger, AppError, ErrorType, ErrorSeverity } from '../../../../lib/error-handler'
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic'
@@ -207,17 +207,23 @@ async function signupHandler(request: NextRequest) {
               fullError: JSON.stringify(authError)
             })
             
-            // If user already exists in Auth, throw a specific error
+            // If user already exists in Auth, return early with 409
             // Check for various ways Supabase might indicate email exists
             if (authError.code === 'email_exists' || 
                 authError.code === 'user_already_exists' ||
                 authError.message?.toLowerCase().includes('email') && authError.message?.toLowerCase().includes('exist') ||
                 authError.message?.toLowerCase().includes('already') && authError.message?.toLowerCase().includes('register') ||
                 authError.status === 422) {
-              console.log('🔍 DETECTED EMAIL EXISTS ERROR - throwing UserExistsError')
-              const existingUserError = new Error('USER_EXISTS_IN_AUTH')
-              existingUserError.name = 'UserExistsError'
-              throw existingUserError
+              console.log('🔍 DETECTED EMAIL EXISTS ERROR - returning 409 response')
+              // Return the 409 response directly - this will bypass withErrorHandler
+               throw new AppError(
+                 'An account with this email already exists. Please sign in instead.',
+                 ErrorType.AUTHENTICATION,
+                 ErrorSeverity.MEDIUM,
+                 409,
+                 true,
+                 { email: sanitizedData.email, originalError: authError }
+               )
             }
             
             throw ErrorFactories.authentication('Failed to create user account', {
@@ -243,14 +249,7 @@ async function signupHandler(request: NextRequest) {
          }
       )
     } catch (error: any) {
-      // Handle the specific case where user exists in Auth
-      if (error.name === 'UserExistsError') {
-        return NextResponse.json(
-          { error: 'An account with this email already exists. Please sign in instead.' },
-          { status: 409 }
-        )
-      }
-      // Re-throw other errors
+      // Re-throw - let withErrorHandler handle it
       throw error
     }
 
