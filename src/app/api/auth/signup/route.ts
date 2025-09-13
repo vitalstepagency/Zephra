@@ -174,50 +174,70 @@ async function signupHandler(request: NextRequest) {
     // Execute signup with transaction rollback capability
     let createdUserId: string | null = null
     
-    const result = await TransactionManager.executeWithRollback(
-      requestId,
-      async () => {
-        const fullName = `${sanitizedData.firstName} ${sanitizedData.lastName}`
+    let result
+    try {
+      result = await TransactionManager.executeWithRollback(
+        requestId,
+        async () => {
+          const fullName = `${sanitizedData.firstName} ${sanitizedData.lastName}`
 
-        // Create user in Supabase Auth
-        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email: sanitizedData.email,
-          password: sanitizedData.password,
-          email_confirm: true,
-          user_metadata: {
-            firstName: sanitizedData.firstName,
-            lastName: sanitizedData.lastName,
-            full_name: fullName,
-            phone: sanitizedData.phone,
-            company: sanitizedData.company,
-            planId: sanitizedData.planId,
-            stripeCustomerId: sanitizedData.stripeCustomerId
-          }
-        })
-
-        if (authError) {
-          throw ErrorFactories.authentication('Failed to create user account', {
-            originalError: authError,
-            email: sanitizedData.email
+          // Create user in Supabase Auth
+          const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+            email: sanitizedData.email,
+            password: sanitizedData.password,
+            email_confirm: true,
+            user_metadata: {
+              firstName: sanitizedData.firstName,
+              lastName: sanitizedData.lastName,
+              full_name: fullName,
+              phone: sanitizedData.phone,
+              company: sanitizedData.company,
+              planId: sanitizedData.planId,
+              stripeCustomerId: sanitizedData.stripeCustomerId
+            }
           })
-        }
 
-        // Store the user ID for potential rollback
-        createdUserId = authUser?.user?.id || null
+          if (authError) {
+            // If user already exists in Auth, throw a specific error
+            if (authError.message?.includes('email_exists') || authError.message?.includes('User already registered')) {
+              const existingUserError = new Error('USER_EXISTS_IN_AUTH')
+              existingUserError.name = 'UserExistsError'
+              throw existingUserError
+            }
+            
+            throw ErrorFactories.authentication('Failed to create user account', {
+              originalError: authError,
+              email: sanitizedData.email
+            })
+          }
 
-        return { authUser, fullName }
-      },
-      async () => {
-         // Rollback: Delete created auth user if profile creation fails
-         try {
-           if (createdUserId) {
-             await supabaseAdmin.auth.admin.deleteUser(createdUserId)
+          // Store the user ID for potential rollback
+          createdUserId = authUser?.user?.id || null
+
+          return { authUser, fullName }
+        },
+        async () => {
+           // Rollback: Delete created auth user if profile creation fails
+           try {
+             if (createdUserId) {
+               await supabaseAdmin.auth.admin.deleteUser(createdUserId)
+             }
+           } catch (rollbackError) {
+             console.error('Failed to rollback auth user creation:', rollbackError)
            }
-         } catch (rollbackError) {
-           console.error('Failed to rollback auth user creation:', rollbackError)
          }
-       }
-    )
+      )
+    } catch (error: any) {
+      // Handle the specific case where user exists in Auth
+      if (error.name === 'UserExistsError') {
+        return NextResponse.json(
+          { error: 'An account with this email already exists. Please sign in instead.' },
+          { status: 409 }
+        )
+      }
+      // Re-throw other errors
+      throw error
+    }
 
     const { authUser, fullName } = result
 
