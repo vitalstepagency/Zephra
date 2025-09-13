@@ -77,62 +77,33 @@ export async function POST(request: NextRequest) {
     
     console.log('Auth user created successfully:', authUser.user.id)
 
-    // Check if user profile already exists
-    console.log('Checking for existing profile for user:', authUser.user.id)
-    const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('id', authUser.user.id)
-      .maybeSingle()
-
-    if (profileCheckError) {
-      console.error('Error checking existing profile:', profileCheckError)
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
-      return NextResponse.json(
-        { error: 'Database error during profile check', details: profileCheckError.message },
-        { status: 500 }
-      )
-    }
-
-    if (existingProfile) {
-      console.log('Profile already exists for user:', existingProfile.id)
-      return NextResponse.json(
-        { error: 'User profile already exists' },
-        { status: 400 }
-      )
-    }
-
-    // Create user profile with 14-day trial
-    console.log('Creating user profile with trial')
+    // Update user profile with trial info (profile is auto-created by trigger)
+    console.log('Updating user profile with trial info for user:', authUser.user.id)
     const trialEndDate = new Date()
     trialEndDate.setDate(trialEndDate.getDate() + 14)
 
+    // Wait a moment for the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 100))
+
     const { error: profileError } = await supabaseAdmin
       .from('users')
-      .insert({
-        id: authUser.user.id,
-        email,
-        full_name: name,
-        avatar_url: null,
+      .update({
         subscription_tier: 'starter',
         subscription_status: 'trial',
         trial_ends_at: trialEndDate.toISOString()
       })
+      .eq('id', authUser.user.id)
 
     if (profileError) {
-      // Clean up auth user if profile creation fails
-      console.error('Profile creation failed, cleaning up auth user:', {
+      console.error('Profile update failed:', {
         profileError,
         authUserId: authUser.user.id
       })
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
-      return NextResponse.json(
-        { error: 'Failed to create user profile', details: profileError.message },
-        { status: 500 }
-      )
+      // Don't delete the auth user since the profile exists, just log the error
+      console.warn('Profile update failed but user account was created successfully')
+    } else {
+      console.log('User profile updated successfully for:', authUser.user.id)
     }
-    
-    console.log('User profile created successfully for:', authUser.user.id)
 
     return NextResponse.json(
       { 
