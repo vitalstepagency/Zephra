@@ -7,14 +7,14 @@ import { authOptions } from '@/lib/auth/config'
 export async function GET(req: NextRequest) {
   try {
     // Get Supabase client and check authentication
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
+    const authSession = await getServerSession(authOptions)
+    if (!authSession?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
-    const user = { id: session.user.id, email: session.user.email }
+    const user = { id: authSession.user.id, email: authSession.user.email }
     
     const { searchParams } = new URL(req.url)
     const sessionId = searchParams.get('session_id')
@@ -31,9 +31,9 @@ export async function GET(req: NextRequest) {
     })
     
     // Retrieve the checkout session
-    const session = await stripe.checkout.sessions.retrieve(sessionId)
+    const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId)
     
-    if (!session) {
+    if (!checkoutSession) {
       return NextResponse.json(
         { error: 'Session not found' },
         { status: 404 }
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     }
     
     // Check if the session belongs to the current user
-    if (session.metadata?.userId !== user.id) {
+    if (checkoutSession.metadata?.userId !== user.id) {
       return NextResponse.json(
         { error: 'Unauthorized access to session' },
         { status: 403 }
@@ -51,10 +51,10 @@ export async function GET(req: NextRequest) {
     let status = 'pending'
     let subscriptionStatus = null
     
-    if (session.payment_status === 'paid' && session.status === 'complete') {
+    if (checkoutSession.payment_status === 'paid' && checkoutSession.status === 'complete') {
       // Payment is complete, check subscription status
-      if (session.subscription) {
-        const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+      if (checkoutSession.subscription) {
+        const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription as string)
         subscriptionStatus = subscription.status
         
         if (subscription.status === 'active' || subscription.status === 'trialing') {
@@ -64,8 +64,8 @@ export async function GET(req: NextRequest) {
           const { error: updateError } = await supabaseAdmin
             .from('users')
             .update({
-              stripe_customer_id: session.customer as string,
-              stripe_subscription_id: session.subscription as string,
+              stripe_customer_id: checkoutSession.customer as string,
+              stripe_subscription_id: checkoutSession.subscription as string,
               subscription_status: subscription.status,
               plan_id: subscription.items.data[0]?.price.id,
               updated_at: new Date().toISOString()
@@ -77,16 +77,20 @@ export async function GET(req: NextRequest) {
           }
         }
       }
-    } else if (session.payment_status === 'unpaid' || session.status === 'expired') {
+    } else if (
+      checkoutSession.payment_status === 'unpaid' ||
+      checkoutSession.status === 'expired' ||
+      checkoutSession.status === 'canceled'
+    ) {
       status = 'failed'
     }
     
     return NextResponse.json({
       status,
-      payment_status: session.payment_status,
-      session_status: session.status,
+      payment_status: checkoutSession.payment_status,
+      session_status: checkoutSession.status,
       subscription_status: subscriptionStatus,
-      customer_email: session.customer_details?.email
+      customer_email: checkoutSession.customer_details?.email
     })
     
   } catch (error) {
