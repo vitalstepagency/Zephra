@@ -1,16 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createSupabaseClient } from '@/lib/supabase/client'
-import { CheckCircle, XCircle, Loader2, CreditCard, Clock } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, CreditCard, Clock, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 type PaymentStatus = 'pending' | 'success' | 'failed' | 'timeout'
 
-export default function PaymentVerificationPage() {
+function PaymentVerificationContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<PaymentStatus>('pending')
@@ -223,5 +223,20 @@ export default function PaymentVerificationPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function PaymentVerificationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="flex items-center space-x-2 text-white">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    }>
+      <PaymentVerificationContent />
+    </Suspense>
   )
 }
