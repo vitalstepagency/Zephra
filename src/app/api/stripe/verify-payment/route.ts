@@ -79,8 +79,7 @@ export async function GET(req: NextRequest) {
       }
     } else if (
       checkoutSession.payment_status === 'unpaid' ||
-      checkoutSession.status === 'expired' ||
-      checkoutSession.status === 'canceled'
+      checkoutSession.status === 'expired'
     ) {
       status = 'failed'
     }
