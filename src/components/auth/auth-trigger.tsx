@@ -1,9 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { AuthModal } from './auth-modal'
 import { Button } from '../ui/button'
 import { User, LogOut } from 'lucide-react'
 
@@ -17,7 +15,6 @@ interface AuthTriggerProps {
 }
 
 export function AuthTrigger({ variant = 'default', size = 'default', className, plan, frequency, redirectToCheckout = false }: AuthTriggerProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const { data: session, status } = useSession()
   const router = useRouter()
 
@@ -72,30 +69,23 @@ export function AuthTrigger({ variant = 'default', size = 'default', className, 
   }
 
   return (
-    <>
-      <Button
-        variant={variant}
-        size={size}
-        className={className}
-        onClick={() => setIsModalOpen(true)}
-      >
-        Get Started Free
-      </Button>
-      
-      <AuthModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        defaultMode="signup"
-        redirectTo={redirectToCheckout ? "/checkout" : undefined}
-        plan={plan}
-        frequency={frequency}
-      />
-    </>
+    <Button
+      variant={variant}
+      size={size}
+      className={className}
+      onClick={() => {
+        const checkoutUrl = plan && frequency 
+          ? `/checkout?plan=${plan}&frequency=${frequency}`
+          : '/checkout'
+        router.push(checkoutUrl)
+      }}
+    >
+      Get Started Free
+    </Button>
   )
 }
 
 export function SignInTrigger({ variant = 'outline', size = 'default', className }: AuthTriggerProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const { data: session, status } = useSession()
   const router = useRouter()
 
@@ -122,21 +112,13 @@ export function SignInTrigger({ variant = 'outline', size = 'default', className
   }
 
   return (
-    <>
-      <Button
-        variant={variant}
-        size={size}
-        className={className}
-        onClick={() => setIsModalOpen(true)}
-      >
-        Sign In
-      </Button>
-      
-      <AuthModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        defaultMode="signin"
-      />
-    </>
+    <Button
+      variant={variant}
+      size={size}
+      className={className}
+      onClick={() => router.push('/checkout')}
+    >
+      Sign In
+    </Button>
   )
 }

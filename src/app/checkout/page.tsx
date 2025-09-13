@@ -2,8 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Shield, Lock, CreditCard, User, Mail, Phone, Building, MapPin, Calendar, ArrowRight, Star } from 'lucide-react';
+import { CheckCircle, Shield, Lock, CreditCard, User, Mail, Phone, Building, MapPin, Calendar, ArrowRight, Star, Eye, EyeOff } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import { PRICING_PLANS } from '@/lib/stripe/config';
 
@@ -46,6 +47,7 @@ const staggerContainer = {
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
   const planParam = searchParams.get('plan') || 'professional';
   const billingParam = searchParams.get('billing') || 'monthly';
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan>(() => {
@@ -69,6 +71,9 @@ function CheckoutContent() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Helper functions for pricing
   const getCurrentPrice = () => billingFrequency === 'monthly' ? selectedPlan.monthlyPrice : selectedPlan.yearlyPrice;
@@ -85,7 +90,7 @@ function CheckoutContent() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    // Email validation
+    // Email validation (required for both modes)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email) {
       newErrors.email = 'Email is required';
@@ -93,32 +98,35 @@ function CheckoutContent() {
       newErrors.email = 'Please enter a valid email address';
     }
     
-    // Name validation
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
-    }
-    
-    // Password validation
+    // Password validation (required for both modes)
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
+    } else if (authMode === 'signup' && formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+    } else if (authMode === 'signup' && !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
       newErrors.password = 'Password must contain uppercase, lowercase, and number';
     }
     
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-    
-    // Phone validation (optional but if provided, must be valid)
-    if (formData.phone) {
-      const phoneRegex = /^[\+]?[1-9][\d\s\-\(\)]{7,15}$/;
-      if (!phoneRegex.test(formData.phone.replace(/[\s\-\(\)]/g, ''))) {
-        newErrors.phone = 'Please enter a valid phone number';
+    // Name validation (only required for signup)
+    if (authMode === 'signup') {
+      if (!formData.firstName.trim()) {
+        newErrors.firstName = 'First name is required';
+      }
+      if (!formData.lastName.trim()) {
+        newErrors.lastName = 'Last name is required';
+      }
+      
+      // Confirm password validation (only for signup)
+      if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
+      
+      // Phone validation (optional but if provided, must be valid)
+      if (formData.phone) {
+        const phoneRegex = /^[\+]?[1-9][\d\s\-\(\)]{7,15}$/;
+        if (!phoneRegex.test(formData.phone.replace(/[\s\-\(\)]/g, ''))) {
+          newErrors.phone = 'Please enter a valid phone number';
+        }
       }
     }
     
@@ -136,15 +144,21 @@ function CheckoutContent() {
     setIsLoading(true);
     
     try {
-      // First try to sign in existing user
-      let signInResult = await signIn('credentials', {
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-        redirect: false
-      });
-
-      // If sign in fails, try to create new account
-      if (signInResult?.error) {
+      let signInResult;
+      
+      if (authMode === 'signin') {
+        // Sign in existing user
+        signInResult = await signIn('credentials', {
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+          redirect: false
+        });
+        
+        if (signInResult?.error) {
+          throw new Error('Invalid email or password. Please check your credentials.');
+        }
+      } else {
+        // Sign up new user
         const signupResponse = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: {
@@ -164,31 +178,22 @@ function CheckoutContent() {
         
         if (!signupResponse.ok) {
           const signupError = await signupResponse.json();
-          // If user already exists, try signing in again
           if (signupError.error?.includes('already exists')) {
-            signInResult = await signIn('credentials', {
-              email: formData.email.trim().toLowerCase(),
-              password: formData.password,
-              redirect: false
-            });
-            
-            if (signInResult?.error) {
-              throw new Error('Account exists but password is incorrect. Please check your password or use a different email.');
-            }
+            throw new Error('An account with this email already exists. Please sign in instead.');
           } else {
             throw new Error(signupError.error || 'Failed to create account');
           }
-        } else {
-          // Account created successfully, now sign in
-          signInResult = await signIn('credentials', {
-            email: formData.email.trim().toLowerCase(),
-            password: formData.password,
-            redirect: false
-          });
+        }
+        
+        // Account created successfully, now sign in
+        signInResult = await signIn('credentials', {
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+          redirect: false
+        });
 
-          if (signInResult?.error) {
-            throw new Error('Account created but failed to sign in. Please try again.');
-          }
+        if (signInResult?.error) {
+          throw new Error('Account created but failed to sign in. Please try again.');
         }
       }
 
@@ -476,15 +481,45 @@ function CheckoutContent() {
             className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-700/30 p-8"
           >
             <form onSubmit={handleSecureCheckout} className="space-y-8">
+              {/* Authentication Mode Toggle */}
+              <div className="space-y-4">
+                <div className="flex bg-slate-700/50 rounded-xl p-1">
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('signup')}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                      authMode === 'signup'
+                        ? 'bg-indigo-600 text-white shadow-lg'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    Create Account
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('signin')}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                      authMode === 'signin'
+                        ? 'bg-indigo-600 text-white shadow-lg'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </div>
+
               {/* Error Display */}
               {errors.general && (
                 <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
                   <p className="text-red-300 text-sm">{errors.general}</p>
                 </div>
               )}
+              
               {/* Personal Information */}
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-white mb-4">Personal Information</h3>
+              {authMode === 'signup' && (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-white mb-4">Personal Information</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">First Name</label>
@@ -554,42 +589,81 @@ function CheckoutContent() {
                     />
                   </div>
                 </div>
-              </div>
+                </div>
+              )}
 
               {/* Account Information */}
               <div className="space-y-4">
-                <h3 className="text-xl font-bold text-white mb-4">Account Security</h3>
+                <h3 className="text-xl font-bold text-white mb-4">{authMode === 'signin' ? 'Sign In' : 'Account Security'}</h3>
+                
+                {/* Email field for sign-in mode */}
+                {authMode === 'signin' && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      className={`w-full px-3 py-3 bg-transparent border-2 rounded-xl text-white placeholder-slate-400 focus:ring-0 focus:outline-none transition-all text-sm ${
+                        errors.email ? 'border-red-500 focus:border-red-400' : 'border-slate-600 focus:border-indigo-500'
+                      }`}
+                      placeholder="john@company.com"
+                      required
+                    />
+                    {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
+                  </div>
+                )}
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
-                    <input
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange('password', e.target.value)}
-                      className={`w-full px-3 py-3 bg-transparent border-2 rounded-xl text-white placeholder-slate-400 focus:ring-0 focus:outline-none transition-all text-sm ${
-                        errors.password ? 'border-red-500 focus:border-red-400' : 'border-slate-600 focus:border-emerald-500'
-                      }`}
-                      placeholder="Create a strong password (8+ characters)"
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.password}
+                        onChange={(e) => handleInputChange('password', e.target.value)}
+                        className={`w-full px-3 py-3 pr-10 bg-transparent border-2 rounded-xl text-white placeholder-slate-400 focus:ring-0 focus:outline-none transition-all text-sm ${
+                          errors.password ? 'border-red-500 focus:border-red-400' : 'border-slate-600 focus:border-emerald-500'
+                        }`}
+                        placeholder={authMode === 'signin' ? 'Enter your password' : 'Create a strong password (8+ characters)'}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                     {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Confirm Password</label>
-                    <input
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                      className={`w-full px-3 py-3 bg-transparent border-2 rounded-xl text-white placeholder-slate-400 focus:ring-0 focus:outline-none transition-all text-sm ${
-                        errors.confirmPassword ? 'border-red-500 focus:border-red-400' : 'border-slate-600 focus:border-emerald-500'
-                      }`}
-                      placeholder="Confirm your password"
-                      required
-                    />
-                    {errors.confirmPassword && <p className="text-red-400 text-xs mt-1">{errors.confirmPassword}</p>}
-                  </div>
-                </div>
-              </div>
+                  {authMode === 'signup' && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">Confirm Password</label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={formData.confirmPassword}
+                          onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                          className={`w-full px-3 py-3 pr-10 bg-transparent border-2 rounded-xl text-white placeholder-slate-400 focus:ring-0 focus:outline-none transition-all text-sm ${
+                             errors.confirmPassword ? 'border-red-500 focus:border-red-400' : 'border-slate-600 focus:border-emerald-500'
+                           }`}
+                           placeholder="Confirm your password"
+                           required
+                         />
+                         <button
+                           type="button"
+                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                         >
+                           {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                         </button>
+                       </div>
+                       {errors.confirmPassword && <p className="text-red-400 text-xs mt-1">{errors.confirmPassword}</p>}
+                     </div>
+                   )}
+                 </div>
+               </div>
 
               {/* Security Notice */}
               <div className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/30 rounded-2xl p-6">
@@ -665,7 +739,7 @@ function CheckoutContent() {
                     ) : (
                       <>
                         <Shield className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
-                        <span className="tracking-wide">Secure Checkout - ${getCurrentPrice()}/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
+                        <span className="tracking-wide">{authMode === 'signin' ? 'Sign In & Continue' : `Secure Checkout - $${getCurrentPrice()}/${billingFrequency === 'monthly' ? 'month' : 'year'}`}</span>
                       </>
                     )}
                   </div>
