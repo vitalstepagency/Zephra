@@ -152,8 +152,11 @@ export default function LandingPage() {
                 whileTap={{ scale: 0.95 }}
               >
                 <AuthTrigger
+                  scrollToPricing={scrollToPricing}
                   className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25"
-                />
+                >
+                  Get Started Free
+                </AuthTrigger>
               </motion.div>
             </motion.div>
             
@@ -414,8 +417,11 @@ export default function LandingPage() {
                 whileTap={{ scale: 0.95 }}
               >
                 <AuthTrigger
+                  scrollToPricing={scrollToPricing}
                   className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25"
-                />
+                >
+                  Start Your Journey
+                </AuthTrigger>
               </motion.div>
             </motion.div>
           </motion.div>
@@ -710,7 +716,9 @@ export default function LandingPage() {
                   plan="starter"
                   frequency={billingFrequency}
                   redirectToCheckout={true}
-                />
+                >
+                  Get Started
+                </AuthTrigger>
               </motion.div>
 
               {/* Pro Plan */}
@@ -750,7 +758,9 @@ export default function LandingPage() {
                   plan="pro"
                   frequency={billingFrequency}
                   redirectToCheckout={true}
-                />
+                >
+                  Start Free Trial
+                </AuthTrigger>
               </motion.div>
 
               {/* Elite Plan */}
@@ -785,7 +795,9 @@ export default function LandingPage() {
                   plan="elite"
                   frequency={billingFrequency}
                   redirectToCheckout={true}
-                />
+                >
+                  Get Elite Access
+                </AuthTrigger>
               </motion.div>
             </div>
 
@@ -962,7 +974,10 @@ export default function LandingPage() {
                   >
                     <AuthTrigger
                       className="w-full px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25 text-center"
-                    />
+                      scrollToPricing={scrollToPricing}
+                    >
+                      Transform Your Marketing
+                    </AuthTrigger>
                   </motion.div>
                 </div>
               </div>

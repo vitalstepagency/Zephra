@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth/config'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
-import { withSecurity } from '@/lib/api-security'
 import { z } from 'zod'
 import { logSecurityEvent } from '@/lib/security'
 
@@ -18,11 +16,20 @@ const checkoutSchema = z.object({
   trialDays: z.number().min(0).max(30).default(7)
 })
 
-export const POST = withSecurity(
-  async (req: NextRequest, { session, userId }) => {
-    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  
+  try {
+    // Get Supabase client and check authentication
+    const supabase = createSupabaseServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     
-    try {
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
         apiVersion: '2025-08-27.basil',
       })
@@ -60,13 +67,13 @@ export const POST = withSecurity(
         type: 'SUSPICIOUS_REQUEST',
         ip,
         path: '/api/stripe/checkout',
-        details: { userId, priceId, action: 'checkout_attempt' }
+        details: { userId: user.id, priceId, action: 'checkout_attempt' }
       })
 
       // Create or retrieve Stripe customer
       let customer
       const existingCustomers = await stripe.customers.list({
-        email: session.user.email,
+        email: user.email!,
         limit: 1
       })
 
@@ -74,10 +81,10 @@ export const POST = withSecurity(
         customer = existingCustomers.data[0]
       } else {
         customer = await stripe.customers.create({
-          email: session.user.email,
-          name: session.user.name || '',
+          email: user.email!,
+          name: user.user_metadata?.full_name || user.email!,
           metadata: {
-            userId: userId
+            userId: user.id
           }
         })
       }
@@ -96,13 +103,13 @@ export const POST = withSecurity(
         subscription_data: {
           trial_period_days: trialDays,
           metadata: {
-            userId: userId
+            userId: user.id
           }
         },
         success_url: successUrl || `${req.nextUrl.origin}/onboarding?success=true&plan=${priceId}`,
         cancel_url: cancelUrl || `${req.nextUrl.origin}/?canceled=true`,
         metadata: {
-          userId: userId
+          userId: user.id
         }
       })
 
@@ -111,33 +118,27 @@ export const POST = withSecurity(
         type: 'SUSPICIOUS_REQUEST',
         ip,
         path: '/api/stripe/checkout',
-        details: { userId, priceId, action: 'checkout_success', sessionId: checkoutSession.id }
+        details: { userId: user.id, priceId, action: 'checkout_success', sessionId: checkoutSession.id }
       })
 
       return NextResponse.json({ 
         sessionId: checkoutSession.id,
         url: checkoutSession.url 
       })
-    } catch (error) {
-      console.error('Stripe checkout error:', error)
-      
-      // Log checkout error
-       logSecurityEvent({
-         type: 'SUSPICIOUS_REQUEST',
-         ip,
-         path: '/api/stripe/checkout',
-         details: { userId, action: 'checkout_error', error: String(error) }
-       })
-      
-      return NextResponse.json(
-        { error: 'Failed to create checkout session' },
-        { status: 500 }
-      )
-    }
-  },
-   {
-     requireAuth: true,
-     allowedMethods: ['POST'],
-     schema: checkoutSchema
-   }
- )
+  } catch (error) {
+    console.error('Stripe checkout error:', error)
+    
+    // Log checkout error (user may not be available in outer catch)
+    logSecurityEvent({
+      type: 'SUSPICIOUS_REQUEST',
+      ip,
+      path: '/api/stripe/checkout',
+      details: { action: 'checkout_error', error: String(error) }
+    })
+    
+    return NextResponse.json(
+      { error: 'Failed to create checkout session' },
+      { status: 500 }
+    )
+  }
+}

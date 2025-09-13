@@ -1,71 +1,82 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '../ui/button'
-import { User, LogOut } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { User, Loader2 } from 'lucide-react'
+import { getCurrentUser } from '@/lib/supabase/client'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 interface AuthTriggerProps {
-  variant?: 'default' | 'outline' | 'ghost'
-  size?: 'sm' | 'default' | 'lg'
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
   className?: string
+  children?: React.ReactNode
   plan?: string
-  frequency?: string
+  frequency?: 'monthly' | 'yearly'
   redirectToCheckout?: boolean
+  scrollToPricing?: () => void
 }
 
-export function AuthTrigger({ variant = 'default', size = 'default', className, plan, frequency, redirectToCheckout = false }: AuthTriggerProps) {
-  const { data: session, status } = useSession()
+export function AuthTrigger({ 
+  variant = 'default', 
+  size = 'default', 
+  className = '',
+  children = 'Get Started',
+  plan,
+  frequency = 'monthly',
+  redirectToCheckout = false,
+  scrollToPricing
+}: AuthTriggerProps) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [user, setUser] = useState<SupabaseUser | null>(null)
   const router = useRouter()
 
-  if (status === 'loading') {
-    return (
-      <Button variant={variant} size={size} className={className} disabled>
-        Loading...
-      </Button>
-    )
-  }
-
-  if (session) {
-    // If user is authenticated and we have plan/frequency, redirect to checkout
-    if (redirectToCheckout && plan && frequency) {
-      return (
-        <Button
-          variant={variant}
-          size={size}
-          className={className}
-          onClick={() => router.push(`/checkout?plan=${plan}&frequency=${frequency}`)}
-        >
-          Start 7-Day Free Trial
-        </Button>
-      )
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const currentUser = await getCurrentUser()
+        setUser(currentUser)
+      } catch (error) {
+        console.error('Error checking user:', error)
+      }
     }
+    checkUser()
+  }, [])
+
+  const handleClick = async () => {
+    setIsLoading(true)
     
-    return (
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size={size}
-          onClick={() => router.push('/dashboard')}
-          className="flex items-center gap-2"
-        >
-          <User className="w-4 h-4" />
-          Dashboard
-        </Button>
-        <Button
-          variant="ghost"
-          size={size}
-          onClick={() => {
-            // Sign out logic
-            window.location.href = '/api/auth/signout'
-          }}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign Out
-        </Button>
-      </div>
-    )
+    try {
+      const currentUser = await getCurrentUser()
+      
+      if (currentUser && redirectToCheckout) {
+        // User is authenticated and should go to checkout
+        const params = new URLSearchParams({
+          plan: plan || 'pro',
+          frequency: frequency
+        })
+        router.push(`/checkout?${params.toString()}`)
+      } else if (!currentUser && scrollToPricing) {
+        // User is not authenticated, scroll to pricing
+        scrollToPricing()
+      } else if (!currentUser) {
+        // Fallback: redirect to checkout for account creation
+        const params = new URLSearchParams({
+          plan: plan || 'pro',
+          frequency: frequency
+        })
+        router.push(`/checkout?${params.toString()}`)
+      }
+    } catch (error) {
+      console.error('Error in handleClick:', error)
+      // Fallback behavior
+      if (scrollToPricing) {
+        scrollToPricing()
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -73,52 +84,50 @@ export function AuthTrigger({ variant = 'default', size = 'default', className, 
       variant={variant}
       size={size}
       className={className}
-      onClick={() => {
-        const checkoutUrl = plan && frequency 
-          ? `/checkout?plan=${plan}&frequency=${frequency}`
-          : '/checkout'
-        router.push(checkoutUrl)
-      }}
+      onClick={handleClick}
+      disabled={isLoading}
     >
-      Get Started Free
+      {isLoading ? (
+        <div className="flex items-center justify-center">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          Loading...
+        </div>
+      ) : (
+        children
+      )}
     </Button>
   )
 }
 
 export function SignInTrigger({ variant = 'outline', size = 'default', className }: AuthTriggerProps) {
-  const { data: session, status } = useSession()
   const router = useRouter()
-
-  if (status === 'loading') {
-    return (
-      <Button variant={variant} size={size} className={className} disabled>
-        Loading...
-      </Button>
-    )
-  }
-
-  if (session) {
-    return (
-      <Button
-        variant="outline"
-        size={size}
-        onClick={() => router.push('/dashboard')}
-        className="flex items-center gap-2"
-      >
-        <User className="w-4 h-4" />
-        Dashboard
-      </Button>
-    )
-  }
 
   return (
     <Button
       variant={variant}
       size={size}
       className={className}
-      onClick={() => router.push('/checkout')}
+      onClick={() => router.push('/auth/signin')}
     >
       Sign In
     </Button>
+  )
+}
+
+interface UserAvatarProps {
+  user: SupabaseUser
+  className?: string
+}
+
+export function UserAvatar({ user, className = '' }: UserAvatarProps) {
+  return (
+    <div className={`flex items-center space-x-2 ${className}`}>
+      <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+        {user.email?.[0]?.toUpperCase() || 'U'}
+      </div>
+      <span className="text-sm font-medium text-slate-700">
+        {user.email}
+      </span>
+    </div>
   )
 }
