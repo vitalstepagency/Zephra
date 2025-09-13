@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle, Shield, Lock, CreditCard, User, Mail, Phone, Building, MapPin, Calendar, ArrowRight, Star, Eye, EyeOff } from 'lucide-react';
 import { createSupabaseClient, getCurrentUser } from '@/lib/supabase/client';
 import { PRICING_PLANS } from '@/lib/stripe/config';
+import { signIn as nextAuthSignIn } from 'next-auth/react'
 
 interface PricingPlan {
   id: string;
@@ -202,6 +203,12 @@ function CheckoutContent() {
             }
             
             setUser(data.user);
+            // Create NextAuth session so protected routes recognize authentication
+            await nextAuthSignIn('credentials', {
+              redirect: false,
+              email: formData.email.trim().toLowerCase(),
+              password: formData.password,
+            })
           } else {
             throw new Error(signupError.error || 'Failed to create account');
           }
@@ -218,6 +225,12 @@ function CheckoutContent() {
           }
           
           setUser(data.user);
+          // Ensure NextAuth session for newly created accounts
+          await nextAuthSignIn('credentials', {
+            redirect: false,
+            email: formData.email.trim().toLowerCase(),
+            password: formData.password,
+          });
         }
       }
 
