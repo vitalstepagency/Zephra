@@ -73,6 +73,7 @@ function OnboardingContent() {
   const plan = searchParams.get('plan') || 'starter'
   const checkoutSuccess = searchParams.get('checkout') === 'success'
   const sessionId = searchParams.get('session_id')
+  const redirectToCheckout = searchParams.get('redirectToCheckout') === 'true'
   const email = searchParams.get('email') || session?.user?.email || ''
   const userName = searchParams.get('name') || session?.user?.name || ''
   
