@@ -57,6 +57,15 @@ function SignUpContent() {
     }
     checkSession()
   }, [router, redirectToCheckout, plan])
+  
+  // Store plan selection in localStorage to persist through sign-in redirects
+  useEffect(() => {
+    if (plan) {
+      localStorage.setItem('selected_plan', plan)
+      localStorage.setItem('selected_frequency', frequency || 'monthly')
+      localStorage.setItem('redirect_to_checkout', redirectToCheckout ? 'true' : 'false')
+    }
+  }, [plan, frequency, redirectToCheckout])
 
   const validateForm = () => {
     const newErrors: {email?: string, name?: string, password?: string} = {}

@@ -65,7 +65,25 @@ export default function SignInPage() {
       if (result?.error) {
         setError('Invalid email or password')
       } else {
-        router.push('/dashboard')
+        // Check if there's stored plan information from signup
+        const storedPlan = localStorage.getItem('selected_plan')
+        const storedFrequency = localStorage.getItem('selected_frequency')
+        const redirectToCheckout = localStorage.getItem('redirect_to_checkout') === 'true'
+        
+        if (storedPlan && redirectToCheckout) {
+          // Redirect to checkout with plan parameters
+          const params = new URLSearchParams({
+            plan: storedPlan,
+            billing: storedFrequency || 'monthly'
+          })
+          router.push(`/checkout?${params.toString()}`)
+        } else if (storedPlan) {
+          // Redirect to onboarding with plan parameter
+          router.push(`/onboarding?plan=${storedPlan}`)
+        } else {
+          // Default redirect to dashboard
+          router.push('/dashboard')
+        }
       }
     } catch (error) {
       console.error('Sign in error:', error)

@@ -226,6 +226,11 @@ function CheckoutContent() {
         localStorage.setItem('checkout_session_id', data.id);
       }
       
+      // Clear plan selection parameters to prevent redirection loops
+      localStorage.removeItem('selected_plan');
+      localStorage.removeItem('selected_frequency');
+      localStorage.removeItem('redirect_to_checkout');
+      
       if (data.url) {
         // Redirect to Stripe Checkout
         window.location.href = data.url;
