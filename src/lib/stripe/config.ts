@@ -121,7 +121,7 @@ export const PRICING_PLANS = {
     name: 'Elite',
     description: 'Perfect for established businesses ready to dominate',
     price: 497,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ENTERPRISE!,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE!,
     features: [
       'Everything in Pro +',
       'Enterprise Market Domination with 5 customer segments',
