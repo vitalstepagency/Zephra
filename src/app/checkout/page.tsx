@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle, Shield, Lock, CreditCard, User, Mail, Phone, Building, MapPin, Calendar, ArrowRight, Star } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 import { PRICING_PLANS } from '@/lib/stripe/config';
 
 interface PricingPlan {
@@ -124,6 +125,38 @@ function CheckoutContent() {
     
     try {
       // Create checkout session
+      // First create the user account
+      const signupResponse = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+          name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+          phone: formData.phone?.trim(),
+          company: formData.company?.trim()
+        }),
+      });
+      
+      if (!signupResponse.ok) {
+        const signupError = await signupResponse.json();
+        throw new Error(signupError.error || 'Failed to create account');
+      }
+
+      // Sign in the user
+      const signInResult = await signIn('credentials', {
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        redirect: false
+      });
+
+      if (signInResult?.error) {
+        throw new Error('Failed to sign in after account creation');
+      }
+
+      // Now create the checkout session (user is authenticated)
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: {
@@ -143,26 +176,6 @@ function CheckoutContent() {
       }
       
       if (data.url) {
-        // First create the user account
-        const signupResponse = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: formData.email.trim().toLowerCase(),
-            password: formData.password,
-            name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-            phone: formData.phone?.trim(),
-            company: formData.company?.trim()
-          }),
-        });
-        
-        if (!signupResponse.ok) {
-          const signupError = await signupResponse.json();
-          throw new Error(signupError.error || 'Failed to create account');
-        }
-        
         // Redirect to Stripe Checkout
         window.location.href = data.url;
       } else {
