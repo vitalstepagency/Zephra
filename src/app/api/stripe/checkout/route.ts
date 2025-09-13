@@ -27,7 +27,29 @@ export const POST = withSecurity(
       })
       
       const body = await req.json()
-      const { priceId, successUrl, cancelUrl } = checkoutSchema.parse(body)
+      
+      // Debug logging
+      console.log('Checkout API received:', {
+        body,
+        envVars: {
+          starter: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_STARTER,
+          pro: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO,
+          elite: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ELITE
+        }
+      })
+      
+      let validationResult
+      try {
+        validationResult = checkoutSchema.parse(body)
+      } catch (error) {
+        console.error('Validation failed:', error)
+        return NextResponse.json(
+          { error: 'Invalid input data', details: error instanceof Error ? error.message : 'Unknown validation error' },
+          { status: 400 }
+        )
+      }
+      
+      const { priceId, successUrl, cancelUrl } = validationResult
       
       // Log payment attempt
       logSecurityEvent({
