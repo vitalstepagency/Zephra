@@ -146,9 +146,12 @@ function CheckoutContent() {
         body: JSON.stringify({
           email: formData.email.trim().toLowerCase(),
           password: formData.password,
-          name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
           phone: formData.phone?.trim(),
-          company: formData.company?.trim()
+          company: formData.company?.trim(),
+          planId: selectedPlan.id,
+          stripeCustomerId: 'temp_customer_id' // Will be updated after Stripe checkout
         }),
       });
       
