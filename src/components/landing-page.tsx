@@ -9,6 +9,7 @@ import {
   Eye, MousePointer, Layers, Gauge, ChevronDown, Plus, Minus
 } from 'lucide-react';
 import { PRICING_PLANS } from '@/lib/stripe/config';
+import { AuthTrigger } from '@/components/auth/auth-trigger';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
@@ -146,14 +147,14 @@ export default function LandingPage() {
               className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16"
               variants={textReveal}
             >
-              <motion.button
-                onClick={scrollToPricing}
-                className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25"
+              <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Join Zephra Free
-              </motion.button>
+                <AuthTrigger
+                  className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25"
+                />
+              </motion.div>
             </motion.div>
             
             <motion.div
@@ -408,14 +409,14 @@ export default function LandingPage() {
               className="mt-16"
               variants={textReveal}
             >
-              <motion.button
-                onClick={scrollToPricing}
-                className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25"
+              <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Create My Success Story
-              </motion.button>
+                <AuthTrigger
+                  className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25"
+                />
+              </motion.div>
             </motion.div>
           </motion.div>
         </div>
@@ -704,12 +705,12 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <a 
-                  href={`/checkout?plan=starter&frequency=${billingFrequency}`} 
+                <AuthTrigger
                   className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300 inline-block text-center"
-                >
-                  Start 7-Day Free Trial
-                </a>
+                  plan="starter"
+                  frequency={billingFrequency}
+                  redirectToCheckout={true}
+                />
               </motion.div>
 
               {/* Pro Plan */}
@@ -744,12 +745,12 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <a 
-                  href={`/checkout?plan=pro&frequency=${billingFrequency}`} 
+                <AuthTrigger
                   className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl font-medium hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 inline-block text-center"
-                >
-                  Start 7-Day Free Trial
-                </a>
+                  plan="pro"
+                  frequency={billingFrequency}
+                  redirectToCheckout={true}
+                />
               </motion.div>
 
               {/* Elite Plan */}
@@ -779,12 +780,12 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <a 
-                  href={`/checkout?plan=elite&frequency=${billingFrequency}`} 
+                <AuthTrigger
                   className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300 inline-block text-center"
-                >
-                  Start 7-Day Free Trial
-                </a>
+                  plan="elite"
+                  frequency={billingFrequency}
+                  redirectToCheckout={true}
+                />
               </motion.div>
             </div>
 
@@ -955,14 +956,14 @@ export default function LandingPage() {
                   <p className="text-lg text-slate-300 mb-4">
                     The question isn't whether you need better marketing. The question is: How much longer will you wait to get it?
                   </p>
-                  <motion.button
-                    onClick={scrollToPricing}
-                    className="w-full px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25 text-center"
+                  <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    Begin My Success Story
-                  </motion.button>
+                    <AuthTrigger
+                      className="w-full px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25 text-center"
+                    />
+                  </motion.div>
                 </div>
               </div>
 

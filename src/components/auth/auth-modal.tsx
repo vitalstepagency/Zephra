@@ -16,12 +16,15 @@ interface AuthModalProps {
   isOpen: boolean
   onClose: () => void
   defaultMode?: 'signin' | 'signup'
+  redirectTo?: string | undefined
+  plan?: string | undefined
+  frequency?: string | undefined
 }
 
 type AuthMode = 'signin' | 'signup' | 'forgot-password'
 type AuthStep = 'form' | 'loading' | 'success' | 'error'
 
-export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, defaultMode = 'signin', redirectTo, plan, frequency }: AuthModalProps) {
   const [mode, setMode] = useState<AuthMode>(defaultMode)
   const [step, setStep] = useState<AuthStep>('form')
   const [showPassword, setShowPassword] = useState(false)
@@ -78,7 +81,11 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
         setStep('success')
         setTimeout(() => {
           onClose()
-          router.push('/dashboard')
+          if (redirectTo && plan && frequency) {
+            router.push(`${redirectTo}?plan=${plan}&frequency=${frequency}`)
+          } else {
+            router.push('/dashboard')
+          }
         }, 2000)
       } else {
         // Sign in with credentials
@@ -96,7 +103,11 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
         setStep('success')
         setTimeout(() => {
           onClose()
-          router.push('/dashboard')
+          if (redirectTo && plan && frequency) {
+            router.push(`${redirectTo}?plan=${plan}&frequency=${frequency}`)
+          } else {
+            router.push('/dashboard')
+          }
         }, 1500)
       }
     } catch (err) {

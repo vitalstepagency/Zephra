@@ -11,9 +11,12 @@ interface AuthTriggerProps {
   variant?: 'default' | 'outline' | 'ghost'
   size?: 'sm' | 'default' | 'lg'
   className?: string
+  plan?: string
+  frequency?: string
+  redirectToCheckout?: boolean
 }
 
-export function AuthTrigger({ variant = 'default', size = 'default', className }: AuthTriggerProps) {
+export function AuthTrigger({ variant = 'default', size = 'default', className, plan, frequency, redirectToCheckout = false }: AuthTriggerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -27,6 +30,20 @@ export function AuthTrigger({ variant = 'default', size = 'default', className }
   }
 
   if (session) {
+    // If user is authenticated and we have plan/frequency, redirect to checkout
+    if (redirectToCheckout && plan && frequency) {
+      return (
+        <Button
+          variant={variant}
+          size={size}
+          className={className}
+          onClick={() => router.push(`/checkout?plan=${plan}&frequency=${frequency}`)}
+        >
+          Start 7-Day Free Trial
+        </Button>
+      )
+    }
+    
     return (
       <div className="flex items-center gap-3">
         <Button
@@ -69,6 +86,9 @@ export function AuthTrigger({ variant = 'default', size = 'default', className }
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         defaultMode="signup"
+        redirectTo={redirectToCheckout ? "/checkout" : undefined}
+        plan={plan}
+        frequency={frequency}
       />
     </>
   )
