@@ -49,12 +49,14 @@ function SignUpContent() {
   useEffect(() => {
     const checkSession = async () => {
       const session = await getSession()
-      if (session) {
+      // Only redirect to dashboard if we're not in the middle of a signup flow
+      // This prevents redirect loops when creating an account
+      if (session && !redirectToCheckout && !plan) {
         router.push('/dashboard')
       }
     }
     checkSession()
-  }, [router])
+  }, [router, redirectToCheckout, plan])
 
   const validateForm = () => {
     const newErrors: {email?: string, name?: string, password?: string} = {}
@@ -128,13 +130,19 @@ function SignUpContent() {
             throw new Error('Failed to sign in')
           }
         } else {
-          // Sign in with redirect to onboarding
+          // Sign in without redirect and then manually navigate
           const result = await signIn('credentials', {
             email,
             password,
-            callbackUrl: `/onboarding?plan=${plan}&name=${encodeURIComponent(name)}`,
-            redirect: true
+            redirect: false
           })
+          
+          if (result?.ok) {
+            // Manually navigate to onboarding with plan parameters
+            router.push(`/onboarding?plan=${plan}&name=${encodeURIComponent(name)}`)
+          } else {
+            throw new Error('Failed to sign in')
+          }
         }
       } else {
         const error = await response.json()

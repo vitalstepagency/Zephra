@@ -97,26 +97,34 @@ function OnboardingContent() {
     
     // Don't redirect immediately if we have a session_id
     // This allows time for session restoration to complete
-    if (!session && !sessionId) {
+    // Don't redirect immediately if we have a session_id or plan parameter
+    // This allows time for session restoration to complete
+    if (!session && !sessionId && !plan) {
+      console.log('No session, sessionId, or plan - redirecting to signin')
       router.push('/auth/signin')
       return
     }
     
     // If we have email and sessionId but no session, try to restore session
-    if (!session && sessionId && email) {
+    if (!session && (sessionId || plan) && email) {
       const restoreSession = async () => {
         try {
           console.log('Attempting to restore session in onboarding with email:', email)
           // Sign in with the email from URL params
           const response = await signIn('credentials', {
             email: email,
-            password: sessionId, // Use sessionId as a temporary password
+            password: sessionId || 'temp-password', // Use sessionId as a temporary password or a placeholder
             redirect: false,
           })
           
           if (response?.error) {
             console.error('Failed to restore session in onboarding:', response.error)
             // Don't redirect immediately - we'll still check payment status
+            // If we have a plan but failed to restore session, try to redirect to signup
+            if (plan && !sessionId) {
+              console.log('Redirecting to signup with plan:', plan)
+              router.push(`/auth/signup?plan=${plan}&redirectToCheckout=${redirectToCheckout}`)
+            }
           } else {
             console.log('Session restored successfully in onboarding')
           }
