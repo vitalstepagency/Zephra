@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createSupabaseClient } from '@/lib/supabase/client'
+import { useSession } from 'next-auth/react'
 import { CheckCircle, XCircle, Loader2, CreditCard, Clock, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,29 +16,22 @@ function PaymentVerificationContent() {
   const [status, setStatus] = useState<PaymentStatus>('pending')
   const [timeElapsed, setTimeElapsed] = useState(0)
   const [errorMessage, setErrorMessage] = useState('')
-  const [user, setUser] = useState<any>(null)
+
+  const { data: session, status: authStatus } = useSession()
   
   const sessionId = searchParams.get('session_id')
   const maxWaitTime = 300 // 5 minutes in seconds
   
+  // Redirect unauthenticated users
   useEffect(() => {
-    // Get current user
-    const getUser = async () => {
-      const supabase = createSupabaseClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      
-      if (!user) {
-        router.push('/auth/signin')
-        return
-      }
+    if (authStatus === 'loading') return
+    if (authStatus === 'unauthenticated') {
+      router.push('/auth/signin')
     }
-    
-    getUser()
-  }, [])
+  }, [authStatus, router])
   
   useEffect(() => {
-    if (!sessionId || !user) return
+    if (!sessionId || authStatus !== 'authenticated') return
     
     let interval: NodeJS.Timeout
     let timeoutId: NodeJS.Timeout
@@ -86,7 +79,7 @@ function PaymentVerificationContent() {
       clearInterval(interval)
       clearTimeout(timeoutId)
     }
-  }, [sessionId, user, status, router])
+  }, [sessionId, authStatus, status, router])
   
   useEffect(() => {
     // Timer for elapsed time
@@ -112,7 +105,7 @@ function PaymentVerificationContent() {
     window.open('mailto:support@yourcompany.com', '_blank')
   }
   
-  if (!user) {
+  if (authStatus === 'loading') {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="flex items-center space-x-2 text-white">

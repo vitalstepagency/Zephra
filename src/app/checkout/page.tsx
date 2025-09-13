@@ -173,6 +173,12 @@ function CheckoutContent() {
         }
         
         setUser(data.user);
+        // Create NextAuth session for existing users
+        await nextAuthSignIn('credentials', {
+          redirect: false,
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+        });
       } else {
         // Try to sign up new user first
         const signupResponse = await fetch('/api/auth/simple-signup', {

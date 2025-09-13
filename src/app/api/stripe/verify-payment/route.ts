@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
+import { supabaseAdmin } from '@/lib/supabase/server'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth/config'
 
 export async function GET(req: NextRequest) {
   try {
     // Get Supabase client and check authentication
-    const supabase = createSupabaseServerClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
+    const user = { id: session.user.id, email: session.user.email }
     
     const { searchParams } = new URL(req.url)
     const sessionId = searchParams.get('session_id')
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
           status = 'complete'
           
           // Update user's subscription status in database
-          const { error: updateError } = await supabase
+          const { error: updateError } = await supabaseAdmin
             .from('users')
             .update({
               stripe_customer_id: session.customer as string,
