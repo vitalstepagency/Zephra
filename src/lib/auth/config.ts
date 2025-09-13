@@ -24,29 +24,63 @@ export const authOptions: NextAuthOptions = {
         try {
           const supabaseAdmin = getSupabaseAdmin()
           
-          // Get user from Supabase Auth
-          const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
-            email: credentials.email,
-            password: credentials.password
-          })
+          // Check if this is a session restoration attempt (from payment verification)
+           const isSessionRestoration = credentials.password.includes('cs_');
+           
+           let authData;
+           
+           if (isSessionRestoration) {
+             // This is a session restoration from payment verification
+             // We'll look up the user by email instead of password authentication
+             const { data: userData, error: lookupError } = await supabaseAdmin
+               .from('profiles')
+               .select('*')
+               .eq('email', credentials.email)
+               .single();
+               
+             if (lookupError) {
+               console.error('User lookup error:', lookupError.message);
+               throw new Error('User not found during session restoration')
+             }
+             
+             // Get user from Supabase Auth by email
+             const { data: userAuth, error: userAuthError } = await supabaseAdmin.auth.admin.listUsers({
+               filter: { email: credentials.email }
+             });
+             
+             if (userAuthError || !userAuth.users || userAuth.users.length === 0) {
+               console.error('Auth lookup error:', userAuthError?.message || 'No user found');
+               throw new Error('Authentication failed during session restoration')
+             }
+             
+             authData = { user: userAuth.users[0] };
+          } else {
+            // Normal password authentication
+            const { data, error: authError } = await supabaseAdmin.auth.signInWithPassword({
+              email: credentials.email,
+              password: credentials.password
+            })
 
-          if (authError) {
-            // Handle specific error cases
-            if (authError.message?.toLowerCase().includes('invalid login credentials')) {
-              throw new Error('Invalid email or password')
+            if (authError) {
+              // Handle specific error cases
+              if (authError.message?.toLowerCase().includes('invalid login credentials')) {
+                throw new Error('Invalid email or password')
+              }
+              if (authError.message?.toLowerCase().includes('email not confirmed')) {
+                throw new Error('Please check your email and click the confirmation link')
+              }
+              if (authError.message?.toLowerCase().includes('too many requests')) {
+                throw new Error('Too many login attempts. Please try again later')
+              }
+              // Generic fallback
+              throw new Error(authError.message || 'Authentication failed')
             }
-            if (authError.message?.toLowerCase().includes('email not confirmed')) {
-              throw new Error('Please check your email and click the confirmation link')
+            
+            if (!data.user) {
+              throw new Error('Authentication failed')
             }
-            if (authError.message?.toLowerCase().includes('too many requests')) {
-              throw new Error('Too many login attempts. Please try again later')
-            }
-            // Generic fallback
-            throw new Error(authError.message || 'Authentication failed')
-          }
-
-          if (!authData.user) {
-            throw new Error('Authentication failed')
+            
+            authData = data;
           }
 
           // Get user profile

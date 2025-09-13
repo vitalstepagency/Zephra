@@ -92,7 +92,10 @@ function OnboardingContent() {
 
   useEffect(() => {
     if (status === 'loading') return
-    if (!session) {
+    
+    // Don't redirect immediately if we have a session_id
+    // This allows time for session restoration to complete
+    if (!session && !sessionId) {
       router.push('/auth/signin')
       return
     }

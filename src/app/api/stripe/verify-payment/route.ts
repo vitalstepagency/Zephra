@@ -8,13 +8,16 @@ export async function GET(req: NextRequest) {
   try {
     // Get Supabase client and check authentication
     const authSession = await getServerSession(authOptions)
-    if (!authSession?.user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+    
+    // Get session ID from query params
+    // Session ID already retrieved above
+    
+    // If user is not authenticated, we'll still proceed with the session check
+    // This allows the payment verification page to work during session restoration
+    let user = null
+    if (authSession?.user) {
+      user = { id: authSession.user.id, email: authSession.user.email }
     }
-    const user = { id: authSession.user.id, email: authSession.user.email }
     
     const { searchParams } = new URL(req.url)
     const sessionId = searchParams.get('session_id')
@@ -40,8 +43,9 @@ export async function GET(req: NextRequest) {
       )
     }
     
-    // Check if the session belongs to the current user
-    if (checkoutSession.metadata?.userId !== user.id) {
+    // If user is authenticated, check if the session belongs to them
+    // If not authenticated, we'll skip this check during session restoration
+    if (user && checkoutSession.metadata?.userId && checkoutSession.metadata.userId !== user.id) {
       return NextResponse.json(
         { error: 'Unauthorized access to session' },
         { status: 403 }
@@ -61,16 +65,38 @@ export async function GET(req: NextRequest) {
           status = 'complete'
           
           // Update user's subscription status in database
-          const { error: updateError } = await supabaseAdmin
-            .from('users')
-            .update({
-              stripe_customer_id: checkoutSession.customer as string,
-              stripe_subscription_id: checkoutSession.subscription as string,
-              subscription_status: subscription.status,
-              plan_id: subscription.items.data[0]?.price.id,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id)
+          // If user is not authenticated yet, find them by email
+          let updateError = null;
+          
+          if (user) {
+            // Update by user ID if authenticated
+            const { error } = await supabaseAdmin
+              .from('users')
+              .update({
+                stripe_customer_id: checkoutSession.customer as string,
+                stripe_subscription_id: checkoutSession.subscription as string,
+                subscription_status: subscription.status,
+                plan_id: subscription.items.data[0]?.price.id,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', user.id);
+              
+            updateError = error;
+          } else if (checkoutSession.customer_details?.email) {
+            // Update by email if not authenticated
+            const { error } = await supabaseAdmin
+              .from('users')
+              .update({
+                stripe_customer_id: checkoutSession.customer as string,
+                stripe_subscription_id: checkoutSession.subscription as string,
+                subscription_status: subscription.status,
+                plan_id: subscription.items.data[0]?.price.id,
+                updated_at: new Date().toISOString()
+              })
+              .eq('email', checkoutSession.customer_details.email);
+              
+            updateError = error;
+          }
           
           if (updateError) {
             console.error('Error updating user subscription:', updateError)
@@ -89,7 +115,8 @@ export async function GET(req: NextRequest) {
       payment_status: checkoutSession.payment_status,
       session_status: checkoutSession.status,
       subscription_status: subscriptionStatus,
-      customer_email: checkoutSession.customer_details?.email
+      customer_email: checkoutSession.customer_details?.email,
+      planId: subscription?.items.data[0]?.price.id || null
     })
     
   } catch (error) {

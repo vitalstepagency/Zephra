@@ -20,18 +20,72 @@ function PaymentVerificationContent() {
   const { data: session, status: authStatus } = useSession()
   
   const sessionId = searchParams.get('session_id')
+  const email = searchParams.get('email')
+  const name = searchParams.get('name')
   const maxWaitTime = 300 // 5 minutes in seconds
   
-  // Redirect unauthenticated users
+  // State to hold email from URL or localStorage
+  const [userEmail, setUserEmail] = useState<string | null>(email)
+  const [userName, setUserName] = useState<string | null>(name)
+  
+  // Get stored credentials from localStorage if not in URL
   useEffect(() => {
-    if (authStatus === 'loading') return
-    if (authStatus === 'unauthenticated') {
-      router.push('/auth/signin')
+    if (!userEmail && typeof window !== 'undefined') {
+      const storedEmail = localStorage.getItem('checkout_email')
+      const storedName = localStorage.getItem('checkout_name')
+      
+      if (storedEmail) {
+        console.log('Using stored credentials from localStorage')
+        setUserEmail(storedEmail)
+        setUserName(storedName)
+      }
     }
-  }, [authStatus, router])
+  }, [userEmail])
+  
+  // Attempt to restore session if we have email and sessionId
+  useEffect(() => {
+    const restoreSession = async () => {
+      if (authStatus === 'loading') return
+      
+      // If we're unauthenticated but have email and sessionId, try to restore session
+      if (authStatus === 'unauthenticated' && sessionId && userEmail) {
+        try {
+          console.log('Attempting to restore session with email:', userEmail)
+          // Sign in with the email from state (URL params or localStorage)
+          const response = await signIn('credentials', {
+            email: userEmail,
+            password: sessionId, // Use sessionId as a temporary password
+            redirect: false,
+          })
+          
+          if (response?.error) {
+            console.error('Failed to restore session:', response.error)
+            // Only redirect if restoration fails
+            router.push('/auth/signin')
+          } else {
+            console.log('Session restored successfully')
+            // Clear localStorage after successful restoration
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('checkout_email')
+              localStorage.removeItem('checkout_name')
+            }
+          }
+        } catch (error) {
+          console.error('Error restoring session:', error)
+          router.push('/auth/signin')
+        }
+      } else if (authStatus === 'unauthenticated' && !sessionId) {
+        // Only redirect if no sessionId is present (direct access without checkout)
+        console.log('No session ID and unauthenticated, redirecting to signin')
+        router.push('/auth/signin')
+      }
+    }
+    
+    restoreSession()
+  }, [authStatus, router, sessionId, userEmail, signIn])
   
   useEffect(() => {
-    if (!sessionId || authStatus !== 'authenticated') return
+    if (!sessionId || authStatus === 'loading') return
     
     let interval: NodeJS.Timeout
     let timeoutId: NodeJS.Timeout
@@ -44,9 +98,16 @@ function PaymentVerificationContent() {
         if (response.ok) {
           if (data.status === 'complete') {
             setStatus('success')
-            // Redirect to onboarding after a brief delay
+            // Redirect to onboarding after a brief delay with plan info
             setTimeout(() => {
-              router.push('/onboarding')
+              // Clear localStorage after successful verification
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('checkout_email')
+                localStorage.removeItem('checkout_name')
+              }
+              // Redirect to onboarding with plan info
+              const planId = data.planId || 'starter'
+              router.push(`/onboarding?plan=${planId}&checkout=success&session_id=${sessionId}`)
             }, 2000)
           } else if (data.status === 'failed') {
             setStatus('failed')

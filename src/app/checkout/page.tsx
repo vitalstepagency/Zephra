@@ -193,6 +193,11 @@ function CheckoutContent() {
           }),
         });
         
+        // Store credentials in localStorage for session restoration
+        localStorage.setItem('checkout_email', formData.email.trim().toLowerCase());
+        localStorage.setItem('checkout_name', `${formData.firstName.trim()} ${formData.lastName.trim()}`);
+        
+        
         if (!signupResponse.ok) {
           const signupError = await signupResponse.json();
           if (signupError.error?.includes('already exists')) {
@@ -254,6 +259,7 @@ function CheckoutContent() {
       });
 
       // Now create the checkout session (user is authenticated)
+      // Include user credentials in the success URL to maintain session
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: {
@@ -261,7 +267,7 @@ function CheckoutContent() {
         },
         body: JSON.stringify({
           priceId: currentPriceId,
-          successUrl: `${window.location.origin}/payment-verification?session_id={CHECKOUT_SESSION_ID}`,
+          successUrl: `${window.location.origin}/payment-verification?session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(formData.email)}&name=${encodeURIComponent(`${formData.firstName} ${formData.lastName}`)}`,
           cancelUrl: `${window.location.origin}/pricing?canceled=true`
         }),
       });
