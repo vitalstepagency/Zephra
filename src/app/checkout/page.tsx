@@ -10,11 +10,15 @@ import { PRICING_PLANS } from '@/lib/stripe/config';
 interface PricingPlan {
   id: string;
   name: string;
-  price: number;
+  monthlyPrice: number;
+  yearlyPrice: number;
   description: string;
   features: readonly string[];
   popular?: boolean;
-  priceId: string;
+  priceIds: {
+    readonly monthly: string;
+    readonly yearly: string;
+  };
   detailedFeatures?: any;
   limits?: any;
 }
@@ -43,6 +47,7 @@ const staggerContainer = {
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const planParam = searchParams.get('plan') || 'professional';
+  const billingParam = searchParams.get('billing') || 'monthly';
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan>(() => {
     const validPlanKeys = Object.keys(pricingPlans) as (keyof typeof pricingPlans)[];
     const planKey: keyof typeof pricingPlans = validPlanKeys.includes(planParam as keyof typeof pricingPlans) 
@@ -50,6 +55,7 @@ function CheckoutContent() {
       : 'professional';
     return pricingPlans[planKey]!;
   });
+  const [billingFrequency, setBillingFrequency] = useState<'monthly' | 'yearly'>(billingParam === 'yearly' ? 'yearly' : 'monthly');
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -63,6 +69,10 @@ function CheckoutContent() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Helper functions for pricing
+  const getCurrentPrice = () => billingFrequency === 'monthly' ? selectedPlan.monthlyPrice : selectedPlan.yearlyPrice;
+  const getCurrentPriceId = () => billingFrequency === 'monthly' ? selectedPlan.priceIds.monthly : selectedPlan.priceIds.yearly;
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -159,14 +169,16 @@ function CheckoutContent() {
       }
 
       // Validate priceId before sending
-      if (!selectedPlan.priceId) {
+      const currentPriceId = getCurrentPriceId();
+      if (!currentPriceId) {
         throw new Error(`No price ID found for plan: ${selectedPlan.id}`);
       }
 
       console.log('Creating checkout session with:', {
-        priceId: selectedPlan.priceId,
+        priceId: currentPriceId,
         planId: selectedPlan.id,
-        planName: selectedPlan.name
+        planName: selectedPlan.name,
+        billingFrequency
       });
 
       // Now create the checkout session (user is authenticated)
@@ -176,7 +188,7 @@ function CheckoutContent() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          priceId: selectedPlan.priceId,
+          priceId: currentPriceId,
           successUrl: `${window.location.origin}/dashboard?success=true`,
           cancelUrl: `${window.location.origin}/pricing?canceled=true`
         }),
@@ -584,8 +596,8 @@ function CheckoutContent() {
               <div className="bg-slate-700/30 rounded-2xl p-4 border border-slate-600/30">
                 <h3 className="text-base font-bold text-white mb-3">Order Summary</h3>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-slate-300">{selectedPlan.name} Plan (Monthly)</span>
-                  <span className="text-sm text-white font-bold">${selectedPlan.price}</span>
+                  <span className="text-sm text-slate-300">{selectedPlan.name} Plan ({billingFrequency === 'monthly' ? 'Monthly' : 'Yearly'})</span>
+                  <span className="text-sm text-white font-bold">${getCurrentPrice()}</span>
                 </div>
                 <div className="flex justify-between items-center mb-3 text-xs">
                   <span className="text-slate-400">Processing Fee</span>
@@ -594,9 +606,9 @@ function CheckoutContent() {
                 <div className="border-t border-slate-600 pt-3">
                   <div className="flex justify-between items-center">
                     <span className="text-base font-bold text-white">Total Today</span>
-                    <span className="text-xl font-bold text-white">${selectedPlan.price}</span>
+                    <span className="text-xl font-bold text-white">${getCurrentPrice()}</span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-2">Billed monthly. Cancel anytime.</p>
+                  <p className="text-xs text-slate-400 mt-2">Billed {billingFrequency}. Cancel anytime.</p>
                 </div>
               </div>
 
@@ -629,7 +641,7 @@ function CheckoutContent() {
                     ) : (
                       <>
                         <Shield className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
-                        <span className="tracking-wide">Secure Checkout - ${selectedPlan.price}/month</span>
+                        <span className="tracking-wide">Secure Checkout - ${getCurrentPrice()}/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
                       </>
                     )}
                   </div>
