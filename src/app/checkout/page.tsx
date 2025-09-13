@@ -173,7 +173,7 @@ function CheckoutContent() {
         
         setUser(data.user);
       } else {
-        // Sign up new user
+        // Try to sign up new user first
         const signupResponse = await fetch('/api/auth/simple-signup', {
           method: 'POST',
           headers: {
@@ -189,24 +189,36 @@ function CheckoutContent() {
         if (!signupResponse.ok) {
           const signupError = await signupResponse.json();
           if (signupError.error?.includes('already exists')) {
-            throw new Error('An account with this email already exists. Please sign in instead.');
+            // User already exists, try to sign them in instead
+            console.log('User already exists, attempting sign in...');
+            const supabase = createSupabaseClient();
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: formData.email.trim().toLowerCase(),
+              password: formData.password
+            });
+            
+            if (error) {
+              throw new Error('An account with this email already exists, but the password is incorrect. Please check your password or use the sign-in option.');
+            }
+            
+            setUser(data.user);
           } else {
             throw new Error(signupError.error || 'Failed to create account');
           }
-        }
-        
-        // Account created successfully, now sign in with Supabase
-        const supabase = createSupabaseClient();
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: formData.email.trim().toLowerCase(),
-          password: formData.password
-        });
+        } else {
+          // Account created successfully, now sign in with Supabase
+          const supabase = createSupabaseClient();
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: formData.email.trim().toLowerCase(),
+            password: formData.password
+          });
 
-        if (error) {
-          throw new Error('Account created but failed to sign in. Please try again.');
+          if (error) {
+            throw new Error('Account created but failed to sign in. Please try again.');
+          }
+          
+          setUser(data.user);
         }
-        
-        setUser(data.user);
       }
 
       // Validate priceId before sending
