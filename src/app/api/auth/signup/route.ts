@@ -204,14 +204,17 @@ async function signupHandler(request: NextRequest) {
               code: authError.code,
               status: authError.status,
               name: authError.name,
-              fullError: authError
+              fullError: JSON.stringify(authError)
             })
             
             // If user already exists in Auth, throw a specific error
+            // Check for various ways Supabase might indicate email exists
             if (authError.code === 'email_exists' || 
-                authError.message?.includes('email_exists') || 
-                authError.message?.includes('User already registered') ||
-                authError.message?.includes('already been registered')) {
+                authError.code === 'user_already_exists' ||
+                authError.message?.toLowerCase().includes('email') && authError.message?.toLowerCase().includes('exist') ||
+                authError.message?.toLowerCase().includes('already') && authError.message?.toLowerCase().includes('register') ||
+                authError.status === 422) {
+              console.log('🔍 DETECTED EMAIL EXISTS ERROR - throwing UserExistsError')
               const existingUserError = new Error('USER_EXISTS_IN_AUTH')
               existingUserError.name = 'UserExistsError'
               throw existingUserError
