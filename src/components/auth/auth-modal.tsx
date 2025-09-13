@@ -64,7 +64,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
         }
         
         // Create account with Supabase
-        const response = await fetch('/api/auth/signup', {
+        const response = await fetch('/api/auth/simple-signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password, name })
