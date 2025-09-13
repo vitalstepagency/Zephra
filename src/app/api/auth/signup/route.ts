@@ -148,24 +148,104 @@ async function signupHandler(request: NextRequest) {
       )
     }
 
-    // Check if user already exists
-    const { data: existingUser, error: userCheckError } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('email', sanitizedData.email)
-      .single()
+    // Check if user already exists in Auth
+    const { data: existingAuthUser, error: authCheckError } = await supabaseAdmin.auth.admin.getUserByEmail(sanitizedData.email)
     
-    if (userCheckError && userCheckError.code !== 'PGRST116') {
-      throw ErrorFactories.database('Failed to verify user status', { 
-        originalError: userCheckError,
+    if (authCheckError && authCheckError.status !== 404) {
+      throw ErrorFactories.database('Failed to verify auth user status', { 
+        originalError: authCheckError,
         email: sanitizedData.email 
       })
     }
 
-    if (existingUser) {
-      throw ErrorFactories.validation('User already exists with this email', {
-        email: sanitizedData.email
-      })
+    // If user exists in Auth, check if they need a profile created
+    if (existingAuthUser?.user) {
+      const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('id', existingAuthUser.user.id)
+        .single()
+      
+      if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+        throw ErrorFactories.database('Failed to verify user profile status', { 
+          originalError: profileCheckError,
+          email: sanitizedData.email 
+        })
+      }
+
+      // If user exists in Auth but no profile, create the profile
+      if (!existingProfile) {
+        const fullName = `${sanitizedData.firstName} ${sanitizedData.lastName}`
+        
+        // Create user profile in users table
+         const { error: profileError } = await supabaseAdmin
+           .from('users')
+           .insert({
+             id: existingAuthUser.user.id,
+             email: sanitizedData.email,
+             full_name: fullName,
+             first_name: sanitizedData.firstName,
+             last_name: sanitizedData.lastName,
+             phone: sanitizedData.phone,
+             company: sanitizedData.company,
+             avatar_url: null,
+             subscription_tier: 'starter',
+             subscription_status: 'trial',
+             plan_id: sanitizedData.planId,
+             stripe_customer_id: sanitizedData.stripeCustomerId,
+             trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+             created_at: new Date().toISOString(),
+             updated_at: new Date().toISOString()
+           })
+
+         if (profileError) {
+           throw ErrorFactories.database('Failed to create user profile for existing auth user', {
+             originalError: profileError,
+             userId: existingAuthUser.user.id,
+             email: sanitizedData.email
+           })
+         }
+
+         // Also create entry in profiles table
+         const { error: profilesError } = await supabaseAdmin
+           .from('profiles')
+           .insert({
+             user_id: existingAuthUser.user.id,
+             email: sanitizedData.email,
+             name: fullName,
+             onboarding_completed: false,
+             subscription_plan: 'starter',
+             preferences: {},
+             created_at: new Date().toISOString(),
+             updated_at: new Date().toISOString()
+           })
+
+         if (profilesError) {
+           console.warn('Failed to create profiles entry (table may not exist):', profilesError)
+         }
+
+        return NextResponse.json(
+          { 
+            message: 'Profile created successfully for existing account',
+            user: {
+              id: existingAuthUser.user.id,
+              email: existingAuthUser.user.email,
+              firstName: sanitizedData.firstName,
+              lastName: sanitizedData.lastName,
+              fullName: fullName,
+              planId: sanitizedData.planId,
+              stripeCustomerId: sanitizedData.stripeCustomerId
+            }
+          },
+          { status: 201 }
+        )
+      } else {
+        // User already has both auth account and profile
+        return NextResponse.json(
+          { error: 'An account with this email already exists. Please sign in instead.' },
+          { status: 409 }
+        )
+      }
     }
 
     // Execute signup with transaction rollback capability
@@ -253,6 +333,24 @@ async function signupHandler(request: NextRequest) {
           userId: authUser.user.id,
           email: sanitizedData.email
         })
+      }
+
+      // Also create entry in profiles table
+      const { error: profilesError } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+          user_id: authUser.user.id,
+          email: sanitizedData.email,
+          name: fullName,
+          onboarding_completed: false,
+          subscription_plan: 'starter',
+          preferences: {},
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+
+      if (profilesError) {
+        console.warn('Failed to create profiles entry (table may not exist):', profilesError)
       }
     }
 
