@@ -100,7 +100,7 @@ export async function createCheckoutSession(data: CheckoutSessionData) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/onboarding?session_id={CHECKOUT_SESSION_ID}&plan=${sanitizedData.planId}`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-verification?session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(sanitizedData.email)}&name=${encodeURIComponent(`${sanitizedData.firstName} ${sanitizedData.lastName}`)}&plan=${sanitizedData.planId}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout?plan=${sanitizedData.planId}&error=payment_cancelled`,
       allow_promotion_codes: true,
       billing_address_collection: 'required',

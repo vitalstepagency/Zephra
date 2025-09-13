@@ -207,9 +207,11 @@ function CheckoutContent() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          priceId: currentPriceId,
-          successUrl: `${window.location.origin}/payment-verification`,
-          cancelUrl: `${window.location.origin}/checkout?plan=${planParam}&billing=${billingParam}&canceled=true`
+          email: user.email,
+          firstName: user.name?.split(' ')[0] || user.email.split('@')[0],
+          lastName: user.name?.split(' ').slice(1).join(' ') || '',
+          planId: selectedPlan.id,
+          priceId: currentPriceId
         }),
       });
       
