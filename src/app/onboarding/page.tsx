@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@/components/ui'
 import { CheckCircle, ArrowRight, Sparkles, Target, Users, Zap, Crown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PRICING_PLANS } from '@/lib/stripe/config'
+import { AIChat } from '@/components/chat/ai-chat'
 
 const steps = [
   {
@@ -72,6 +73,7 @@ function OnboardingContent() {
   const plan = searchParams.get('plan') || 'starter'
   const checkoutSuccess = searchParams.get('checkout') === 'success'
   const sessionId = searchParams.get('session_id')
+  const email = searchParams.get('email') || session?.user?.email || ''
   const userName = searchParams.get('name') || session?.user?.name || ''
   
   const [currentStep, setCurrentStep] = useState(1)
@@ -100,9 +102,35 @@ function OnboardingContent() {
       return
     }
     
+    // If we have email and sessionId but no session, try to restore session
+    if (!session && sessionId && email) {
+      const restoreSession = async () => {
+        try {
+          console.log('Attempting to restore session in onboarding with email:', email)
+          // Sign in with the email from URL params
+          const response = await signIn('credentials', {
+            email: email,
+            password: sessionId, // Use sessionId as a temporary password
+            redirect: false,
+          })
+          
+          if (response?.error) {
+            console.error('Failed to restore session in onboarding:', response.error)
+            // Don't redirect immediately - we'll still check payment status
+          } else {
+            console.log('Session restored successfully in onboarding')
+          }
+        } catch (error) {
+          console.error('Error restoring session in onboarding:', error)
+        }
+      }
+      
+      restoreSession()
+    }
+    
     // Check payment status and onboarding completion
     checkUserStatus()
-  }, [session, status, router])
+  }, [session, status, router, sessionId, searchParams, email, signIn])
   
   const checkUserStatus = async () => {
     try {
@@ -111,25 +139,32 @@ function OnboardingContent() {
         setPaymentVerified(true)
       } else if (sessionId) {
         // If coming from Stripe checkout with session ID, verify payment
-        const paymentResponse = await fetch(`/api/stripe/verify-session?session_id=${sessionId}`)
+        // Use a more permissive API endpoint that doesn't require authentication
+        const paymentResponse = await fetch(`/api/stripe/verify-payment?session_id=${sessionId}`)
         if (paymentResponse.ok) {
-          const { verified } = await paymentResponse.json()
-          setPaymentVerified(verified)
+          const data = await paymentResponse.json()
+          setPaymentVerified(data.status === 'complete')
         }
       } else {
         // Check if user has active subscription
         setPaymentVerified(true) // Assume verified if no session_id
       }
       
-      // Check onboarding completion status
-      const onboardingResponse = await fetch('/api/onboarding')
-      if (onboardingResponse.ok) {
-        const { completed } = await onboardingResponse.json()
-        setOnboardingCompleted(completed)
-        
-        // If already completed, redirect to dashboard
-        if (completed) {
-          router.push('/dashboard?welcome=true')
+      // Only check onboarding completion if we have a session
+      if (session) {
+        try {
+          const onboardingResponse = await fetch('/api/onboarding')
+          if (onboardingResponse.ok) {
+            const { completed } = await onboardingResponse.json()
+            setOnboardingCompleted(completed)
+            
+            // If already completed, redirect to dashboard
+            if (completed) {
+              router.push('/dashboard?welcome=true')
+            }
+          }
+        } catch (onboardingError) {
+          console.error('Error checking onboarding status:', onboardingError)
         }
       }
     } catch (error) {
@@ -434,6 +469,15 @@ function OnboardingContent() {
                           Based on your goals, Zephra will create custom campaigns, optimize your funnels, 
                           and automate your follow-up sequences to help you achieve your revenue targets.
                         </p>
+                      </div>
+                      
+                      <div className="mt-6 h-[500px]">
+                        <AIChat 
+                          businessName={formData.businessName}
+                          industry={formData.industry}
+                          currentChallenges={formData.currentChallenges}
+                          onComplete={() => nextStep()}
+                        />
                       </div>
                     </div>
                   )}

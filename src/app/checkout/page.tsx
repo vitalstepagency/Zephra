@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle, Shield, Lock, CreditCard, User, Mail, Phone, Building, MapPin, Calendar, ArrowRight, Star, Eye, EyeOff } from 'lucide-react';
 import { createSupabaseClient, getCurrentUser } from '@/lib/supabase/client';
@@ -46,6 +46,7 @@ const staggerContainer = {
 };
 
 function CheckoutContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +56,17 @@ function CheckoutContent() {
       try {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
+        
+        // If no user is found, redirect to signup with plan parameters
+        if (!currentUser) {
+          const params = new URLSearchParams({
+            plan: planParam,
+            frequency: billingParam,
+            redirectToCheckout: 'true'
+          });
+          router.push(`/auth/signup?${params.toString()}`);
+          return;
+        }
       } catch (error) {
         console.error('Error checking user:', error);
       } finally {
@@ -152,98 +164,21 @@ function CheckoutContent() {
   const handleSecureCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    // User should already be authenticated at this point
+    // If not, they would have been redirected to signup
+    if (!user) {
+      const params = new URLSearchParams({
+        plan: planParam,
+        frequency: billingParam,
+        redirectToCheckout: 'true'
+      });
+      router.push(`/auth/signup?${params.toString()}`);
       return;
     }
     
     setIsLoading(true);
     
     try {
-      
-      if (authMode === 'signin') {
-        // Sign in existing user with Supabase
-        const supabase = createSupabaseClient();
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: formData.email.trim().toLowerCase(),
-          password: formData.password
-        });
-        
-        if (error) {
-          throw new Error('Invalid email or password. Please check your credentials.');
-        }
-        
-        setUser(data.user);
-        // Create NextAuth session for existing users
-        await nextAuthSignIn('credentials', {
-          redirect: false,
-          email: formData.email.trim().toLowerCase(),
-          password: formData.password,
-        });
-      } else {
-        // Try to sign up new user first
-        const signupResponse = await fetch('/api/auth/simple-signup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: formData.email.trim().toLowerCase(),
-            password: formData.password,
-            name: `${formData.firstName.trim()} ${formData.lastName.trim()}`
-          }),
-        });
-        
-        // Store credentials in localStorage for session restoration
-        localStorage.setItem('checkout_email', formData.email.trim().toLowerCase());
-        localStorage.setItem('checkout_name', `${formData.firstName.trim()} ${formData.lastName.trim()}`);
-        
-        
-        if (!signupResponse.ok) {
-          const signupError = await signupResponse.json();
-          if (signupError.error?.includes('already exists')) {
-            // User already exists, try to sign them in instead
-            console.log('User already exists, attempting sign in...');
-            const supabase = createSupabaseClient();
-            const { data, error } = await supabase.auth.signInWithPassword({
-              email: formData.email.trim().toLowerCase(),
-              password: formData.password
-            });
-            
-            if (error) {
-              throw new Error('An account with this email already exists, but the password is incorrect. Please check your password or use the sign-in option.');
-            }
-            
-            setUser(data.user);
-            // Create NextAuth session so protected routes recognize authentication
-            await nextAuthSignIn('credentials', {
-              redirect: false,
-              email: formData.email.trim().toLowerCase(),
-              password: formData.password,
-            })
-          } else {
-            throw new Error(signupError.error || 'Failed to create account');
-          }
-        } else {
-          // Account created successfully, now sign in with Supabase
-          const supabase = createSupabaseClient();
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: formData.email.trim().toLowerCase(),
-            password: formData.password
-          });
-
-          if (error) {
-            throw new Error('Account created but failed to sign in. Please try again.');
-          }
-          
-          setUser(data.user);
-          // Ensure NextAuth session for newly created accounts
-          await nextAuthSignIn('credentials', {
-            redirect: false,
-            email: formData.email.trim().toLowerCase(),
-            password: formData.password,
-          });
-        }
-      }
 
       // Validate priceId before sending
       const currentPriceId = getCurrentPriceId();
@@ -257,18 +192,24 @@ function CheckoutContent() {
         planName: selectedPlan.name,
         billingFrequency
       });
+      
+      // Store user email, name, and billing frequency for session restoration after payment
+      if (user) {
+        localStorage.setItem('checkout_email', user.email);
+        localStorage.setItem('checkout_name', user.name || user.email.split('@')[0]);
+        localStorage.setItem('billing_frequency', billingFrequency);
+      }
 
       // Now create the checkout session (user is authenticated)
-      // Include user credentials in the success URL to maintain session
-      const response = await fetch('/api/stripe/checkout', {
+      const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           priceId: currentPriceId,
-          successUrl: `${window.location.origin}/payment-verification?session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(formData.email)}&name=${encodeURIComponent(`${formData.firstName} ${formData.lastName}`)}`,
-          cancelUrl: `${window.location.origin}/pricing?canceled=true`
+          successUrl: `${window.location.origin}/payment-verification`,
+          cancelUrl: `${window.location.origin}/checkout?plan=${planParam}&billing=${billingParam}&canceled=true`
         }),
       });
       
@@ -276,6 +217,11 @@ function CheckoutContent() {
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create checkout session');
+      }
+      
+      // Store session ID for verification after payment
+      if (data.id) {
+        localStorage.setItem('checkout_session_id', data.id);
       }
       
       if (data.url) {

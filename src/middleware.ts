@@ -160,8 +160,17 @@ export default withAuth(
 
     // If user is not authenticated and trying to access protected routes
     if (!token && protectedRoutes.some(route => pathname.startsWith(route))) {
-      // For onboarding, redirect to main page
-      if (pathname.startsWith('/onboarding')) {
+      // Check if the URL has a session_id parameter (coming from payment verification)
+      const hasSessionId = req.nextUrl.searchParams.has('session_id')
+      
+      // Special case for onboarding - allow access with session_id parameter
+      if (pathname.startsWith('/onboarding') && hasSessionId) {
+        // Allow access to onboarding with session_id (session restoration in progress)
+        return NextResponse.next()
+      }
+      
+      // For onboarding without session_id, redirect to main page
+      if (pathname.startsWith('/onboarding') && !hasSessionId) {
         return NextResponse.redirect(new URL('/', req.url))
       }
       // For other protected routes, redirect to signin

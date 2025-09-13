@@ -61,12 +61,13 @@ export function AuthTrigger({
         // User is not authenticated, scroll to pricing
         scrollToPricing()
       } else if (!currentUser) {
-        // Fallback: redirect to checkout for account creation
+        // Redirect to signup page with plan parameters
         const params = new URLSearchParams({
           plan: plan || 'pro',
-          frequency: frequency
+          frequency: frequency,
+          redirectToCheckout: redirectToCheckout ? 'true' : 'false'
         })
-        router.push(`/checkout?${params.toString()}`)
+        router.push(`/auth/signup?${params.toString()}`)
       }
     } catch (error) {
       console.error('Error in handleClick:', error)

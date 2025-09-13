@@ -60,19 +60,16 @@ function PaymentVerificationContent() {
           
           if (response?.error) {
             console.error('Failed to restore session:', response.error)
-            // Only redirect if restoration fails
-            router.push('/auth/signin')
+            // Don't redirect immediately - let the payment verification continue
+            // The user might still be able to complete payment verification
           } else {
             console.log('Session restored successfully')
-            // Clear localStorage after successful restoration
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('checkout_email')
-              localStorage.removeItem('checkout_name')
-            }
+            // Don't clear localStorage yet - we'll need it for the onboarding redirect
+            // It will be cleared after successful payment verification
           }
         } catch (error) {
           console.error('Error restoring session:', error)
-          router.push('/auth/signin')
+          // Don't redirect immediately - let the payment verification continue
         }
       } else if (authStatus === 'unauthenticated' && !sessionId) {
         // Only redirect if no sessionId is present (direct access without checkout)
@@ -104,10 +101,25 @@ function PaymentVerificationContent() {
               if (typeof window !== 'undefined') {
                 localStorage.removeItem('checkout_email')
                 localStorage.removeItem('checkout_name')
+                const frequency = localStorage.getItem('billing_frequency') || 'monthly'
+                localStorage.removeItem('billing_frequency')
               }
-              // Redirect to onboarding with plan info
+              // Redirect to onboarding with plan info and include email/name for session restoration
               const planId = data.planId || 'starter'
-              router.push(`/onboarding?plan=${planId}&checkout=success&session_id=${sessionId}`)
+              const frequency = localStorage.getItem('billing_frequency') || 'monthly'
+              
+              // Construct URL with all necessary parameters
+              const urlWithParams = new URL('/onboarding', window.location.origin)
+              urlWithParams.searchParams.set('plan', planId)
+              urlWithParams.searchParams.set('frequency', frequency)
+              urlWithParams.searchParams.set('checkout', 'success')
+              urlWithParams.searchParams.set('session_id', sessionId)
+              
+              // Add email and name to the redirect URL if available
+              if (userEmail) urlWithParams.searchParams.set('email', userEmail)
+              if (userName) urlWithParams.searchParams.set('name', userName || '')
+              
+              router.push(urlWithParams.pathname + urlWithParams.search)
             }, 2000)
           } else if (data.status === 'failed') {
             setStatus('failed')

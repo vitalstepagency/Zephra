@@ -7,6 +7,7 @@ import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitl
 import { Mail, ArrowRight, Sparkles, Shield, Zap, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useToast } from '@/components/ui/use-toast'
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -42,6 +43,8 @@ function SignUpContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const plan = searchParams.get('plan') || 'starter'
+  const frequency = searchParams.get('frequency') || 'monthly'
+  const redirectToCheckout = searchParams.get('redirectToCheckout') === 'true'
 
   useEffect(() => {
     const checkSession = async () => {
@@ -76,6 +79,7 @@ function SignUpContent() {
     return Object.keys(newErrors).length === 0
   }
 
+  const { toast } = useToast()
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -87,17 +91,51 @@ function SignUpContent() {
       const response = await fetch('/api/auth/simple-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name })
+        body: JSON.stringify({ 
+          email: email.trim().toLowerCase(), 
+          password, 
+          name: name.trim() 
+        })
       })
       
       if (response.ok) {
-        // Then sign in with the new credentials
-        const result = await signIn('credentials', {
-          email,
-          password,
-          callbackUrl: `/onboarding?plan=${plan}&name=${encodeURIComponent(name)}`,
-          redirect: true
+        // Store credentials in localStorage for session restoration
+        localStorage.setItem('checkout_email', email.trim().toLowerCase())
+        localStorage.setItem('checkout_name', name.trim())
+        
+        toast({
+          title: 'Account created successfully!',
+          description: redirectToCheckout ? 'Redirecting to checkout...' : 'Redirecting to onboarding...'
         })
+        
+        // Then sign in with the new credentials
+        if (redirectToCheckout) {
+          // Sign in without redirect
+          const result = await signIn('credentials', {
+            email,
+            password,
+            redirect: false
+          })
+          
+          if (result?.ok) {
+            // Redirect to checkout with plan parameters
+            const params = new URLSearchParams({
+              plan: plan,
+              billing: frequency
+            })
+            router.push(`/checkout?${params.toString()}`)
+          } else {
+            throw new Error('Failed to sign in')
+          }
+        } else {
+          // Sign in with redirect to onboarding
+          const result = await signIn('credentials', {
+            email,
+            password,
+            callbackUrl: `/onboarding?plan=${plan}&name=${encodeURIComponent(name)}`,
+            redirect: true
+          })
+        }
       } else {
         const error = await response.json()
         setErrors({ email: error.message || 'Sign up failed' })
@@ -105,6 +143,11 @@ function SignUpContent() {
     } catch (error) {
       console.error('Sign up error:', error)
       setErrors({ email: 'An error occurred during sign up' })
+      toast({
+        variant: 'destructive',
+        title: 'Error creating account',
+        description: 'An unexpected error occurred during sign up'
+      })
     } finally {
       setIsLoading(false)
     }
