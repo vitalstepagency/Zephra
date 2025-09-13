@@ -69,6 +69,10 @@ const nextConfig = {
       '@/lib/monitoring': require('path').resolve(__dirname, 'src/lib/monitoring.ts'),
       '@/lib/api-security': require('path').resolve(__dirname, 'src/lib/api-security.ts'),
       '@/lib/error-handler': require('path').resolve(__dirname, 'src/lib/error-handler.ts'),
+      '@/lib/rate-limit': require('path').resolve(__dirname, 'src/lib/rate-limit.ts'),
+      '@/lib/supabase/client': require('path').resolve(__dirname, 'src/lib/supabase/client.ts'),
+      '@/components/providers/theme-provider': require('path').resolve(__dirname, 'src/components/providers/theme-provider.tsx'),
+      '@/components/providers/auth-provider': require('path').resolve(__dirname, 'src/components/providers/auth-provider.tsx'),
       '@/components/landing-page': require('path').resolve(__dirname, 'src/components/landing-page.tsx'),
     };
     
