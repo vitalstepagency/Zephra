@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseAdmin } from '../../../../lib/supabase/server'
+import { supabaseAdmin } from '../../../../lib/supabase/server'
 import { z } from 'zod'
-import bcrypt from 'bcryptjs'
 import { rateLimit } from '../../../../lib/rate-limit'
 import DOMPurify from 'isomorphic-dompurify'
 import { 
@@ -110,7 +109,7 @@ async function signupHandler(request: NextRequest) {
       )
     }
     
-    const supabaseAdmin = getSupabaseAdmin()
+
     const body = await request.json().catch(() => {
       throw ErrorFactories.validation('Invalid JSON in request body')
     })
@@ -173,8 +172,6 @@ async function signupHandler(request: NextRequest) {
     const result = await TransactionManager.executeWithRollback(
       requestId,
       async () => {
-        // Hash password
-        const hashedPassword = await bcrypt.hash(sanitizedData.password, 12)
         const fullName = `${sanitizedData.firstName} ${sanitizedData.lastName}`
 
         // Create user in Supabase Auth
@@ -200,7 +197,7 @@ async function signupHandler(request: NextRequest) {
           })
         }
 
-        return { authUser, hashedPassword, fullName }
+        return { authUser, fullName }
       },
       async () => {
          // Rollback: Delete created auth user if profile creation fails
@@ -214,7 +211,7 @@ async function signupHandler(request: NextRequest) {
        }
     )
 
-    const { authUser, hashedPassword, fullName } = result
+    const { authUser, fullName } = result
 
     // Check if user profile already exists
     const { data: existingProfile } = await supabaseAdmin
