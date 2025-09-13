@@ -198,8 +198,20 @@ async function signupHandler(request: NextRequest) {
           })
 
           if (authError) {
+            // Debug: Log the actual error structure
+            console.log('Auth Error Details:', {
+              message: authError.message,
+              code: authError.code,
+              status: authError.status,
+              name: authError.name,
+              fullError: authError
+            })
+            
             // If user already exists in Auth, throw a specific error
-            if (authError.message?.includes('email_exists') || authError.message?.includes('User already registered')) {
+            if (authError.code === 'email_exists' || 
+                authError.message?.includes('email_exists') || 
+                authError.message?.includes('User already registered') ||
+                authError.message?.includes('already been registered')) {
               const existingUserError = new Error('USER_EXISTS_IN_AUTH')
               existingUserError.name = 'UserExistsError'
               throw existingUserError
