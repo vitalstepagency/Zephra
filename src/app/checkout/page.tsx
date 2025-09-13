@@ -136,39 +136,60 @@ function CheckoutContent() {
     setIsLoading(true);
     
     try {
-      // Create checkout session
-      // First create the user account
-      const signupResponse = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email.trim().toLowerCase(),
-          password: formData.password,
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
-          phone: formData.phone?.trim(),
-          company: formData.company?.trim(),
-          planId: selectedPlan.id,
-          stripeCustomerId: 'temp_customer_id' // Will be updated after Stripe checkout
-        }),
-      });
-      
-      if (!signupResponse.ok) {
-        const signupError = await signupResponse.json();
-        throw new Error(signupError.error || 'Failed to create account');
-      }
-
-      // Sign in the user
-      const signInResult = await signIn('credentials', {
+      // First try to sign in existing user
+      let signInResult = await signIn('credentials', {
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
         redirect: false
       });
 
+      // If sign in fails, try to create new account
       if (signInResult?.error) {
-        throw new Error('Failed to sign in after account creation');
+        const signupResponse = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email.trim().toLowerCase(),
+            password: formData.password,
+            firstName: formData.firstName.trim(),
+            lastName: formData.lastName.trim(),
+            phone: formData.phone?.trim(),
+            company: formData.company?.trim(),
+            planId: selectedPlan.id,
+            stripeCustomerId: 'temp_customer_id' // Will be updated after Stripe checkout
+          }),
+        });
+        
+        if (!signupResponse.ok) {
+          const signupError = await signupResponse.json();
+          // If user already exists, try signing in again
+          if (signupError.error?.includes('already exists')) {
+            signInResult = await signIn('credentials', {
+              email: formData.email.trim().toLowerCase(),
+              password: formData.password,
+              redirect: false
+            });
+            
+            if (signInResult?.error) {
+              throw new Error('Account exists but password is incorrect. Please check your password or use a different email.');
+            }
+          } else {
+            throw new Error(signupError.error || 'Failed to create account');
+          }
+        } else {
+          // Account created successfully, now sign in
+          signInResult = await signIn('credentials', {
+            email: formData.email.trim().toLowerCase(),
+            password: formData.password,
+            redirect: false
+          });
+
+          if (signInResult?.error) {
+            throw new Error('Account created but failed to sign in. Please try again.');
+          }
+        }
       }
 
       // Validate priceId before sending
