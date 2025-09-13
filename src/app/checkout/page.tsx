@@ -21,8 +21,10 @@ interface PricingPlan {
 
 const pricingPlans: Record<string, PricingPlan> = {
   starter: { ...PRICING_PLANS.starter, id: 'starter' },
-  professional: { ...PRICING_PLANS.pro, id: 'professional' },
-  elite: { ...PRICING_PLANS.enterprise, id: 'elite' }
+  pro: { ...PRICING_PLANS.pro, id: 'pro' },
+  professional: { ...PRICING_PLANS.pro, id: 'professional' }, // alias for pro
+  enterprise: { ...PRICING_PLANS.enterprise, id: 'enterprise' },
+  elite: { ...PRICING_PLANS.enterprise, id: 'elite' } // alias for enterprise
 };
 
 const fadeInUp = {
@@ -155,6 +157,17 @@ function CheckoutContent() {
       if (signInResult?.error) {
         throw new Error('Failed to sign in after account creation');
       }
+
+      // Validate priceId before sending
+      if (!selectedPlan.priceId) {
+        throw new Error(`No price ID found for plan: ${selectedPlan.id}`);
+      }
+
+      console.log('Creating checkout session with:', {
+        priceId: selectedPlan.priceId,
+        planId: selectedPlan.id,
+        planName: selectedPlan.name
+      });
 
       // Now create the checkout session (user is authenticated)
       const response = await fetch('/api/stripe/checkout', {
