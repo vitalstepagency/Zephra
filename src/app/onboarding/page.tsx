@@ -70,6 +70,7 @@ function OnboardingContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const plan = searchParams.get('plan') || 'starter'
+  const checkoutSuccess = searchParams.get('checkout') === 'success'
   const sessionId = searchParams.get('session_id')
   const userName = searchParams.get('name') || session?.user?.name || ''
   
@@ -102,8 +103,11 @@ function OnboardingContent() {
   
   const checkUserStatus = async () => {
     try {
-      // If coming from Stripe checkout, verify payment
-      if (sessionId) {
+      // If coming from successful checkout, assume payment is verified
+      if (checkoutSuccess) {
+        setPaymentVerified(true)
+      } else if (sessionId) {
+        // If coming from Stripe checkout with session ID, verify payment
         const paymentResponse = await fetch(`/api/stripe/verify-session?session_id=${sessionId}`)
         if (paymentResponse.ok) {
           const { verified } = await paymentResponse.json()
@@ -186,8 +190,8 @@ function OnboardingContent() {
     )
   }
 
-  // Show payment verification message if payment not verified
-  if (sessionId && !paymentVerified) {
+  // Show payment verification message if payment not verified (but not for checkout success)
+  if ((sessionId && !paymentVerified) && !checkoutSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">

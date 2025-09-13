@@ -3,8 +3,8 @@
 import { signIn, getSession } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Separator } from '@/components/ui'
-import { Github, Mail, Chrome, ArrowRight, Zap, Shield } from 'lucide-react'
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@/components/ui'
+import { Mail, Eye, EyeOff, ArrowRight, Zap, Shield } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -35,7 +35,9 @@ const cardVariants = {
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
-  const [errors, setErrors] = useState<{email?: string}>({})
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -48,47 +50,26 @@ export default function SignInPage() {
     checkSession()
   }, [router])
 
-  const validateEmail = () => {
-    const newErrors: {email?: string} = {}
-    
-    if (!email) {
-      newErrors.email = 'Email is required'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Please enter a valid email address'
-    }
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!validateEmail()) return
-    
     setIsLoading(true)
+    setError('')
+    
     try {
-      await signIn('email', { 
+      const result = await signIn('credentials', {
         email,
-        callbackUrl: '/dashboard',
-        redirect: true 
+        password,
+        redirect: false
       })
+      
+      if (result?.error) {
+        setError('Invalid email or password')
+      } else {
+        router.push('/dashboard')
+      }
     } catch (error) {
       console.error('Sign in error:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleSocialSignIn = async (provider: string) => {
-    setIsLoading(true)
-    try {
-      await signIn(provider, { 
-        callbackUrl: '/dashboard',
-        redirect: true 
-      })
-    } catch (error) {
-      console.error('Sign in error:', error)
+      setError('An error occurred during sign in')
     } finally {
       setIsLoading(false)
     }
@@ -149,42 +130,14 @@ export default function SignInPage() {
             </CardHeader>
             
             <CardContent className="space-y-6">
-              {/* Social Sign In */}
-              <div className="space-y-3">
-                <Button
-                  onClick={() => handleSocialSignIn('google')}
-                  disabled={isLoading}
-                  className="w-full bg-white hover:bg-gray-50 text-gray-900 border-0 py-6"
-                  variant="outline"
-                >
-                  <Chrome className="w-5 h-5 mr-3" />
-                  Continue with Google
-                </Button>
-                
-                <Button
-                  onClick={() => handleSocialSignIn('github')}
-                  disabled={isLoading}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-white border-slate-600 py-6"
-                  variant="outline"
-                >
-                  <Github className="w-5 h-5 mr-3" />
-                  Continue with GitHub
-                </Button>
-              </div>
-              
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <Separator className="w-full bg-slate-700" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-slate-900 px-3 text-slate-400 font-medium">
-                    Or continue with email
-                  </span>
-                </div>
-              </div>
-              
               {/* Email Sign In Form */}
               <form onSubmit={handleEmailSignIn} className="space-y-4">
+                {error && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </div>
+                )}
+                
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-slate-300 font-medium">
                     Email Address
@@ -197,73 +150,89 @@ export default function SignInPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500 py-6"
                     disabled={isLoading}
+                    required
                   />
-                  {errors.email && (
-                    <p className="text-red-400 text-sm">{errors.email}</p>
-                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-slate-300 font-medium">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500 py-6 pr-12"
+                      disabled={isLoading}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
                 
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white border-0 py-6 font-semibold"
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white border-0 py-6 font-semibold"
                 >
                   {isLoading ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-                      Signing In...
+                    <div className="flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                      Signing in...
                     </div>
                   ) : (
-                    <div className="flex items-center">
+                    <>
                       <Mail className="w-5 h-5 mr-2" />
                       Sign In
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </div>
+                    </>
                   )}
                 </Button>
               </form>
+              
+              <div className="text-center">
+                <Link 
+                  href="/auth/forgot-password" 
+                  className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
-
-        {/* Trust Indicators */}
-        <motion.div 
-          className="mt-8 text-center"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
+        
+        {/* Footer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+          className="text-center space-y-4"
         >
-          <div className="flex items-center justify-center space-x-6 mb-6">
-            <div className="flex items-center text-slate-400 text-sm">
-              <Shield className="w-4 h-4 mr-2 text-emerald-400" />
-              Secure & Encrypted
-            </div>
-            <div className="flex items-center text-slate-400 text-sm">
-              <Zap className="w-4 h-4 mr-2 text-indigo-400" />
-              Quick Access
-            </div>
-          </div>
-          
-          <p className="text-xs text-slate-500 mb-4">
-            By signing in, you agree to our{' '}
-            <Link href="/terms" className="text-indigo-400 hover:text-indigo-300 underline">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy" className="text-indigo-400 hover:text-indigo-300 underline">
-              Privacy Policy
-            </Link>
-          </p>
-          
           <p className="text-slate-400 text-sm">
             Don't have an account?{' '}
-            <Link 
-              href="/auth/signup" 
-              className="text-indigo-400 hover:text-indigo-300 font-medium underline"
-            >
+            <Link href="/auth/signup" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
               Sign up here
             </Link>
           </p>
+          
+          <div className="flex items-center justify-center space-x-6 text-xs text-slate-500">
+            <Link href="/privacy" className="hover:text-slate-400 transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <Link href="/terms" className="hover:text-slate-400 transition-colors">
+              Terms of Service
+            </Link>
+          </div>
         </motion.div>
       </motion.div>
     </div>

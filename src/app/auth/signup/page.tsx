@@ -3,8 +3,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Separator } from '@/components/ui'
-import { Github, Mail, Chrome, ArrowRight, Sparkles, Shield, Zap } from 'lucide-react'
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@/components/ui'
+import { Mail, ArrowRight, Sparkles, Shield, Zap, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -36,7 +36,9 @@ function SignUpContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
-  const [errors, setErrors] = useState<{email?: string, name?: string}>({})
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [errors, setErrors] = useState<{email?: string, name?: string, password?: string}>({})
   const router = useRouter()
   const searchParams = useSearchParams()
   const plan = searchParams.get('plan') || 'starter'
@@ -52,7 +54,7 @@ function SignUpContent() {
   }, [router])
 
   const validateForm = () => {
-    const newErrors: {email?: string, name?: string} = {}
+    const newErrors: {email?: string, name?: string, password?: string} = {}
     
     if (!email) {
       newErrors.email = 'Email is required'
@@ -64,38 +66,45 @@ function SignUpContent() {
       newErrors.name = 'Name must be at least 2 characters'
     }
     
+    if (!password) {
+      newErrors.password = 'Password is required'
+    } else if (!password || password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters'
+    }
+    
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleEmailSignUp = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!validateForm()) return
     
     setIsLoading(true)
     try {
-      await signIn('email', { 
-        email,
-        callbackUrl: `/onboarding?plan=${plan}&name=${encodeURIComponent(name)}`,
-        redirect: true 
+      // First create the account via API
+      const response = await fetch('/api/auth/simple-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name })
       })
+      
+      if (response.ok) {
+        // Then sign in with the new credentials
+        const result = await signIn('credentials', {
+          email,
+          password,
+          callbackUrl: `/onboarding?plan=${plan}&name=${encodeURIComponent(name)}`,
+          redirect: true
+        })
+      } else {
+        const error = await response.json()
+        setErrors({ email: error.message || 'Sign up failed' })
+      }
     } catch (error) {
       console.error('Sign up error:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleSocialSignUp = async (provider: string) => {
-    setIsLoading(true)
-    try {
-      await signIn(provider, { 
-        callbackUrl: `/onboarding?plan=${plan}`,
-        redirect: true 
-      })
-    } catch (error) {
-      console.error('Sign up error:', error)
+      setErrors({ email: 'An error occurred during sign up' })
     } finally {
       setIsLoading(false)
     }
@@ -169,42 +178,8 @@ function SignUpContent() {
             </CardHeader>
             
             <CardContent className="space-y-6">
-              {/* Social Sign Up */}
-              <div className="space-y-3">
-                <Button
-                  onClick={() => handleSocialSignUp('google')}
-                  disabled={isLoading}
-                  className="w-full bg-white hover:bg-gray-50 text-gray-900 border-0 py-6"
-                  variant="outline"
-                >
-                  <Chrome className="w-5 h-5 mr-3" />
-                  Continue with Google
-                </Button>
-                
-                <Button
-                  onClick={() => handleSocialSignUp('github')}
-                  disabled={isLoading}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-white border-slate-600 py-6"
-                  variant="outline"
-                >
-                  <Github className="w-5 h-5 mr-3" />
-                  Continue with GitHub
-                </Button>
-              </div>
-              
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <Separator className="w-full bg-slate-700" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-slate-900 px-3 text-slate-400 font-medium">
-                    Or continue with email
-                  </span>
-                </div>
-              </div>
-              
-              {/* Email Sign Up Form */}
-              <form onSubmit={handleEmailSignUp} className="space-y-4">
+              {/* Sign Up Form */}
+              <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-slate-300 font-medium">
                     Full Name
@@ -238,6 +213,40 @@ function SignUpContent() {
                   />
                   {errors.email && (
                     <p className="text-red-400 text-sm">{errors.email}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-slate-300 font-medium">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Create a password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500 py-6 pr-12"
+                      disabled={isLoading}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={isLoading}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-slate-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-slate-400" />
+                      )}
+                    </Button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-red-400 text-sm">{errors.password}</p>
                   )}
                 </div>
                 

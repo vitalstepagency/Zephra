@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
             userId: user.id
           }
         },
-        success_url: successUrl || `${req.nextUrl.origin}/onboarding?success=true&plan=${priceId}`,
+        success_url: successUrl || `${req.nextUrl.origin}/onboarding?checkout=success`,
         cancel_url: cancelUrl || `${req.nextUrl.origin}/?canceled=true`,
         metadata: {
           userId: user.id
