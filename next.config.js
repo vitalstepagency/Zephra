@@ -63,8 +63,12 @@ const nextConfig = {
       '@/hooks/use-toast': require('path').resolve(__dirname, 'src/hooks/use-toast.ts'),
       '@/lib/utils': require('path').resolve(__dirname, 'src/lib/utils.ts'),
       '@/lib/stripe/config': require('path').resolve(__dirname, 'src/lib/stripe/config.ts'),
+      '@/lib/stripe/checkout': require('path').resolve(__dirname, 'src/lib/stripe/checkout.ts'),
       '@/lib/security': require('path').resolve(__dirname, 'src/lib/security.ts'),
       '@/lib/auth/config': require('path').resolve(__dirname, 'src/lib/auth/config.ts'),
+      '@/lib/monitoring': require('path').resolve(__dirname, 'src/lib/monitoring.ts'),
+      '@/lib/api-security': require('path').resolve(__dirname, 'src/lib/api-security.ts'),
+      '@/lib/error-handler': require('path').resolve(__dirname, 'src/lib/error-handler.ts'),
       '@/components/landing-page': require('path').resolve(__dirname, 'src/components/landing-page.tsx'),
     };
     
