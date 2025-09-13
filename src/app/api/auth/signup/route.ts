@@ -170,7 +170,6 @@ async function signupHandler(request: NextRequest) {
     }
 
     // User doesn't exist, proceed with creation
-    // DEBUG: Fixed getUserByEmail issue - v2.0
 
     // Execute signup with transaction rollback capability
     let createdUserId: string | null = null
