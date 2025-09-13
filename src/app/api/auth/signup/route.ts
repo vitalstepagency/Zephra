@@ -198,32 +198,20 @@ async function signupHandler(request: NextRequest) {
           })
 
           if (authError) {
-            // Debug: Log the actual error structure
-            console.log('Auth Error Details:', {
-              message: authError.message,
-              code: authError.code,
-              status: authError.status,
-              name: authError.name,
-              fullError: JSON.stringify(authError)
-            })
-            
-            // If user already exists in Auth, return early with 409
-            // Check for various ways Supabase might indicate email exists
+            // If user already exists in Auth, return 409 error
             if (authError.code === 'email_exists' || 
                 authError.code === 'user_already_exists' ||
                 authError.message?.toLowerCase().includes('email') && authError.message?.toLowerCase().includes('exist') ||
                 authError.message?.toLowerCase().includes('already') && authError.message?.toLowerCase().includes('register') ||
                 authError.status === 422) {
-              console.log('🔍 DETECTED EMAIL EXISTS ERROR - returning 409 response')
-              // Return the 409 response directly - this will bypass withErrorHandler
-               throw new AppError(
-                 'An account with this email already exists. Please sign in instead.',
-                 ErrorType.AUTHENTICATION,
-                 ErrorSeverity.MEDIUM,
-                 409,
-                 true,
-                 { email: sanitizedData.email, originalError: authError }
-               )
+              throw new AppError(
+                'An account with this email already exists. Please sign in instead.',
+                ErrorType.AUTHENTICATION,
+                ErrorSeverity.MEDIUM,
+                409,
+                true,
+                { email: sanitizedData.email, originalError: authError }
+              )
             }
             
             throw ErrorFactories.authentication('Failed to create user account', {
