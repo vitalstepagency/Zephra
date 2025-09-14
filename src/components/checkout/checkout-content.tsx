@@ -89,6 +89,9 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
     setIsLoading(true)
     
     try {
+      // Reset any redirect count to prevent loops
+      localStorage.removeItem('redirectCount')
+      
       // Validate priceId before sending
       const currentPriceId = getCurrentPriceId()
       if (!currentPriceId) {

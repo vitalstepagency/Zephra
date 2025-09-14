@@ -188,6 +188,8 @@ export default function PlanSignUpPage() {
               plan: planId,
               billing: frequency
             })
+            // Clear any redirectToCheckout parameter to prevent loops
+            localStorage.removeItem('redirectToCheckout')
             router.push(`/checkout?${params.toString()}`)
           }, 1500)
         } else {

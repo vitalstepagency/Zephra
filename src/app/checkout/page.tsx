@@ -96,6 +96,7 @@ export default function CheckoutPage() {
             return
           }
           
+          console.log('Auto sign-in successful, proceeding to checkout')
           // Clear stored credentials after successful sign-in
           localStorage.removeItem('newUserEmail')
           localStorage.removeItem('newUserPassword')
@@ -105,6 +106,24 @@ export default function CheckoutPage() {
           return
         } else if (status === 'unauthenticated') {
           console.log('No authenticated session found, redirecting to plans')
+          
+          // Check if we're in a redirection loop
+          const redirectCount = parseInt(localStorage.getItem('redirectCount') || '0')
+          if (redirectCount > 2) {
+            console.log('Detected redirection loop, clearing state and redirecting to home')
+            localStorage.removeItem('redirectCount')
+            localStorage.removeItem('newUserEmail')
+            localStorage.removeItem('newUserPassword')
+            localStorage.removeItem('redirectToCheckout')
+            localStorage.removeItem('selectedPlan')
+            localStorage.removeItem('billingFrequency')
+            router.push('/')
+            return
+          }
+          
+          // Increment redirect count
+          localStorage.setItem('redirectCount', (redirectCount + 1).toString())
+          
           // Store the redirect flag in URL params
           const params = new URLSearchParams({
             redirectToCheckout: 'true'
@@ -122,6 +141,8 @@ export default function CheckoutPage() {
         // We have a session, set the user
         if (session?.user) {
           setUser(session.user)
+          // Clear redirect count since we're successfully authenticated
+          localStorage.removeItem('redirectCount')
         }
       } catch (error) {
         console.error('Error checking session:', error)

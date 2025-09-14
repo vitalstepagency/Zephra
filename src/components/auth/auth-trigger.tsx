@@ -58,7 +58,7 @@ export function AuthTrigger({
         })
         router.push(`/checkout?${params.toString()}`)
       } else {
-        // If not logged in, redirect to plans page with parameters
+        // If not logged in, redirect to plan-specific sign-up page
         const params = new URLSearchParams({
           redirectToCheckout: 'true',
           frequency: frequency
@@ -67,8 +67,8 @@ export function AuthTrigger({
       }
     } catch (error) {
       console.error('Error in handleClick:', error)
-      // Default fallback - go to plans page
-      router.push('/plans')
+      // Default fallback - go to plan-specific sign-up page
+      router.push(`/plans/${plan}`)
     } finally {
       setIsLoading(false)
     }
@@ -84,14 +84,17 @@ export function AuthTrigger({
   }, [])
 
   const handleGetStarted = () => {
+    // Reset any redirect count to prevent loops
+    localStorage.removeItem('redirectCount')
+    
     if (planId) {
       // If we're on a plan page, redirect to the plan-specific signup
       const searchParams = new URLSearchParams(window.location.search)
       const frequency = searchParams.get('frequency') || 'monthly'
-      router.push(`/plans/${planId}?frequency=${frequency}`)
+      router.push(`/plans/${planId}?frequency=${frequency}&redirectToCheckout=true`)
     } else {
       // Otherwise redirect to the plan-specific signup page
-      router.push(`/plans/${plan}?frequency=${frequency}`)
+      router.push(`/plans/${plan}?frequency=${frequency}&redirectToCheckout=true`)
     }
   }
 
