@@ -197,7 +197,7 @@ export default function PlanSignUpPage() {
               billing: frequency
             })
             router.push(`/checkout?${params.toString()}`)
-          }, 1500)
+          }, 1000)
         } else {
           throw new Error('Failed to sign in')
         }

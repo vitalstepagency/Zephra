@@ -52,63 +52,106 @@ export default function SignInPage() {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     setError('')
     
+    if (!email || !password) {
+      setError('Please enter both email and password')
+      return
+    }
+    
+    setIsLoading(true)
+    
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false
-      })
+      // Check if this is a new user from plan signup
+      const checkoutEmail = localStorage.getItem('checkout_email')
+      const newUserEmail = localStorage.getItem('newUserEmail')
+      const newUserPassword = localStorage.getItem('newUserPassword')
       
-      if (result?.error) {
-        setError('Invalid email or password')
-      } else {
-        // Check if there's stored plan information from signup
-        const storedPlan = localStorage.getItem('selected_plan')
-        const storedFrequency = localStorage.getItem('selected_frequency')
-        const redirectToCheckout = localStorage.getItem('redirect_to_checkout') === 'true'
+      // If we have stored credentials from plan signup and they match the entered credentials
+      if ((checkoutEmail === email || newUserEmail === email) && newUserPassword === password) {
+        console.log('New user from plan signup detected, proceeding to checkout')
         
-        // Check old key formats and migrate if found
-        if (!storedPlan) {
-          const oldStoredPlan = localStorage.getItem('selectedPlan')
-          if (oldStoredPlan) {
-            localStorage.setItem('selected_plan', oldStoredPlan)
-          }
-        }
+        // Sign in with stored credentials
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false
+        })
         
-        if (localStorage.getItem('redirectToCheckout') === 'true') {
-          localStorage.setItem('redirect_to_checkout', 'true')
-        }
-        
-        // Store the current redirect state before clearing flags
-        const shouldRedirectToCheckout = redirectToCheckout || localStorage.getItem('redirectToCheckout') === 'true'
-        const finalPlan = storedPlan || localStorage.getItem('selectedPlan') || 'pro'
-        const finalFrequency = storedFrequency || localStorage.getItem('billingFrequency') || 'monthly'
-        
-        // Clear all redirect flags immediately to prevent loops
-        localStorage.removeItem('redirect_to_checkout')
-        localStorage.removeItem('redirectToCheckout')
-        localStorage.removeItem('redirectCount')
-        localStorage.removeItem('selectedPlan')
-        localStorage.removeItem('billingFrequency')
-        
-        if (finalPlan && shouldRedirectToCheckout) {
-          // Redirect to checkout with plan parameters
+        if (result?.error) {
+          setError('Invalid email or password')
+        } else {
+          // Get stored plan and frequency
+          const storedPlan = localStorage.getItem('selected_plan')
+          const storedFrequency = localStorage.getItem('selected_frequency')
+          
+          // Create URL params for the redirect
           const params = new URLSearchParams({
-            plan: finalPlan,
-            billing: finalFrequency
+            plan: storedPlan || 'pro',
+            billing: storedFrequency || 'monthly'
           })
           
-          console.log('Redirecting to checkout with plan:', finalPlan, 'and billing:', finalFrequency)
+          // Redirect directly to checkout
+          console.log('Redirecting to checkout with stored plan info')
           router.push(`/checkout?${params.toString()}`)
-        } else if (storedPlan) {
-          // Redirect to onboarding with plan parameter
-          router.push(`/onboarding?plan=${storedPlan}`)
+          return
+        }
+      } else {
+        // Regular sign in flow
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false
+        })
+        
+        if (result?.error) {
+          setError('Invalid email or password')
         } else {
-          // Default redirect to dashboard
-          router.push('/dashboard')
+          // Check if there's stored plan information from signup
+          const storedPlan = localStorage.getItem('selected_plan')
+          const storedFrequency = localStorage.getItem('selected_frequency')
+          const redirectToCheckout = localStorage.getItem('redirect_to_checkout') === 'true'
+          
+          // Check old key formats and migrate if found
+          if (!storedPlan) {
+            const oldStoredPlan = localStorage.getItem('selectedPlan')
+            if (oldStoredPlan) {
+              localStorage.setItem('selected_plan', oldStoredPlan)
+            }
+          }
+          
+          if (localStorage.getItem('redirectToCheckout') === 'true') {
+            localStorage.setItem('redirect_to_checkout', 'true')
+          }
+          
+          // Store the current redirect state before clearing flags
+          const shouldRedirectToCheckout = redirectToCheckout || localStorage.getItem('redirectToCheckout') === 'true'
+          const finalPlan = storedPlan || localStorage.getItem('selectedPlan') || 'pro'
+          const finalFrequency = storedFrequency || localStorage.getItem('billingFrequency') || 'monthly'
+          
+          // Clear all redirect flags immediately to prevent loops
+          localStorage.removeItem('redirect_to_checkout')
+          localStorage.removeItem('redirectToCheckout')
+          localStorage.removeItem('redirectCount')
+          localStorage.removeItem('selectedPlan')
+          localStorage.removeItem('billingFrequency')
+          
+          if (finalPlan && shouldRedirectToCheckout) {
+            // Redirect to checkout with plan parameters
+            const params = new URLSearchParams({
+              plan: finalPlan,
+              billing: finalFrequency
+            })
+            
+            console.log('Redirecting to checkout with plan:', finalPlan, 'and billing:', finalFrequency)
+            router.push(`/checkout?${params.toString()}`)
+          } else if (storedPlan) {
+            // Redirect to onboarding with plan parameter
+            router.push(`/onboarding?plan=${storedPlan}`)
+          } else {
+            // Default redirect to dashboard
+            router.push('/dashboard')
+          }
         }
       }
     } catch (error) {

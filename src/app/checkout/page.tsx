@@ -236,20 +236,32 @@ export default function CheckoutPage() {
           // Increment redirect count
           localStorage.setItem('redirectCount', (redirectCount + 1).toString())
           
-          // Store the redirect flag in localStorage (more reliable than URL params)
-          localStorage.setItem('redirect_to_checkout', 'true')
+          // Check if we have a newly created user from plan-specific signup
+          const checkoutEmail = localStorage.getItem('checkout_email')
+          const checkoutName = localStorage.getItem('checkout_name')
           
-          // Store plan and billing info in localStorage
-          if (planId) localStorage.setItem('selected_plan', planId)
-          if (billingFrequency) localStorage.setItem('selected_frequency', billingFrequency)
-          
-          // Create URL params for the redirect
-          const params = new URLSearchParams()
-          params.append('frequency', billingFrequency || 'monthly')
-          
-          // Redirect to signin page
-          router.push(`/auth/signin`)
-          return
+          if (checkoutEmail) {
+            // User has already signed up, proceed with checkout
+            console.log('User has already signed up, proceeding with checkout')
+            // Set a temporary user for checkout
+            setUser({
+              name: checkoutName || '',
+              email: checkoutEmail,
+              id: 'temp-id'
+            })
+            return
+          } else {
+            // Store the redirect flag in localStorage (more reliable than URL params)
+            localStorage.setItem('redirect_to_checkout', 'true')
+            
+            // Store plan and billing info in localStorage
+            if (planId) localStorage.setItem('selected_plan', planId)
+            if (billingFrequency) localStorage.setItem('selected_frequency', billingFrequency)
+            
+            // Redirect to signin page
+            router.push(`/auth/signin`)
+            return
+          }
         }
         
         // We have a session, set the user
