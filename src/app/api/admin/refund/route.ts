@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server'
-import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { 
@@ -7,10 +6,9 @@ import {
   secureResponse,
   logSecurityEvent
 } from '@/lib/security'
+import { getStripe } from '@/lib/stripe/config'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-})
+const stripe = getStripe()
 
 export async function POST(req: NextRequest) {
   try {
