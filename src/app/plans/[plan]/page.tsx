@@ -87,6 +87,17 @@ function PlanSignupContent() {
       try {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
+        
+        // Check if user is already logged in and should be redirected
+        const session = await getSession();
+        if (session && redirectToCheckout) {
+          // User is logged in and should be redirected to checkout
+          const params = new URLSearchParams({
+            plan: normalizedPlanId,
+            billing: billingFrequency
+          });
+          router.push(`/checkout?${params.toString()}`);
+        }
       } catch (error) {
         // Handle auth session missing error gracefully
         console.error('Error checking user:', error);
@@ -97,7 +108,7 @@ function PlanSignupContent() {
       }
     };
     checkUser();
-  }, []);
+  }, [router, normalizedPlanId, billingFrequency, redirectToCheckout]);
 
   // Store plan selection in localStorage to persist through sign-in redirects
   useEffect(() => {
@@ -151,9 +162,12 @@ function PlanSignupContent() {
       });
       
       if (response.ok) {
-        // Store credentials in localStorage for session restoration
+        // Store credentials and plan selection in localStorage for session restoration
         localStorage.setItem('checkout_email', email.trim().toLowerCase());
         localStorage.setItem('checkout_name', name.trim());
+        localStorage.setItem('selectedPlan', normalizedPlanId);
+        localStorage.setItem('billingFrequency', billingFrequency);
+        localStorage.setItem('redirectToCheckout', 'true');
         
         toast({
           title: 'Account created successfully!',

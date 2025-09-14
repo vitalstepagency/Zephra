@@ -63,7 +63,8 @@ function CheckoutContent() {
         // If no user is found, redirect to plans page with plan parameters
         if (!currentUser) {
           const params = new URLSearchParams({
-            frequency: billingParam
+            frequency: billingParam,
+            redirectToCheckout: 'true'
           });
           router.push(`/plans/${planParam}?${params.toString()}`);
           return;

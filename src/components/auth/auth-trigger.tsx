@@ -23,7 +23,7 @@ export function AuthTrigger({
   size = 'default', 
   className = '',
   children = 'Get Started',
-  plan,
+  plan = 'pro',
   frequency = 'monthly',
   redirectToCheckout = false,
   scrollToPricing
@@ -49,35 +49,12 @@ export function AuthTrigger({
     setIsLoading(true)
     
     try {
-      // Use the cached user state instead of making another API call
-      // This prevents the AuthSessionMissingError from appearing in the console
-      
-      if (user && redirectToCheckout) {
-        // User is authenticated and should go to checkout
-        const params = new URLSearchParams({
-          plan: plan || 'pro',
-          billing: frequency
-        })
-        router.push(`/checkout?${params.toString()}`)
-      } else if (!user && scrollToPricing) {
-        // User is not authenticated, scroll to pricing
-        scrollToPricing()
-      } else if (!user && plan) {
-        // Redirect to plan details page with redirectToCheckout flag
-        router.push(`/plans/${plan}?frequency=${frequency}&redirectToCheckout=true`)
-      } else if (!user) {
-        // Redirect to plans page
-        router.push('/plans')
-      }
+      // Redirect to plans page instead of opening a modal
+      router.push(`/plans/${plan}`)
     } catch (error) {
       console.error('Error in handleClick:', error)
-      // Fallback behavior
-      if (scrollToPricing) {
-        scrollToPricing()
-      } else {
-        // Default fallback - go to plans page
-        router.push('/plans')
-      }
+      // Default fallback - go to plans page
+      router.push('/plans')
     } finally {
       setIsLoading(false)
     }
