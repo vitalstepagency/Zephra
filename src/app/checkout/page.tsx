@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
+import type { Session } from 'next-auth'
 import { getCurrentUser } from '@/lib/supabase/client'
 import { CheckoutContent } from '@/components/checkout/checkout-content'
 import { Suspense } from 'react'
@@ -11,15 +12,16 @@ import { Loader2 } from 'lucide-react'
 
 // Define the session user type
 type SessionUser = {
-  name?: string | null
-  email?: string | null
-  image?: string | null
-  id?: string | null
+  name?: string | null | undefined;
+  email: string;
+  image?: string | null | undefined;
+  id: string;
 }
 
 export default function CheckoutPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  
   
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<SessionUser | null>(null)
@@ -81,12 +83,13 @@ export default function CheckoutPage() {
           localStorage.removeItem('redirectCount')
           
           // Set the user
-          if (session?.user) {
+          const currentSession = session as Session | null;
+          if (currentSession?.user) {
             const sessionUser: SessionUser = {
-              name: session.user.name,
-              email: session.user.email,
-              image: session.user.image,
-              id: session.user.id as string | undefined
+              name: currentSession.user.name,
+              email: currentSession.user.email,
+              image: currentSession.user.image,
+              id: currentSession.user.id
             }
             setUser(sessionUser)
           } else {
@@ -210,13 +213,14 @@ export default function CheckoutPage() {
         }
         
         // We have a session, set the user
-        if (session?.user) {
+        const currentSession = session as Session | null;
+        if (currentSession?.user) {
           // Cast the session user to our SessionUser type
           const sessionUser: SessionUser = {
-            name: session.user.name,
-            email: session.user.email,
-            image: session.user.image,
-            id: session.user.id as string | undefined
+            name: currentSession.user.name,
+            email: currentSession.user.email,
+            image: currentSession.user.image,
+            id: currentSession.user.id
           }
           setUser(sessionUser)
           // Clear redirect count since we're successfully authenticated
