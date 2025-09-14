@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Shield, Lock, CreditCard, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { PRICING_PLANS } from '@/lib/stripe/config'
+import { normalizePlanId } from '@/lib/stripe/helpers'
 
 interface CheckoutContentProps {
   user: any
@@ -45,11 +46,40 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
   const defaultPlanId = planId || 'pro'
   const defaultBillingFrequency = billingFrequency || 'monthly'
   
+  // Get plan ID from URL params or localStorage if not provided as prop
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(() => {
+    // If planId prop is provided, use it (normalized)
+    if (planId) return normalizePlanId(planId)
+    
+    // Otherwise check URL params and localStorage
+    if (typeof window !== 'undefined') {
+      // First try URL params
+      const params = new URLSearchParams(window.location.search)
+      const planFromUrl = params.get('plan')
+      if (planFromUrl) return normalizePlanId(planFromUrl)
+      
+      // Then try localStorage
+      const storedPlan = localStorage.getItem('selected_plan')
+      if (storedPlan) return normalizePlanId(storedPlan)
+      
+      // Check old format
+      const oldStoredPlan = localStorage.getItem('selectedPlan')
+      if (oldStoredPlan) {
+        const normalizedPlan = normalizePlanId(oldStoredPlan)
+        localStorage.setItem('selected_plan', normalizedPlan)
+        localStorage.removeItem('selectedPlan')
+        return normalizedPlan
+      }
+    }
+    
+    return 'pro' // Default to pro plan
+  })
+  
   // Initialize selected plan and billing frequency
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan>(() => {
     const validPlanKeys = Object.keys(pricingPlans) as (keyof typeof pricingPlans)[]
-    const planKey: keyof typeof pricingPlans = validPlanKeys.includes(defaultPlanId as keyof typeof pricingPlans) 
-      ? (defaultPlanId as keyof typeof pricingPlans) 
+    const planKey: keyof typeof pricingPlans = validPlanKeys.includes(selectedPlanId as keyof typeof pricingPlans) 
+      ? (selectedPlanId as keyof typeof pricingPlans) 
       : 'pro'
     return pricingPlans[planKey]!
   })

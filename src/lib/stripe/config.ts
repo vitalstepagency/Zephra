@@ -67,7 +67,8 @@ export const PRICING_PLANS = {
       contacts: 1000,
       emailsPerMonth: 5000,
       funnels: 3
-    }
+    },
+    aliases: ['basic'] // Add aliases for plan ID normalization
   },
   pro: {
     name: 'Pro',
@@ -123,7 +124,8 @@ export const PRICING_PLANS = {
       contacts: 10000,
       emailsPerMonth: 50000,
       funnels: 25
-    }
+    },
+    aliases: ['professional'] // Add aliases for plan ID normalization
   },
   enterprise: {
     name: 'Elite',
@@ -188,7 +190,8 @@ export const PRICING_PLANS = {
       contacts: -1, // unlimited
       emailsPerMonth: -1, // unlimited
       funnels: -1 // unlimited
-    }
+    },
+    aliases: ['elite'] // Add aliases for plan ID normalization
   }
 } as const
 

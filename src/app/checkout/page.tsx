@@ -9,6 +9,7 @@ import { CheckoutContent } from '@/components/checkout/checkout-content'
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Loader2 } from 'lucide-react'
+import { normalizePlanId } from '@/lib/stripe/helpers'
 
 // Define the session user type
 type SessionUser = {
@@ -47,20 +48,33 @@ export default function CheckoutPage() {
       
       // First try to get from URL params
       if (planFromUrl) {
-        setPlanId(planFromUrl)
-        localStorage.setItem('selected_plan', planFromUrl)
+        // Normalize plan ID to handle aliases
+        const normalizedPlan = normalizePlanId(planFromUrl)
+        
+        setPlanId(normalizedPlan)
+        localStorage.setItem('selected_plan', normalizedPlan)
       } else {
         // Fallback to localStorage - prioritize new key format
         const storedPlan = localStorage.getItem('selected_plan')
         if (storedPlan) {
-          setPlanId(storedPlan)
+          // Normalize stored plan ID
+          const normalizedPlan = normalizePlanId(storedPlan)
+          
+          setPlanId(normalizedPlan)
+          // Update localStorage if normalization occurred
+          if (normalizedPlan !== storedPlan) {
+            localStorage.setItem('selected_plan', normalizedPlan)
+          }
         } else {
           // Check old key format and migrate if found
           const oldStoredPlan = localStorage.getItem('selectedPlan')
           if (oldStoredPlan) {
-            localStorage.setItem('selected_plan', oldStoredPlan)
+            // Normalize old stored plan ID
+            const normalizedPlan = normalizePlanId(oldStoredPlan)
+            
+            localStorage.setItem('selected_plan', normalizedPlan)
             localStorage.removeItem('selectedPlan')
-            setPlanId(oldStoredPlan)
+            setPlanId(normalizedPlan)
           } else {
             setPlanId('pro') // Default to 'pro' if no plan is specified
             localStorage.setItem('selected_plan', 'pro')

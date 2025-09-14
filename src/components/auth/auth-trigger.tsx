@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { User, Loader2 } from 'lucide-react'
 import { getCurrentUser } from '@/lib/supabase/client'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+import { normalizePlanId } from '@/lib/stripe/helpers'
 
 interface AuthTriggerProps {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
@@ -50,10 +51,13 @@ export function AuthTrigger({
     setIsLoading(true)
     
     try {
+      // Normalize plan ID to handle aliases
+      const normalizedPlan = normalizePlanId(plan)
+      
       if (user) {
         // If user is already logged in, redirect directly to checkout
         const params = new URLSearchParams({
-          plan: plan,
+          plan: normalizedPlan,
           billing: frequency
         })
         router.push(`/checkout?${params.toString()}`)
@@ -64,7 +68,7 @@ export function AuthTrigger({
         })
         
         // Store plan and frequency in localStorage for the checkout redirect
-        localStorage.setItem('selected_plan', plan)
+        localStorage.setItem('selected_plan', normalizedPlan)
         localStorage.setItem('selected_frequency', frequency)
         localStorage.setItem('redirect_to_checkout', 'true')
         
@@ -74,7 +78,7 @@ export function AuthTrigger({
         localStorage.removeItem('selectedPlan')
         localStorage.removeItem('billingFrequency')
         
-        router.push(`/plans/${plan}?${params.toString()}`)
+        router.push(`/plans/${normalizedPlan}?${params.toString()}`)
       }
     } catch (error) {
       console.error('Error in handleClick:', error)
