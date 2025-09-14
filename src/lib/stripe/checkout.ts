@@ -123,7 +123,7 @@ export async function createCheckoutSession(data: CheckoutSessionData) {
       // Configure session parameters
       const sessionConfig = {
         customer: customer.id,
-        payment_method_types: ['card'],
+        payment_method_types: ['card'] as Array<'card'>,
         line_items: [
           {
             price: sanitizedData.priceId,

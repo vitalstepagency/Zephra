@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       // Create checkout session with trial
       const checkoutSession = await stripe.checkout.sessions.create({
         customer: customer!.id,
-        payment_method_types: ['card'],
+        payment_method_types: ['card'] as Array<'card'>,
         line_items: [
           {
             price: priceId,
