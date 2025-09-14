@@ -112,6 +112,9 @@ export default function CheckoutPage() {
           localStorage.removeItem('redirectToCheckout')
           localStorage.removeItem('redirect_to_checkout')
           localStorage.removeItem('redirectCount')
+          // Ensure all redirect flags are cleared to prevent loops
+          localStorage.removeItem('selected_plan')
+          localStorage.removeItem('selected_frequency')
           
           // Set the user
           const currentSession = session as Session | null;
@@ -244,8 +247,8 @@ export default function CheckoutPage() {
           const params = new URLSearchParams()
           params.append('frequency', billingFrequency || 'monthly')
           
-          // Redirect to plans page
-          router.push(`/plans/${planId || 'pro'}?${params.toString()}`)
+          // Redirect to signin page
+          router.push(`/auth/signin`)
           return
         }
         
