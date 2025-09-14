@@ -68,6 +68,9 @@ export function AuthTrigger({
         localStorage.setItem('selected_frequency', frequency)
         localStorage.setItem('redirect_to_checkout', 'true')
         
+        // Clear any redirect counts to prevent loops
+        localStorage.removeItem('redirectCount')
+        
         router.push(`/plans/${plan}?${params.toString()}`)
       }
     } catch (error) {
@@ -100,15 +103,14 @@ export function AuthTrigger({
       console.log('Setting redirect_to_checkout flag and plan details')
     } else {
       localStorage.removeItem('redirect_to_checkout')
+      localStorage.removeItem('redirectToCheckout') // Clear old format too
     }
     
     if (planId) {
       // If we're on a plan page, redirect to the plan-specific signup
       const params = new URLSearchParams()
       params.append('frequency', frequency || 'monthly')
-      if (redirectToCheckout) {
-        params.append('redirectToCheckout', 'true')
-      }
+      // Don't add redirectToCheckout to URL params, use localStorage instead
       const destination = `/plans/${planId}?${params.toString()}`
       console.log(`Navigating to: ${destination}`)
       router.push(destination)
@@ -116,9 +118,7 @@ export function AuthTrigger({
       // Otherwise redirect to the plan-specific signup page
       const params = new URLSearchParams()
       params.append('frequency', frequency || 'monthly')
-      if (redirectToCheckout) {
-        params.append('redirectToCheckout', 'true')
-      }
+      // Don't add redirectToCheckout to URL params, use localStorage instead
       const destination = `/plans/${plan}?${params.toString()}`
       console.log(`Navigating to: ${destination}`)
       router.push(destination)

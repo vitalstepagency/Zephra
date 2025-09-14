@@ -70,17 +70,31 @@ export default function SignInPage() {
         const storedFrequency = localStorage.getItem('selected_frequency')
         const redirectToCheckout = localStorage.getItem('redirect_to_checkout') === 'true'
         
+        // Check old key formats and migrate if found
+        if (!storedPlan) {
+          const oldStoredPlan = localStorage.getItem('selectedPlan')
+          if (oldStoredPlan) {
+            localStorage.setItem('selected_plan', oldStoredPlan)
+          }
+        }
+        
+        if (localStorage.getItem('redirectToCheckout') === 'true') {
+          localStorage.setItem('redirect_to_checkout', 'true')
+        }
+        
+        // Clear all redirect flags immediately to prevent loops
+        localStorage.removeItem('redirect_to_checkout')
+        localStorage.removeItem('redirectToCheckout')
+        localStorage.removeItem('redirectCount')
+        localStorage.removeItem('selectedPlan')
+        localStorage.removeItem('billingFrequency')
+        
         if (storedPlan && redirectToCheckout) {
           // Redirect to checkout with plan parameters
           const params = new URLSearchParams({
             plan: storedPlan,
             billing: storedFrequency || 'monthly'
           })
-          
-          // Clear the redirect flag to prevent loops
-          localStorage.removeItem('redirect_to_checkout')
-          localStorage.removeItem('redirectToCheckout') // Clear old format too
-          localStorage.removeItem('redirectCount')
           
           console.log('Redirecting to checkout with plan:', storedPlan, 'and billing:', storedFrequency)
           router.push(`/checkout?${params.toString()}`)

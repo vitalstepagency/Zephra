@@ -160,15 +160,17 @@ export default function PlanSignUpPage() {
       
       if (response.ok) {
         // Store credentials in localStorage for session restoration and automatic sign-in after checkout
-        localStorage.setItem('checkout_email', email.trim().toLowerCase())
-        localStorage.setItem('checkout_name', name.trim())
-        localStorage.setItem('selected_plan', planId)
-        localStorage.setItem('selected_frequency', frequency)
         localStorage.setItem('newUserEmail', email.trim().toLowerCase())
         localStorage.setItem('newUserPassword', password)
+        localStorage.setItem('selected_plan', planId)
+        localStorage.setItem('selected_frequency', frequency)
+        localStorage.setItem('checkout_email', email.trim().toLowerCase())
+        localStorage.setItem('checkout_name', name.trim())
         
-        // Clear any redirect flags to prevent loops
+        // Clear any old redirect flags to prevent loops
         localStorage.removeItem('redirectToCheckout')
+        localStorage.removeItem('selectedPlan')
+        localStorage.removeItem('billingFrequency')
         localStorage.removeItem('redirectCount')
         
         toast({

@@ -49,20 +49,45 @@ export default function CheckoutPage() {
       if (planFromUrl) {
         setPlanId(planFromUrl)
       } else {
-        // Fallback to localStorage
-        const storedPlan = localStorage.getItem('selected_plan') || localStorage.getItem('selectedPlan')
-        if (storedPlan) setPlanId(storedPlan)
+        // Fallback to localStorage - prioritize new key format
+        const storedPlan = localStorage.getItem('selected_plan')
+        if (storedPlan) {
+          setPlanId(storedPlan)
+        } else {
+          // Check old key format and migrate if found
+          const oldStoredPlan = localStorage.getItem('selectedPlan')
+          if (oldStoredPlan) {
+            localStorage.setItem('selected_plan', oldStoredPlan)
+            localStorage.removeItem('selectedPlan')
+            setPlanId(oldStoredPlan)
+          } else {
+            setPlanId('pro') // Default to 'pro' if no plan is specified
+          }
+        }
       }
       
       // Same for billing frequency
       if (billingFromUrl) {
         setBillingFrequency(billingFromUrl)
       } else {
-        const storedFrequency = localStorage.getItem('selected_frequency') || localStorage.getItem('billingFrequency')
-        if (storedFrequency) setBillingFrequency(storedFrequency)
+        // Prioritize new key format
+        const storedFrequency = localStorage.getItem('selected_frequency')
+        if (storedFrequency) {
+          setBillingFrequency(storedFrequency)
+        } else {
+          // Check old key format and migrate if found
+          const oldStoredFrequency = localStorage.getItem('billingFrequency')
+          if (oldStoredFrequency) {
+            localStorage.setItem('selected_frequency', oldStoredFrequency)
+            localStorage.removeItem('billingFrequency')
+            setBillingFrequency(oldStoredFrequency)
+          } else {
+            setBillingFrequency('monthly') // Default to monthly if no frequency is specified
+          }
+        }
       }
       
-      // Clear redirect flags
+      // Clear all redirect flags to prevent loops
       localStorage.removeItem('redirect_to_checkout')
       localStorage.removeItem('redirectToCheckout')
       localStorage.removeItem('redirectCount')
@@ -190,12 +215,16 @@ export default function CheckoutPage() {
           const redirectCount = parseInt(localStorage.getItem('redirectCount') || '0')
           if (redirectCount > 2) {
             console.log('Detected redirection loop, clearing state and redirecting to home')
+            // Clear all localStorage keys related to auth flow
             localStorage.removeItem('redirectCount')
             localStorage.removeItem('newUserEmail')
             localStorage.removeItem('newUserPassword')
             localStorage.removeItem('redirectToCheckout')
+            localStorage.removeItem('redirect_to_checkout')
             localStorage.removeItem('selectedPlan')
+            localStorage.removeItem('selected_plan')
             localStorage.removeItem('billingFrequency')
+            localStorage.removeItem('selected_frequency')
             router.push('/')
             return
           }
