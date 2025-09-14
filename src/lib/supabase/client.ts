@@ -30,12 +30,18 @@ export const createSupabaseClient = () => {
 
 // Helper function to get the current user
 export const getCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser()
-  if (error) {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error) {
+      console.error('Error getting current user:', error)
+      return null
+    }
+    return user
+  } catch (error) {
+    // Handle AuthSessionMissingError gracefully
     console.error('Error getting current user:', error)
     return null
   }
-  return user
 }
 
 // Helper function to sign out

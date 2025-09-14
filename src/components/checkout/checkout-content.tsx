@@ -77,11 +77,22 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
     
     // User should already be authenticated at this point
     if (!user) {
+      console.log('User not authenticated, redirecting to plans')
+      
+      // Store plan selection for after authentication
+      localStorage.setItem('selectedPlan', selectedPlan.id)
+      localStorage.setItem('billingFrequency', selectedBillingFrequency)
+      
+      // Set redirect flag but clear any existing redirect count to start fresh
+      localStorage.setItem('redirectToCheckout', 'true')
+      localStorage.removeItem('redirectCount')
+      
       const params = new URLSearchParams({
         plan: selectedPlan.id,
         billing: selectedBillingFrequency,
         redirectToCheckout: 'true'
       })
+      console.log(`Redirecting to plan page: /plans/${selectedPlan.id}?${params.toString()}`)
       router.push(`/plans/${selectedPlan.id}?${params.toString()}`)
       return
     }

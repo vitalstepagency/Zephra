@@ -9,12 +9,20 @@ import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Loader2 } from 'lucide-react'
 
+// Define the session user type
+type SessionUser = {
+  name?: string | null
+  email?: string | null
+  image?: string | null
+  id?: string | null
+}
+
 export default function CheckoutPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   
   const [isLoading, setIsLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<SessionUser | null>(null)
   
   // Get plan and billing from URL params
   const [planParam, setPlanParam] = useState<string | null>(null)
@@ -62,6 +70,32 @@ export default function CheckoutPage() {
     
     const checkSession = async () => {
       try {
+        console.log('Checkout page - Current auth status:', status)
+        
+        // Clear stored credentials after sign-in
+        if (status === 'authenticated') {
+          console.log('User is authenticated, clearing temporary credentials')
+          localStorage.removeItem('newUserEmail')
+          localStorage.removeItem('newUserPassword')
+          localStorage.removeItem('redirectToCheckout')
+          localStorage.removeItem('redirectCount')
+          
+          // Set the user
+          if (session?.user) {
+            const sessionUser: SessionUser = {
+              name: session.user.name,
+              email: session.user.email,
+              image: session.user.image,
+              id: session.user.id as string | undefined
+            }
+            setUser(sessionUser)
+          } else {
+            setUser(null)
+          }
+          
+          return
+        }
+        
         // Check if we have a newly created user from plan-specific signup
         const newUserEmail = localStorage.getItem('newUserEmail')
         const newUserPassword = localStorage.getItem('newUserPassword')
@@ -105,7 +139,44 @@ export default function CheckoutPage() {
           window.location.reload()
           return
         } else if (status === 'unauthenticated') {
-          console.log('No authenticated session found, redirecting to plans')
+          console.log('No authenticated session found, checking for auto sign-in credentials')
+          
+          // Check if we have stored credentials for auto sign-in
+          const storedEmail = localStorage.getItem('newUserEmail')
+          const storedPassword = localStorage.getItem('newUserPassword')
+          
+          if (storedEmail && storedPassword) {
+            console.log('Found stored credentials, attempting auto sign-in')
+            try {
+              // Attempt to sign in with stored credentials
+              const result = await signIn('credentials', {
+                email: storedEmail,
+                password: storedPassword,
+                redirect: false
+              })
+              
+              if (result?.ok) {
+                console.log('Auto sign-in successful, refreshing page')
+                // Clear stored credentials after successful sign-in
+                localStorage.removeItem('newUserEmail')
+                localStorage.removeItem('newUserPassword')
+                // Clear any redirect flags
+                localStorage.removeItem('redirectCount')
+                localStorage.removeItem('redirectToCheckout')
+                
+                // Refresh the page to get the authenticated session
+                window.location.reload()
+                return
+              } else {
+                console.log('Auto sign-in failed, proceeding with redirect')
+                // Clear invalid credentials
+                localStorage.removeItem('newUserEmail')
+                localStorage.removeItem('newUserPassword')
+              }
+            } catch (error) {
+              console.error('Error during auto sign-in:', error)
+            }
+          }
           
           // Check if we're in a redirection loop
           const redirectCount = parseInt(localStorage.getItem('redirectCount') || '0')
@@ -140,7 +211,14 @@ export default function CheckoutPage() {
         
         // We have a session, set the user
         if (session?.user) {
-          setUser(session.user)
+          // Cast the session user to our SessionUser type
+          const sessionUser: SessionUser = {
+            name: session.user.name,
+            email: session.user.email,
+            image: session.user.image,
+            id: session.user.id as string | undefined
+          }
+          setUser(sessionUser)
           // Clear redirect count since we're successfully authenticated
           localStorage.removeItem('redirectCount')
         }

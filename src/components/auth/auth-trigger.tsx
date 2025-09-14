@@ -84,17 +84,40 @@ export function AuthTrigger({
   }, [])
 
   const handleGetStarted = () => {
-    // Reset any redirect count to prevent loops
+    // Clear any existing redirect counts and flags to start fresh
     localStorage.removeItem('redirectCount')
+    
+    // Set redirect flag and plan selection if needed
+    if (redirectToCheckout) {
+      localStorage.setItem('redirectToCheckout', 'true')
+      console.log('Setting redirectToCheckout flag')
+    } else {
+      localStorage.removeItem('redirectToCheckout')
+    }
     
     if (planId) {
       // If we're on a plan page, redirect to the plan-specific signup
-      const searchParams = new URLSearchParams(window.location.search)
-      const frequency = searchParams.get('frequency') || 'monthly'
-      router.push(`/plans/${planId}?frequency=${frequency}&redirectToCheckout=true`)
-    } else {
+      const params = new URLSearchParams()
+      params.append('frequency', frequency || 'monthly')
+      if (redirectToCheckout) {
+        params.append('redirectToCheckout', 'true')
+      }
+      const destination = `/plans/${planId}?${params.toString()}`
+      console.log(`Navigating to: ${destination}`)
+      router.push(destination)
+    } else if (plan) {
       // Otherwise redirect to the plan-specific signup page
-      router.push(`/plans/${plan}?frequency=${frequency}&redirectToCheckout=true`)
+      const params = new URLSearchParams()
+      params.append('frequency', frequency || 'monthly')
+      if (redirectToCheckout) {
+        params.append('redirectToCheckout', 'true')
+      }
+      const destination = `/plans/${plan}?${params.toString()}`
+      console.log(`Navigating to: ${destination}`)
+      router.push(destination)
+    } else {
+      console.log('Navigating to general plans page')
+      router.push('/plans')
     }
   }
 
@@ -104,7 +127,7 @@ export function AuthTrigger({
         variant={variant}
         size={size}
         className={className}
-        onClick={handleClick}
+        onClick={scrollToPricing ? scrollToPricing : handleGetStarted}
       >
         {isLoading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

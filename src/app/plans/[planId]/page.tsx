@@ -167,6 +167,10 @@ export default function PlanSignUpPage() {
         localStorage.setItem('newUserEmail', email.trim().toLowerCase())
         localStorage.setItem('newUserPassword', password)
         
+        // Clear any redirect flags to prevent loops
+        localStorage.removeItem('redirectToCheckout')
+        localStorage.removeItem('redirectCount')
+        
         toast({
           title: 'Account created successfully!',
           description: 'Redirecting to checkout...'
@@ -181,6 +185,7 @@ export default function PlanSignUpPage() {
         
         if (result?.ok) {
           setStep('success')
+          console.log('Sign-in successful, redirecting to checkout')
           
           // Redirect to checkout with plan parameters after a short delay
           setTimeout(() => {
@@ -188,8 +193,6 @@ export default function PlanSignUpPage() {
               plan: planId,
               billing: frequency
             })
-            // Clear any redirectToCheckout parameter to prevent loops
-            localStorage.removeItem('redirectToCheckout')
             router.push(`/checkout?${params.toString()}`)
           }, 1500)
         } else {
