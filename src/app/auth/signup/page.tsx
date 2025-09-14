@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@/components/ui'
-import { Mail, ArrowRight, Sparkles, Shield, Zap, Eye, EyeOff } from 'lucide-react'
+import { Mail, ArrowRight, Sparkles, Shield, Zap, Eye, EyeOff, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
@@ -34,17 +34,20 @@ const cardVariants = {
 }
 
 function SignUpContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const plan = searchParams.get('plan') || 'starter'
+  const frequency = searchParams.get('frequency') || 'monthly'
+  const redirectToCheckout = searchParams.get('redirectToCheckout') === 'true'
+  
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<{email?: string, name?: string, password?: string}>({})
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const plan = searchParams.get('plan') || 'starter'
-  const frequency = searchParams.get('frequency') || 'monthly'
-  const redirectToCheckout = searchParams.get('redirectToCheckout') === 'true'
+  const [selectedPlan, setSelectedPlan] = useState(plan || '')
+  const [selectedFrequency, setSelectedFrequency] = useState<'monthly' | 'yearly'>((frequency || 'monthly') as 'monthly' | 'yearly')
 
   useEffect(() => {
     const checkSession = async () => {
@@ -56,6 +59,15 @@ function SignUpContent() {
       }
     }
     checkSession()
+    
+    // Check if we have a plan in localStorage but not in URL params
+    // This happens when coming from plan details page
+    if (!plan && localStorage.getItem('selected_plan')) {
+      const storedPlan = localStorage.getItem('selected_plan')
+      const storedFrequency = localStorage.getItem('selected_frequency') || 'monthly'
+      setSelectedPlan(storedPlan || '')
+      setSelectedFrequency(storedFrequency as 'monthly' | 'yearly')
+    }
   }, [router, redirectToCheckout, plan])
   
   // Store plan selection in localStorage to persist through sign-in redirects
@@ -114,13 +126,17 @@ function SignUpContent() {
         localStorage.setItem('checkout_email', email.trim().toLowerCase())
         localStorage.setItem('checkout_name', name.trim())
         
+        // Use the selected plan from state (which may have come from localStorage)
+        const finalPlan = selectedPlan || plan || 'starter'
+        const finalFrequency = selectedFrequency || frequency || 'monthly'
+        
         toast({
           title: 'Account created successfully!',
-          description: redirectToCheckout ? 'Redirecting to checkout...' : 'Redirecting to onboarding...'
+          description: redirectToCheckout || finalPlan ? 'Redirecting to checkout...' : 'Redirecting to onboarding...'
         })
         
         // Then sign in with the new credentials
-        if (redirectToCheckout) {
+        if (redirectToCheckout || finalPlan) {
           // Sign in without redirect
           const result = await signIn('credentials', {
             email,
@@ -131,8 +147,8 @@ function SignUpContent() {
           if (result?.ok) {
             // Redirect to checkout with plan parameters
             const params = new URLSearchParams({
-              plan: plan,
-              billing: frequency
+              plan: finalPlan,
+              billing: finalFrequency
             })
             router.push(`/checkout?${params.toString()}`)
           } else {
@@ -148,7 +164,7 @@ function SignUpContent() {
           
           if (result?.ok) {
             // Manually navigate to onboarding with plan parameters
-            router.push(`/onboarding?plan=${plan}&name=${encodeURIComponent(name)}`)
+            router.push(`/onboarding?name=${encodeURIComponent(name)}`)
           } else {
             throw new Error('Failed to sign in')
           }
@@ -226,6 +242,67 @@ function SignUpContent() {
             </motion.div>
           )}
         </div>
+        
+        {/* Plan Details - Only show when plan is selected */}
+        {plan && plan !== 'starter' && (
+          <motion.div 
+            className="mb-8 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-5"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-white">
+                {plan === 'pro' ? 'Pro Plan' : plan === 'enterprise' ? 'Enterprise Plan' : 'Starter Plan'}
+              </h3>
+              <div className="text-right">
+                <div className="text-indigo-400 font-bold">
+                  ${frequency === 'monthly' ? 
+                    (plan === 'pro' ? '297' : plan === 'enterprise' ? '497' : '197') : 
+                    (plan === 'pro' ? '2,970' : plan === 'enterprise' ? '4,970' : '1,970')}
+                </div>
+                <div className="text-slate-400 text-sm">
+                  {frequency === 'monthly' ? 'per month' : 'per year'}
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2 mb-4">
+              {plan === 'pro' && (
+                <>
+                  <div className="flex items-start">
+                    <CheckCircle className="w-5 h-5 text-emerald-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span className="text-slate-300">Advanced Market Intelligence with 3 detailed customer personas</span>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="w-5 h-5 text-emerald-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span className="text-slate-300">100 unique ad variations across all major platforms</span>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="w-5 h-5 text-emerald-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span className="text-slate-300">5 custom sales funnels with 12-email nurture sequences</span>
+                  </div>
+                </>
+              )}
+              {plan === 'enterprise' && (
+                <>
+                  <div className="flex items-start">
+                    <CheckCircle className="w-5 h-5 text-emerald-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span className="text-slate-300">Everything in Pro plan plus enterprise features</span>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="w-5 h-5 text-emerald-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span className="text-slate-300">Unlimited ad variations and custom funnels</span>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="w-5 h-5 text-emerald-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span className="text-slate-300">Dedicated account manager and priority support</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* Sign Up Card */}
         <motion.div variants={cardVariants}>
@@ -323,7 +400,7 @@ function SignUpContent() {
                   ) : (
                     <div className="flex items-center">
                       <Mail className="w-5 h-5 mr-2" />
-                      Create Account
+                      Create Account & Continue to Checkout
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </div>
                   )}

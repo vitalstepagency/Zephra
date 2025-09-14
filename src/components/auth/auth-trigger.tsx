@@ -39,6 +39,7 @@ export function AuthTrigger({
         setUser(currentUser)
       } catch (error) {
         console.error('Error checking user:', error)
+        // Don't set user to null on error, keep it undefined to avoid infinite loading
       }
     }
     checkUser()
@@ -48,32 +49,34 @@ export function AuthTrigger({
     setIsLoading(true)
     
     try {
-      const currentUser = await getCurrentUser()
+      // Use the cached user state instead of making another API call
+      // This prevents the AuthSessionMissingError from appearing in the console
       
-      if (currentUser && redirectToCheckout) {
+      if (user && redirectToCheckout) {
         // User is authenticated and should go to checkout
         const params = new URLSearchParams({
           plan: plan || 'pro',
-          frequency: frequency
+          billing: frequency
         })
         router.push(`/checkout?${params.toString()}`)
-      } else if (!currentUser && scrollToPricing) {
+      } else if (!user && scrollToPricing) {
         // User is not authenticated, scroll to pricing
         scrollToPricing()
-      } else if (!currentUser) {
-        // Redirect to signup page with plan parameters
-        const params = new URLSearchParams({
-          plan: plan || 'pro',
-          frequency: frequency,
-          redirectToCheckout: redirectToCheckout ? 'true' : 'false'
-        })
-        router.push(`/auth/signup?${params.toString()}`)
+      } else if (!user && plan) {
+        // Redirect to plan details page
+        router.push(`/plans/${plan}?frequency=${frequency}`)
+      } else if (!user) {
+        // Redirect to plans page
+        router.push('/pricing')
       }
     } catch (error) {
       console.error('Error in handleClick:', error)
       // Fallback behavior
       if (scrollToPricing) {
         scrollToPricing()
+      } else {
+        // Default fallback - go to pricing page
+        router.push('/pricing')
       }
     } finally {
       setIsLoading(false)
@@ -94,7 +97,7 @@ export function AuthTrigger({
           Loading...
         </div>
       ) : (
-        children
+        children || 'Get Started Free'
       )}
     </Button>
   )

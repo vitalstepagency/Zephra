@@ -51,6 +51,9 @@ function CheckoutContent() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
+  const planParam = searchParams.get('plan') || localStorage.getItem('selected_plan') || 'professional';
+  const billingParam = searchParams.get('billing') || localStorage.getItem('selected_frequency') || 'monthly';
+  
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -74,9 +77,7 @@ function CheckoutContent() {
       }
     };
     checkUser();
-  }, []);
-  const planParam = searchParams.get('plan') || 'professional';
-  const billingParam = searchParams.get('billing') || 'monthly';
+  }, [router, planParam, billingParam]);
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan>(() => {
     const validPlanKeys = Object.keys(pricingPlans) as (keyof typeof pricingPlans)[];
     const planKey: keyof typeof pricingPlans = validPlanKeys.includes(planParam as keyof typeof pricingPlans) 
@@ -85,6 +86,12 @@ function CheckoutContent() {
     return pricingPlans[planKey]!;
   });
   const [billingFrequency, setBillingFrequency] = useState<'monthly' | 'yearly'>(billingParam === 'yearly' ? 'yearly' : 'monthly');
+  
+  // Store selected plan and frequency in localStorage for persistence
+  useEffect(() => {
+    if (planParam) localStorage.setItem('selected_plan', planParam);
+    if (billingParam) localStorage.setItem('selected_frequency', billingParam);
+  }, [planParam, billingParam]);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -168,8 +175,8 @@ function CheckoutContent() {
     // If not, they would have been redirected to signup
     if (!user) {
       const params = new URLSearchParams({
-        plan: planParam,
-        frequency: billingParam,
+        plan: selectedPlan.id,
+        frequency: billingFrequency,
         redirectToCheckout: 'true'
       });
       router.push(`/auth/signup?${params.toString()}`);
@@ -198,6 +205,7 @@ function CheckoutContent() {
         localStorage.setItem('checkout_email', user.email);
         localStorage.setItem('checkout_name', user.name || user.email.split('@')[0]);
         localStorage.setItem('billing_frequency', billingFrequency);
+        localStorage.setItem('selected_plan', selectedPlan.id);
       }
 
       // Now create the checkout session (user is authenticated)

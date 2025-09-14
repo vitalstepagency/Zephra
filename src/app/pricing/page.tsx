@@ -177,7 +177,7 @@ export default function PricingPage() {
                       className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
                       variant={plan.popular ? 'default' : 'outline'}
                     >
-                      <Link href={`/checkout?plan=${plan.name.toLowerCase()}`}>
+                      <Link href={`/auth/signup?plan=${plan.name.toLowerCase()}&frequency=${isAnnual ? 'yearly' : 'monthly'}`}>
                         {plan.cta}
                       </Link>
                     </Button>
