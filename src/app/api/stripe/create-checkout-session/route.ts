@@ -63,6 +63,8 @@ async function createCheckoutSessionHandler(request: NextRequest) {
     // Validate price ID against allowed values
     const allowedPriceIds = [
       'price_1RDnUnFCKuRbOGyzto5CVIee', // Existing price ID
+      'price_1RDnUnFCKuRbOGyzto5CVIee_monthly',
+      'price_1RDnUnFCKuRbOGyzto5CVIee_yearly',
       // Add other valid price IDs here
     ];
 

@@ -147,8 +147,8 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
       }
       
       // Store session ID for verification after payment
-      if (data.id) {
-        localStorage.setItem('checkout_session_id', data.id)
+      if (data.sessionId) {
+        localStorage.setItem('checkout_session_id', data.sessionId)
       }
       
       // Clear plan selection parameters to prevent redirection loops
