@@ -166,6 +166,7 @@ export default function PlanSignUpPage() {
         localStorage.setItem('selected_frequency', frequency)
         localStorage.setItem('checkout_email', email.trim().toLowerCase())
         localStorage.setItem('checkout_name', name.trim())
+        localStorage.setItem('redirect_to_checkout', 'true')
         
         // Clear any old redirect flags to prevent loops
         localStorage.removeItem('redirectToCheckout')

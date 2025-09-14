@@ -110,6 +110,7 @@ export default function CheckoutPage() {
           localStorage.removeItem('newUserEmail')
           localStorage.removeItem('newUserPassword')
           localStorage.removeItem('redirectToCheckout')
+          localStorage.removeItem('redirect_to_checkout')
           localStorage.removeItem('redirectCount')
           
           // Set the user
@@ -232,16 +233,18 @@ export default function CheckoutPage() {
           // Increment redirect count
           localStorage.setItem('redirectCount', (redirectCount + 1).toString())
           
-          // Store the redirect flag in URL params
-          const params = new URLSearchParams({
-            redirectToCheckout: 'true'
-          })
+          // Store the redirect flag in localStorage (more reliable than URL params)
+          localStorage.setItem('redirect_to_checkout', 'true')
           
-          // If we have plan and billing info, add them to the redirect
-          if (planId) params.append('plan', planId)
-          if (billingFrequency) params.append('billing', billingFrequency)
+          // Store plan and billing info in localStorage
+          if (planId) localStorage.setItem('selected_plan', planId)
+          if (billingFrequency) localStorage.setItem('selected_frequency', billingFrequency)
           
-          // Redirect to plans page with the flag
+          // Create URL params for the redirect
+          const params = new URLSearchParams()
+          params.append('frequency', billingFrequency || 'monthly')
+          
+          // Redirect to plans page
           router.push(`/plans/${planId || 'pro'}?${params.toString()}`)
           return
         }

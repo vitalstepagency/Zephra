@@ -68,8 +68,11 @@ export function AuthTrigger({
         localStorage.setItem('selected_frequency', frequency)
         localStorage.setItem('redirect_to_checkout', 'true')
         
-        // Clear any redirect counts to prevent loops
+        // Clear any redirect counts and old format keys to prevent loops
         localStorage.removeItem('redirectCount')
+        localStorage.removeItem('redirectToCheckout')
+        localStorage.removeItem('selectedPlan')
+        localStorage.removeItem('billingFrequency')
         
         router.push(`/plans/${plan}?${params.toString()}`)
       }

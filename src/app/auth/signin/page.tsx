@@ -82,6 +82,11 @@ export default function SignInPage() {
           localStorage.setItem('redirect_to_checkout', 'true')
         }
         
+        // Store the current redirect state before clearing flags
+        const shouldRedirectToCheckout = redirectToCheckout || localStorage.getItem('redirectToCheckout') === 'true'
+        const finalPlan = storedPlan || localStorage.getItem('selectedPlan') || 'pro'
+        const finalFrequency = storedFrequency || localStorage.getItem('billingFrequency') || 'monthly'
+        
         // Clear all redirect flags immediately to prevent loops
         localStorage.removeItem('redirect_to_checkout')
         localStorage.removeItem('redirectToCheckout')
@@ -89,14 +94,14 @@ export default function SignInPage() {
         localStorage.removeItem('selectedPlan')
         localStorage.removeItem('billingFrequency')
         
-        if (storedPlan && redirectToCheckout) {
+        if (finalPlan && shouldRedirectToCheckout) {
           // Redirect to checkout with plan parameters
           const params = new URLSearchParams({
-            plan: storedPlan,
-            billing: storedFrequency || 'monthly'
+            plan: finalPlan,
+            billing: finalFrequency
           })
           
-          console.log('Redirecting to checkout with plan:', storedPlan, 'and billing:', storedFrequency)
+          console.log('Redirecting to checkout with plan:', finalPlan, 'and billing:', finalFrequency)
           router.push(`/checkout?${params.toString()}`)
         } else if (storedPlan) {
           // Redirect to onboarding with plan parameter
