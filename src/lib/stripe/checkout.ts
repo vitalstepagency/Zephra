@@ -120,9 +120,9 @@ export async function createCheckoutSession(data: CheckoutSessionData) {
         metadata: {
           planId: sanitizedData.planId,
           userId: sanitizedData.userId || '',
-          trial_period_days: '14'
+          trial_period_days: '7'
         },
-        trial_period_days: 14
+        trial_period_days: 7
       },
       automatic_tax: {
         enabled: true
