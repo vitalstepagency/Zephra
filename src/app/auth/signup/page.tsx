@@ -108,7 +108,10 @@ function SignUpContent() {
     
     if (!validateForm()) return
     
+    // Set loading state first to update UI immediately
     setIsLoading(true)
+    console.log('Setting loading state to true')
+    
     try {
       // First create the account via API
       const response = await fetch('/api/auth/simple-signup', {
@@ -132,6 +135,7 @@ function SignUpContent() {
         
         // Set redirect flag for checkout
         localStorage.setItem('redirect_to_checkout', 'true')
+        localStorage.setItem('redirectToCheckout', 'true') // Set both formats for compatibility
         
         toast({
           title: 'Account created successfully!',
@@ -147,6 +151,8 @@ function SignUpContent() {
         })
         
         if (result?.ok) {
+          // Keep loading state true during redirect
+          console.log('Redirecting to checkout')
           // Redirect to checkout with plan parameters
           const params = new URLSearchParams({
             plan: finalPlan,
@@ -159,6 +165,7 @@ function SignUpContent() {
       } else {
         const error = await response.json()
         setErrors({ email: error.message || 'Sign up failed' })
+        setIsLoading(false) // Reset loading state on error
       }
     } catch (error) {
       console.error('Sign up error:', error)
@@ -168,8 +175,7 @@ function SignUpContent() {
         title: 'Error creating account',
         description: 'An unexpected error occurred during sign up'
       })
-    } finally {
-      setIsLoading(false)
+      setIsLoading(false) // Reset loading state on error
     }
   }
 
@@ -378,16 +384,17 @@ function SignUpContent() {
                   type="submit"
                   disabled={isLoading}
                   className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white border-0 py-6 font-semibold"
+                  id="signup-button"
                 >
                   {isLoading ? (
-                    <div className="flex items-center">
+                    <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-                      Creating Account...
+                      Creating Your Account Now...
                     </div>
                   ) : (
                     <div className="flex items-center">
                       <Mail className="w-5 h-5 mr-2" />
-                      Create Account & Continue to Checkout
+                      Start Your Free Trial
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </div>
                   )}

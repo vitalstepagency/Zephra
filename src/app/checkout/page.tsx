@@ -110,8 +110,10 @@ export default function CheckoutPage() {
           console.log('User is authenticated, clearing temporary credentials')
           localStorage.removeItem('newUserEmail')
           localStorage.removeItem('newUserPassword')
-          localStorage.removeItem('redirectToCheckout')
-          localStorage.removeItem('redirect_to_checkout')
+          
+          // Don't remove redirect flags yet - we need them to trigger checkout
+          // localStorage.removeItem('redirectToCheckout')
+          // localStorage.removeItem('redirect_to_checkout')
           localStorage.removeItem('redirectCount')
           
           // Set the user
@@ -133,9 +135,20 @@ export default function CheckoutPage() {
               console.log('Redirect to checkout flag detected, initiating checkout')
               // Let the component fully render before triggering checkout
               setTimeout(() => {
+                console.log('Attempting to click checkout button')
                 const checkoutButton = document.querySelector('#checkout-button') as HTMLButtonElement
                 if (checkoutButton) {
+                  console.log('Checkout button found, clicking')
                   checkoutButton.click()
+                  
+                  // Clear redirect flags after clicking the button
+                  setTimeout(() => {
+                    console.log('Clearing redirect flags')
+                    localStorage.removeItem('redirectToCheckout')
+                    localStorage.removeItem('redirect_to_checkout')
+                  }, 2000)
+                } else {
+                  console.error('Checkout button not found')
                 }
               }, 1000)
             }

@@ -98,6 +98,7 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
     }
     
     setIsLoading(true)
+    console.log('Starting secure checkout process')
     
     try {
       // Reset any redirect count to prevent loops
@@ -146,21 +147,25 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
         throw new Error(data.error || 'Failed to create checkout session')
       }
       
+      console.log('Checkout session created successfully:', data)
+      
       // Store session ID for verification after payment
       if (data.sessionId) {
         localStorage.setItem('stripe_checkout_session_id', data.sessionId)
       }
       
-      // Clear plan selection parameters to prevent redirection loops
-      localStorage.removeItem('selected_plan')
-      localStorage.removeItem('selected_frequency')
-      localStorage.removeItem('redirect_to_checkout')
-      localStorage.removeItem('selectedPlan')
-      localStorage.removeItem('billingFrequency')
-      localStorage.removeItem('redirectToCheckout')
-      
       // Redirect to Stripe Checkout
       if (data.url) {
+        // Only clear plan selection parameters after we have the URL
+        // to prevent redirection loops
+        localStorage.removeItem('selected_plan')
+        localStorage.removeItem('selected_frequency')
+        localStorage.removeItem('redirect_to_checkout')
+        localStorage.removeItem('selectedPlan')
+        localStorage.removeItem('billingFrequency')
+        localStorage.removeItem('redirectToCheckout')
+        
+        console.log('Redirecting to Stripe checkout:', data.url)
         window.location.href = data.url
       } else {
         throw new Error('No checkout URL returned')
