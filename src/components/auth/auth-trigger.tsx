@@ -67,7 +67,7 @@ export function AuthTrigger({
         router.push(`/plans/${plan}?frequency=${frequency}`)
       } else if (!user) {
         // Redirect to plans page
-        router.push('/pricing')
+        router.push('/plans')
       }
     } catch (error) {
       console.error('Error in handleClick:', error)
@@ -75,8 +75,8 @@ export function AuthTrigger({
       if (scrollToPricing) {
         scrollToPricing()
       } else {
-        // Default fallback - go to pricing page
-        router.push('/pricing')
+        // Default fallback - go to plans page
+        router.push('/plans')
       }
     } finally {
       setIsLoading(false)

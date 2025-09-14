@@ -6,50 +6,31 @@ import { Check, Star, Zap, Shield, Users, BarChart3 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
+// Import pricing plans from the Stripe config
+import { PRICING_PLANS } from '@/lib/stripe/config'
+
 const plans = [
   {
-    name: 'Starter',
-    price: 29,
-    description: 'Perfect for small businesses getting started',
-    features: [
-      'Up to 5 campaigns',
-      'Basic analytics',
-      'Email support',
-      '1 user account',
-      'Standard templates'
-    ],
+    name: PRICING_PLANS.starter.name,
+    price: PRICING_PLANS.starter.monthlyPrice,
+    description: PRICING_PLANS.starter.description,
+    features: PRICING_PLANS.starter.features,
     popular: false,
-    cta: 'Start Free Trial'
+    cta: 'Get Started'
   },
   {
-    name: 'Professional',
-    price: 79,
-    description: 'Ideal for growing businesses',
-    features: [
-      'Unlimited campaigns',
-      'Advanced analytics',
-      'Priority support',
-      'Up to 10 users',
-      'Custom templates',
-      'A/B testing',
-      'API access'
-    ],
+    name: PRICING_PLANS.pro.name,
+    price: PRICING_PLANS.pro.monthlyPrice,
+    description: PRICING_PLANS.pro.description,
+    features: PRICING_PLANS.pro.features,
     popular: true,
     cta: 'Get Started'
   },
   {
-    name: 'Enterprise',
-    price: 199,
-    description: 'For large organizations',
-    features: [
-      'Everything in Professional',
-      'Dedicated account manager',
-      'Custom integrations',
-      'Unlimited users',
-      'White-label options',
-      'SLA guarantee',
-      'Advanced security'
-    ],
+    name: PRICING_PLANS.enterprise.name,
+    price: PRICING_PLANS.enterprise.monthlyPrice,
+    description: PRICING_PLANS.enterprise.description,
+    features: PRICING_PLANS.enterprise.features,
     popular: false,
     cta: 'Contact Sales'
   }
@@ -177,7 +158,7 @@ export default function PricingPage() {
                       className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
                       variant={plan.popular ? 'default' : 'outline'}
                     >
-                      <Link href={`/auth/signup?plan=${plan.name.toLowerCase()}&frequency=${isAnnual ? 'yearly' : 'monthly'}`}>
+                      <Link href={`/plans/${plan.name.toLowerCase()}?frequency=${isAnnual ? 'yearly' : 'monthly'}`}>
                         {plan.cta}
                       </Link>
                     </Button>
