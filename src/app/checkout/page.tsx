@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
 import { getCurrentUser } from '@/lib/supabase/client'
 import { CheckoutContent } from '@/components/checkout/checkout-content'
@@ -12,14 +12,13 @@ import { Loader2 } from 'lucide-react'
 export default function CheckoutPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const searchParams = useSearchParams()
   
   const [isLoading, setIsLoading] = useState(true)
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
   
   // Get plan and billing from URL params
-  const planParam = searchParams.get('plan')
-  const billingParam = searchParams.get('billing')
+  const [planParam, setPlanParam] = useState<string | null>(null)
+  const [billingParam, setBillingParam] = useState<string | null>(null)
   
   // Set plan and billing from URL params or localStorage
   const [planId, setPlanId] = useState<string | null>(null)
@@ -27,25 +26,35 @@ export default function CheckoutPage() {
   
   // Initialize plan and billing from URL params or localStorage
   useEffect(() => {
-    // First try to get from URL params
-    if (planParam) {
-      setPlanId(planParam)
-    } else if (typeof window !== 'undefined') {
-      // Fallback to localStorage
-      const storedPlan = localStorage.getItem('selectedPlan')
-      if (storedPlan) setPlanId(storedPlan)
+    if (typeof window !== 'undefined') {
+      // Get URL params
+      const url = new URL(window.location.href)
+      const planFromUrl = url.searchParams.get('plan')
+      const billingFromUrl = url.searchParams.get('billing')
+      
+      setPlanParam(planFromUrl)
+      setBillingParam(billingFromUrl)
+      
+      // First try to get from URL params
+      if (planFromUrl) {
+        setPlanId(planFromUrl)
+      } else {
+        // Fallback to localStorage
+        const storedPlan = localStorage.getItem('selectedPlan')
+        if (storedPlan) setPlanId(storedPlan)
+      }
+      
+      // Same for billing frequency
+      if (billingFromUrl) {
+        setBillingFrequency(billingFromUrl)
+      } else {
+        const storedFrequency = localStorage.getItem('billingFrequency')
+        if (storedFrequency) setBillingFrequency(storedFrequency)
+      }
+      
+      setIsLoading(false)
     }
-    
-    // Same for billing frequency
-    if (billingParam) {
-      setBillingFrequency(billingParam)
-    } else if (typeof window !== 'undefined') {
-      const storedFrequency = localStorage.getItem('billingFrequency')
-      if (storedFrequency) setBillingFrequency(storedFrequency)
-    }
-    
-    setIsLoading(false)
-  }, [planParam, billingParam])
+  }, [])
   
   // Check for user session and redirect if not authenticated
   useEffect(() => {
