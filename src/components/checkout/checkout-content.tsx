@@ -132,10 +132,11 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
         },
         body: JSON.stringify({
           email: user.email,
-          firstName: user.name?.split(' ')[0] || user.email.split('@')[0],
-          lastName: user.name?.split(' ').slice(1).join(' ') || '',
+          name: user.name || user.email.split('@')[0],
           planId: selectedPlan.id,
-          priceId: currentPriceId
+          priceId: currentPriceId,
+          successUrl: `${window.location.origin}/checkout/success`,
+          cancelUrl: `${window.location.origin}/checkout`
         }),
       })
       
