@@ -174,24 +174,15 @@ function PlanSignupContent() {
           description: 'Redirecting to checkout...'
         });
         
-        // Sign in without redirect
-        const result = await signIn('credentials', {
+        // Sign in with redirect to checkout
+        await signIn('credentials', {
           email,
           password,
-          redirect: false,
+          redirect: true,
           callbackUrl: `/checkout?plan=${normalizedPlanId}&billing=${billingFrequency}`
         });
         
-        if (result?.ok) {
-          // Redirect to checkout with plan parameters
-          const params = new URLSearchParams({
-            plan: normalizedPlanId,
-            billing: billingFrequency
-          });
-          router.push(`/checkout?${params.toString()}`);
-        } else {
-          throw new Error('Failed to sign in');
-        }
+        // The redirect will happen automatically from signIn
       } else {
         const error = await response.json();
         setErrors({ email: error.message || 'Sign up failed' });
