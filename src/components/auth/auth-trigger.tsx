@@ -90,8 +90,8 @@ export function AuthTrigger({
       const frequency = searchParams.get('frequency') || 'monthly'
       router.push(`/plans/${planId}?frequency=${frequency}`)
     } else {
-      // Otherwise redirect to pricing
-      router.push('/pricing')
+      // Otherwise redirect to the plan-specific signup page
+      router.push(`/plans/${plan}?frequency=${frequency}`)
     }
   }
 
@@ -101,9 +101,12 @@ export function AuthTrigger({
         variant={variant}
         size={size}
         className={className}
-        onClick={handleGetStarted}
+        onClick={handleClick}
       >
-        Get Started Free
+        {isLoading ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : null}
+        {children}
       </Button>
     </>
   )
