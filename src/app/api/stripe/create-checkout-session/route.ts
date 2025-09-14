@@ -127,6 +127,13 @@ export async function OPTIONS(request: NextRequest) {
       'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_BASE_URL || '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400', // 24 hours cache for preflight requests
     },
   });
+}
+
+// Helper function to sanitize input
+function sanitizeInput(input: string | undefined): string {
+  if (!input) return '';
+  return input.trim().replace(/[<>"'&]/g, '');
 }

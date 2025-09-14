@@ -144,6 +144,7 @@ function SignUpContent() {
         
         // Always sign in and redirect to checkout
         // Sign in without redirect
+        console.log('Attempting to sign in with credentials')
         const result = await signIn('credentials', {
           email,
           password,
@@ -152,14 +153,23 @@ function SignUpContent() {
         
         if (result?.ok) {
           // Keep loading state true during redirect
-          console.log('Redirecting to checkout')
+          console.log('Sign in successful, redirecting to checkout')
+          
+          // Ensure we keep loading state during navigation
+          // DO NOT set isLoading to false here
+          
           // Redirect to checkout with plan parameters
           const params = new URLSearchParams({
             plan: finalPlan,
-            frequency: finalFrequency
+            frequency: finalFrequency,
+            redirectToCheckout: 'true' // Add this to URL params as well
           })
-          router.push(`/checkout?${params.toString()}`)
+          
+          // Force a hard navigation to ensure the checkout page loads fresh
+          console.log('Redirecting to checkout page:', `/checkout?${params.toString()}`)
+          window.location.href = `/checkout?${params.toString()}`
         } else {
+          console.error('Sign in failed:', result?.error)
           throw new Error('Failed to sign in')
         }
       } else {

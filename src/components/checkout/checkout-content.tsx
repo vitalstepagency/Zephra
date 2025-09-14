@@ -85,6 +85,7 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
       
       // Set redirect flag but clear any existing redirect count to start fresh
       localStorage.setItem('redirect_to_checkout', 'true')
+      localStorage.setItem('redirectToCheckout', 'true') // Set both formats for compatibility
       localStorage.removeItem('redirectCount')
       
       const params = new URLSearchParams({
@@ -93,7 +94,9 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
         redirectToCheckout: 'true'
       })
       console.log(`Redirecting to sign up page: /auth/signup?${params.toString()}`)
-      router.push(`/auth/signup?${params.toString()}`)
+      
+      // Use window.location for a hard redirect to ensure fresh page load
+      window.location.href = `/auth/signup?${params.toString()}`
       return
     }
     
@@ -136,16 +139,27 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
           name: user.name || user.email.split('@')[0],
           planId: selectedPlan.id,
           priceId: currentPriceId,
+          userId: user.id || '',
           successUrl: `${window.location.origin}/checkout/success`,
           cancelUrl: `${window.location.origin}/checkout`
         }),
       })
       
-      const data = await response.json()
-      
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session')
+        const errorText = await response.text()
+        console.error('Error response from server:', errorText)
+        try {
+          const errorData = JSON.parse(errorText)
+          throw new Error(errorData.error || 'Failed to create checkout session')
+        } catch (parseError) {
+          throw new Error(`Server error: ${response.status} ${response.statusText}`)
+        }
       }
+      
+      const data = await response.json().catch(err => {
+        console.error('Error parsing JSON response:', err)
+        throw new Error('Invalid response from server')
+      })
       
       console.log('Checkout session created successfully:', data)
       
@@ -166,15 +180,23 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
         localStorage.removeItem('redirectToCheckout')
         
         console.log('Redirecting to Stripe checkout:', data.url)
+        // Use a hard redirect to Stripe
         window.location.href = data.url
       } else {
-        throw new Error('No checkout URL returned')
+        console.error('Missing URL in checkout response:', data)
+        throw new Error('No checkout URL returned from Stripe')
       }
     } catch (error) {
       console.error('Checkout error:', error)
       setErrors({
         checkout: error instanceof Error ? error.message : 'An unexpected error occurred'
       })
+      
+      // Show a toast notification for better user feedback
+      if (typeof window !== 'undefined' && window.document) {
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+        alert(`Checkout error: ${errorMessage}. Please try again or contact support.`);
+      }
     } finally {
       setIsLoading(false)
     }

@@ -129,7 +129,8 @@ export default function CheckoutPage() {
             
             // Check if we should redirect to Stripe checkout
             const shouldRedirectToCheckout = localStorage.getItem('redirect_to_checkout') === 'true' || 
-                                            localStorage.getItem('redirectToCheckout') === 'true'
+                                            localStorage.getItem('redirectToCheckout') === 'true' ||
+                                            new URL(window.location.href).searchParams.get('redirectToCheckout') === 'true'
             
             if (shouldRedirectToCheckout) {
               console.log('Redirect to checkout flag detected, initiating checkout')
@@ -139,6 +140,7 @@ export default function CheckoutPage() {
                 const checkoutButton = document.querySelector('#checkout-button') as HTMLButtonElement
                 if (checkoutButton) {
                   console.log('Checkout button found, clicking')
+                  // Directly trigger the checkout button click
                   checkoutButton.click()
                   
                   // Clear redirect flags after clicking the button
@@ -146,9 +148,31 @@ export default function CheckoutPage() {
                     console.log('Clearing redirect flags')
                     localStorage.removeItem('redirectToCheckout')
                     localStorage.removeItem('redirect_to_checkout')
+                    
+                    // Also remove from URL without page reload
+                    const currentUrl = new URL(window.location.href)
+                    if (currentUrl.searchParams.has('redirectToCheckout')) {
+                      currentUrl.searchParams.delete('redirectToCheckout')
+                      window.history.replaceState({}, '', currentUrl.toString())
+                    }
                   }, 2000)
                 } else {
                   console.error('Checkout button not found')
+                  // Try again after a short delay as a fallback
+                  setTimeout(() => {
+                    const retryButton = document.querySelector('#checkout-button') as HTMLButtonElement
+                    if (retryButton) {
+                      console.log('Checkout button found on retry, clicking')
+                      retryButton.click()
+                    } else {
+                      console.error('Checkout button not found after retry')
+                      // Show user-friendly error message
+                      alert('Unable to proceed to checkout automatically. Please try refreshing the page or contact support if the issue persists.')
+                      // Clear redirect flags to prevent loops
+                      localStorage.removeItem('redirectToCheckout')
+                      localStorage.removeItem('redirect_to_checkout')
+                    }
+                  }, 1000)
                 }
               }, 1000)
             }
