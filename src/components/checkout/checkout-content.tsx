@@ -211,10 +211,15 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
                 </span>
               </div>
               
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                <Lock className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-500">Secure checkout powered by Stripe</span>
-              </div>
+              <div className="flex flex-col items-center space-y-2 mb-4">
+            <div className="flex items-center justify-center space-x-2">
+              <Lock className="h-4 w-4 text-gray-500" />
+              <span className="text-sm text-gray-500">Secure checkout powered by Stripe</span>
+            </div>
+            <div className="text-center text-sm text-indigo-500 font-medium">
+              Your 14-day free trial starts today
+            </div>
+          </div>
               
               <button
                 type="submit"

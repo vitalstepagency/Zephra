@@ -30,6 +30,7 @@ export function AuthTrigger({
 }: AuthTriggerProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<SupabaseUser | null>(null)
+  const [planId, setPlanId] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -49,8 +50,21 @@ export function AuthTrigger({
     setIsLoading(true)
     
     try {
-      // Redirect to plans page instead of opening a modal
-      router.push(`/plans/${plan}`)
+      if (user) {
+        // If user is already logged in, redirect directly to checkout
+        const params = new URLSearchParams({
+          plan: plan,
+          billing: frequency
+        })
+        router.push(`/checkout?${params.toString()}`)
+      } else {
+        // If not logged in, redirect to plans page with parameters
+        const params = new URLSearchParams({
+          redirectToCheckout: 'true',
+          frequency: frequency
+        })
+        router.push(`/plans/${plan}?${params.toString()}`)
+      }
     } catch (error) {
       console.error('Error in handleClick:', error)
       // Default fallback - go to plans page
@@ -60,23 +74,38 @@ export function AuthTrigger({
     }
   }
 
+  // Check if we're on a plan page
+  useEffect(() => {
+    const path = window.location.pathname
+    const planMatch = path.match(/\/plans\/([^\/]+)/)
+    if (planMatch && planMatch[1]) {
+      setPlanId(planMatch[1])
+    }
+  }, [])
+
+  const handleGetStarted = () => {
+    if (planId) {
+      // If we're on a plan page, redirect to the plan-specific signup
+      const searchParams = new URLSearchParams(window.location.search)
+      const frequency = searchParams.get('frequency') || 'monthly'
+      router.push(`/plans/${planId}?frequency=${frequency}`)
+    } else {
+      // Otherwise redirect to pricing
+      router.push('/pricing')
+    }
+  }
+
   return (
-    <Button
-      variant={variant}
-      size={size}
-      className={className}
-      onClick={handleClick}
-      disabled={isLoading}
-    >
-      {isLoading ? (
-        <div className="flex items-center justify-center">
-          <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          Loading...
-        </div>
-      ) : (
-        children || 'Get Started Free'
-      )}
-    </Button>
+    <>
+      <Button
+        variant={variant}
+        size={size}
+        className={className}
+        onClick={handleGetStarted}
+      >
+        Get Started Free
+      </Button>
+    </>
   )
 }
 

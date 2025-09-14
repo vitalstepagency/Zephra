@@ -28,7 +28,7 @@ const enhancedSignupSchema = z.object({
   phone: z.string().optional(),
   company: z.string().max(100).optional(),
   planId: z.string().min(1, 'Plan ID is required'),
-  stripeCustomerId: z.string().min(1, 'Stripe customer ID is required'),
+  stripeCustomerId: z.string().optional(), // Make Stripe customer ID optional for initial signup
   honeypot: z.string().optional(),
   timestamp: z.number().optional(),
   userAgent: z.string().optional(),
@@ -130,7 +130,7 @@ async function signupHandler(request: NextRequest) {
       phone: validatedData.phone ? sanitizePhone(validatedData.phone) : undefined,
       company: validatedData.company && typeof validatedData.company === 'string' ? sanitizeInput(validatedData.company) : undefined,
       planId: sanitizeInput(validatedData.planId),
-      stripeCustomerId: sanitizeInput(validatedData.stripeCustomerId)
+      stripeCustomerId: validatedData.stripeCustomerId ? sanitizeInput(validatedData.stripeCustomerId) : undefined
     }
     
     // Additional security validations
@@ -263,10 +263,10 @@ async function signupHandler(request: NextRequest) {
           phone: sanitizedData.phone,
           company: sanitizedData.company,
           avatar_url: null,
-          subscription_tier: 'starter',
-          subscription_status: 'trial',
+          subscription_tier: sanitizedData.planId || 'starter',
+          subscription_status: sanitizedData.stripeCustomerId ? 'active' : 'pending',
           plan_id: sanitizedData.planId,
-          stripe_customer_id: sanitizedData.stripeCustomerId,
+          stripe_customer_id: sanitizedData.stripeCustomerId || null,
           trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days trial
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -288,7 +288,7 @@ async function signupHandler(request: NextRequest) {
           email: sanitizedData.email,
           name: fullName,
           onboarding_completed: false,
-          subscription_plan: 'starter',
+          subscription_plan: sanitizedData.planId || 'starter',
           preferences: {},
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -311,7 +311,8 @@ async function signupHandler(request: NextRequest) {
           lastName: sanitizedData.lastName,
           fullName: fullName,
           planId: sanitizedData.planId,
-          stripeCustomerId: sanitizedData.stripeCustomerId
+          stripeCustomerId: sanitizedData.stripeCustomerId || null,
+          subscriptionStatus: sanitizedData.stripeCustomerId ? 'active' : 'pending'
         }
       },
       { status: 201 }

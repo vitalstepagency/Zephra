@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, Suspense } from 'react'
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
+import { CustomerPortalButton } from '@/components/dashboard/customer-portal-button'
 import { 
   BarChart3, 
   Users, 
@@ -102,10 +103,11 @@ function DashboardContent() {
               </Badge>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </Button>
+                <CustomerPortalButton />
+                <Button variant="outline" size="sm">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </Button>
               <div className="flex items-center space-x-2">
                 <img
                   className="h-8 w-8 rounded-full"

@@ -56,13 +56,54 @@ export default function CheckoutPage() {
     }
   }, [])
   
-  // Check for user session and redirect if not authenticated
+  // Check for user session and handle authentication
   useEffect(() => {
     if (status === 'loading') return
     
     const checkSession = async () => {
       try {
-        if (status === 'unauthenticated') {
+        // Check if we have a newly created user from plan-specific signup
+        const newUserEmail = localStorage.getItem('newUserEmail')
+        const newUserPassword = localStorage.getItem('newUserPassword')
+        
+        if (status === 'unauthenticated' && newUserEmail && newUserPassword) {
+          console.log('New user detected, attempting automatic sign-in')
+          
+          // Attempt to sign in with the new user credentials
+          const result = await signIn('credentials', {
+            email: newUserEmail,
+            password: newUserPassword,
+            redirect: false
+          })
+          
+          if (result?.error) {
+            console.error('Auto sign-in failed:', result.error)
+            // Clear stored credentials and redirect to plans
+            localStorage.removeItem('newUserEmail')
+            localStorage.removeItem('newUserPassword')
+            
+            // Store the redirect flag in URL params
+            const params = new URLSearchParams({
+              redirectToCheckout: 'true'
+            })
+            
+            // If we have plan and billing info, add them to the redirect
+            if (planId) params.append('plan', planId)
+            if (billingFrequency) params.append('billing', billingFrequency)
+            
+            // Redirect to plans page with the flag
+            router.push(`/plans/${planId || 'pro'}?${params.toString()}`)
+            return
+          }
+          
+          // Clear stored credentials after successful sign-in
+          localStorage.removeItem('newUserEmail')
+          localStorage.removeItem('newUserPassword')
+          
+          // Refresh the session to get the user data
+          window.location.reload()
+          return
+        } else if (status === 'unauthenticated') {
           console.log('No authenticated session found, redirecting to plans')
           // Store the redirect flag in URL params
           const params = new URLSearchParams({
