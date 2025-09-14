@@ -7,10 +7,7 @@ import {
   secureResponse,
   logSecurityEvent
 } from '@/lib/security'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-})
+import { getStripe } from '@/lib/stripe/config'
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,6 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get active subscriptions for this customer
+    const stripe = getStripe()
     const subscriptions = await stripe.subscriptions.list({
       customer: customer.stripe_customer_id,
       status: 'active',
