@@ -247,7 +247,7 @@ function PlanSignupContent() {
               {plan.name} Plan
             </h1>
             <p className="text-xl text-slate-300 mb-6">
-              You're 60 seconds away from never worrying about marketing again
+              Unlock powerful marketing automation and growth tools
             </p>
             
             <div className="inline-flex items-center bg-slate-800/50 p-1 rounded-lg mb-6">
@@ -294,10 +294,20 @@ function PlanSignupContent() {
           
           {plan.detailedFeatures && Object.entries(plan.detailedFeatures).length > 0 && (
             <motion.div variants={fadeInUp} className="space-y-6 mb-8">
-              {Object.entries(plan.detailedFeatures).slice(0, 2).map(([key, feature]: [string, any]) => (
-                <div key={key} className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
+              {Object.entries(plan.detailedFeatures).map(([key, feature]: [string, any]) => (
+                <div key={key} className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 mb-4">
                   <h3 className="text-lg font-bold text-white mb-2">{feature.title}</h3>
-                  <p className="text-slate-400 mb-4 text-sm">{feature.description}</p>
+                  <p className="text-slate-400 mb-3 text-sm">{feature.description}</p>
+                  {feature.items && (
+                    <ul className="space-y-2">
+                      {feature.items.map((item: string, idx: number) => (
+                        <li key={idx} className="flex items-start">
+                          <CheckCircle className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-slate-300 text-sm">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               ))}
             </motion.div>
@@ -313,9 +323,9 @@ function PlanSignupContent() {
         >
           <div className="w-full max-w-md">
             {/* Header */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <motion.div 
-                className="flex items-center justify-center mb-4"
+                className="flex items-center justify-center mb-3"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -326,7 +336,7 @@ function PlanSignupContent() {
               </motion.div>
               
               <motion.h2 
-                className="text-2xl font-bold text-white mb-2"
+                className="text-3xl font-bold text-white mb-2"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
@@ -357,11 +367,11 @@ function PlanSignupContent() {
 
             {/* Sign Up Card */}
             <motion.div variants={cardVariants}>
-              <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-700/50 shadow-2xl">
+              <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-700/50 shadow-2xl border-indigo-500/20">
                 <CardHeader className="space-y-1 pb-4">
                   <CardTitle className="text-xl text-white">Get Started</CardTitle>
                   <CardDescription className="text-slate-400">
-                    Create your account in 60 seconds
+                    Choose your preferred sign-up method
                   </CardDescription>
                 </CardHeader>
                 
@@ -441,7 +451,7 @@ function PlanSignupContent() {
                     <Button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white border-0 py-5 font-semibold mt-2"
+                      className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white border-0 py-6 font-semibold mt-4 rounded-xl shadow-lg shadow-indigo-500/20"
                     >
                       {isLoading ? (
                         <div className="flex items-center">
@@ -451,7 +461,7 @@ function PlanSignupContent() {
                       ) : (
                         <div className="flex items-center justify-center">
                           <Mail className="w-5 h-5 mr-2" />
-                          Create Account & Continue to Checkout
+                          Create Account
                           <ArrowRight className="w-5 h-5 ml-2" />
                         </div>
                       )}
@@ -459,19 +469,19 @@ function PlanSignupContent() {
                   </form>
 
                   {/* Trust Indicators */}
-                  <div className="mt-4 text-center">
-                    <div className="flex items-center justify-center space-x-6 mb-4">
-                      <div className="flex items-center text-slate-400 text-sm">
+                  <div className="mt-6 text-center">
+                    <div className="flex items-center justify-center space-x-8 mb-5 bg-slate-800/30 backdrop-blur-sm border border-slate-700/30 rounded-xl p-3">
+                      <div className="flex items-center text-slate-300 text-sm">
                         <Shield className="w-4 h-4 mr-2 text-emerald-400" />
                         Secure & Encrypted
                       </div>
-                      <div className="flex items-center text-slate-400 text-sm">
+                      <div className="flex items-center text-slate-300 text-sm">
                         <Zap className="w-4 h-4 mr-2 text-indigo-400" />
                         Instant Setup
                       </div>
                     </div>
                     
-                    <p className="text-xs text-slate-500 mb-2">
+                    <p className="text-xs text-slate-500 mb-3">
                       By creating an account, you agree to our{' '}
                       <Link href="/terms" className="text-indigo-400 hover:text-indigo-300 underline">
                         Terms of Service
@@ -482,7 +492,7 @@ function PlanSignupContent() {
                       </Link>
                     </p>
                     
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-slate-300 text-sm">
                       Already have an account?{' '}
                       <Link 
                         href="/auth/signin" 
