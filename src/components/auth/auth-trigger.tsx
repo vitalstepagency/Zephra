@@ -60,9 +60,14 @@ export function AuthTrigger({
       } else {
         // If not logged in, redirect to plan-specific sign-up page
         const params = new URLSearchParams({
-          redirectToCheckout: 'true',
           frequency: frequency
         })
+        
+        // Store plan and frequency in localStorage for the checkout redirect
+        localStorage.setItem('selected_plan', plan)
+        localStorage.setItem('selected_frequency', frequency)
+        localStorage.setItem('redirect_to_checkout', 'true')
+        
         router.push(`/plans/${plan}?${params.toString()}`)
       }
     } catch (error) {
@@ -89,10 +94,12 @@ export function AuthTrigger({
     
     // Set redirect flag and plan selection if needed
     if (redirectToCheckout) {
-      localStorage.setItem('redirectToCheckout', 'true')
-      console.log('Setting redirectToCheckout flag')
+      localStorage.setItem('redirect_to_checkout', 'true')
+      localStorage.setItem('selected_plan', plan)
+      localStorage.setItem('selected_frequency', frequency)
+      console.log('Setting redirect_to_checkout flag and plan details')
     } else {
-      localStorage.removeItem('redirectToCheckout')
+      localStorage.removeItem('redirect_to_checkout')
     }
     
     if (planId) {

@@ -76,6 +76,13 @@ export default function SignInPage() {
             plan: storedPlan,
             billing: storedFrequency || 'monthly'
           })
+          
+          // Clear the redirect flag to prevent loops
+          localStorage.removeItem('redirect_to_checkout')
+          localStorage.removeItem('redirectToCheckout') // Clear old format too
+          localStorage.removeItem('redirectCount')
+          
+          console.log('Redirecting to checkout with plan:', storedPlan, 'and billing:', storedFrequency)
           router.push(`/checkout?${params.toString()}`)
         } else if (storedPlan) {
           // Redirect to onboarding with plan parameter

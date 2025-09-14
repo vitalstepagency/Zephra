@@ -50,7 +50,7 @@ export default function CheckoutPage() {
         setPlanId(planFromUrl)
       } else {
         // Fallback to localStorage
-        const storedPlan = localStorage.getItem('selectedPlan')
+        const storedPlan = localStorage.getItem('selected_plan') || localStorage.getItem('selectedPlan')
         if (storedPlan) setPlanId(storedPlan)
       }
       
@@ -58,9 +58,14 @@ export default function CheckoutPage() {
       if (billingFromUrl) {
         setBillingFrequency(billingFromUrl)
       } else {
-        const storedFrequency = localStorage.getItem('billingFrequency')
+        const storedFrequency = localStorage.getItem('selected_frequency') || localStorage.getItem('billingFrequency')
         if (storedFrequency) setBillingFrequency(storedFrequency)
       }
+      
+      // Clear redirect flags
+      localStorage.removeItem('redirect_to_checkout')
+      localStorage.removeItem('redirectToCheckout')
+      localStorage.removeItem('redirectCount')
       
       setIsLoading(false)
     }
