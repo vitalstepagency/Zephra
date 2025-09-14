@@ -4,9 +4,9 @@
   "description": "AI-Powered All-in-One Digital Marketing Platform",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H localhost -p 3001",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H localhost -p 3001",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "db:generate": "drizzle-kit generate:pg",

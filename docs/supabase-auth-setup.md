@@ -23,10 +23,10 @@ Add these redirect URLs in your Google Cloud Console:
 
 ### 4. Site URL Configuration
 In Supabase Authentication settings:
-- **Site URL**: `http://localhost:3000` (development)
+- **Site URL**: `http://localhost:3001` (development)
 - **Redirect URLs**: 
-  - `http://localhost:3000/auth/callback`
-  - `http://localhost:3000/**` (for development)
+  - `http://localhost:3001/auth/callback`
+- `http://localhost:3001/**` (for development)
 
 ### 5. Additional Security Settings
 - Enable **Email Confirmations** if desired
@@ -37,7 +37,7 @@ In Supabase Authentication settings:
 
 Once configured:
 1. Start your development server: `npm run dev`
-2. Navigate to `http://localhost:3000`
+2. Navigate to `http://localhost:3001`
 3. Click "Sign in with Google"
 4. Complete the OAuth flow
 5. Verify user creation in Supabase Dashboard > Authentication > Users
@@ -46,7 +46,7 @@ Once configured:
 
 Ensure these are set in your `.env.local`:
 ```
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=http://localhost:3001
 NEXTAUTH_SECRET=your-generated-secret
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret

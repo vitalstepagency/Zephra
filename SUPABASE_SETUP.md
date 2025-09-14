@@ -47,9 +47,9 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 ### 5. Configure Authentication
 
 1. Go to **Authentication** → **Settings**
-2. Under **Site URL**, add: `http://localhost:3000`
+2. Under **Site URL**, add: `http://localhost:3001`
 3. Under **Redirect URLs**, add:
-   - `http://localhost:3000/auth/callback`
+   - `http://localhost:3001/auth/callback`
    - `https://your-domain.com/auth/callback` (for production)
 
 #### Enable OAuth Providers (Optional)
@@ -93,7 +93,7 @@ openssl rand -base64 32
 Add it to `.env.local`:
 ```env
 NEXTAUTH_SECRET=your-generated-secret-here
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=http://localhost:3001
 ```
 
 ### 8. Test Your Setup
@@ -103,7 +103,7 @@ NEXTAUTH_URL=http://localhost:3000
    npm run dev
    ```
 
-2. Visit `http://localhost:3000`
+2. Visit `http://localhost:3001`
 3. Try signing up/signing in
 4. Check your Supabase dashboard to see if users are being created
 

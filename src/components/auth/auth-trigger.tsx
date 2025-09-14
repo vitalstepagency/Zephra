@@ -63,8 +63,8 @@ export function AuthTrigger({
         // User is not authenticated, scroll to pricing
         scrollToPricing()
       } else if (!user && plan) {
-        // Redirect to plan details page
-        router.push(`/plans/${plan}?frequency=${frequency}`)
+        // Redirect to plan details page with redirectToCheckout flag
+        router.push(`/plans/${plan}?frequency=${frequency}&redirectToCheckout=true`)
       } else if (!user) {
         // Redirect to plans page
         router.push('/plans')

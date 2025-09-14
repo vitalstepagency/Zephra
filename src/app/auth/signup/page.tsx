@@ -132,42 +132,26 @@ function SignUpContent() {
         
         toast({
           title: 'Account created successfully!',
-          description: redirectToCheckout || finalPlan ? 'Redirecting to checkout...' : 'Redirecting to onboarding...'
+          description: 'Redirecting to checkout...'
         })
         
-        // Then sign in with the new credentials
-        if (redirectToCheckout || finalPlan) {
-          // Sign in without redirect
-          const result = await signIn('credentials', {
-            email,
-            password,
-            redirect: false
+        // Always sign in and redirect to checkout
+        // Sign in without redirect
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false
+        })
+        
+        if (result?.ok) {
+          // Redirect to checkout with plan parameters
+          const params = new URLSearchParams({
+            plan: finalPlan,
+            billing: finalFrequency
           })
-          
-          if (result?.ok) {
-            // Redirect to checkout with plan parameters
-            const params = new URLSearchParams({
-              plan: finalPlan,
-              billing: finalFrequency
-            })
-            router.push(`/checkout?${params.toString()}`)
-          } else {
-            throw new Error('Failed to sign in')
-          }
+          router.push(`/checkout?${params.toString()}`)
         } else {
-          // Sign in without redirect and then manually navigate
-          const result = await signIn('credentials', {
-            email,
-            password,
-            redirect: false
-          })
-          
-          if (result?.ok) {
-            // Manually navigate to onboarding with plan parameters
-            router.push(`/onboarding?name=${encodeURIComponent(name)}`)
-          } else {
-            throw new Error('Failed to sign in')
-          }
+          throw new Error('Failed to sign in')
         }
       } else {
         const error = await response.json()

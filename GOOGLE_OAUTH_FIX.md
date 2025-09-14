@@ -18,23 +18,23 @@ The redirect URIs in Google Cloud Console don't match what NextAuth.js is sendin
 ### 2. Configure Authorized JavaScript Origins
 Add these URLs to "Authorized JavaScript origins":
 ```
-http://localhost:3000
+http://localhost:3001
 https://yourdomain.com (for production)
 ```
 
 ### 3. Configure Authorized Redirect URIs
 Add these EXACT URLs to "Authorized redirect URIs":
 ```
-http://localhost:3000/api/auth/callback/google
+http://localhost:3001/api/auth/callback/google
 https://yourdomain.com/api/auth/callback/google (for production)
 ```
 
-**IMPORTANT**: The redirect URI must be EXACTLY `http://localhost:3000/api/auth/callback/google` for NextAuth.js
+**IMPORTANT**: The redirect URI must be EXACTLY `http://localhost:3001/api/auth/callback/google` for NextAuth.js
 
 ### 4. Environment Variables Check
 Ensure your `.env.local` has:
 ```env
-NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_URL="http://localhost:3001"
 GOOGLE_CLIENT_ID="your_client_id_here"
 GOOGLE_CLIENT_SECRET="your_client_secret_here"
 ```

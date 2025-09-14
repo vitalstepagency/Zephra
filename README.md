@@ -90,7 +90,7 @@ This platform represents the new gold standard in digital marketing automation, 
    ```
 
 7. **Open the application**
-   - Frontend: http://localhost:3000
+   - Frontend: http://localhost:3001
    - Kibana (if enabled): http://localhost:5601
    - MinIO Console: http://localhost:9001
    - Mailhog (if enabled): http://localhost:8025

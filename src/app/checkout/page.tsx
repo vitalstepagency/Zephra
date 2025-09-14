@@ -60,14 +60,12 @@ function CheckoutContent() {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
         
-        // If no user is found, redirect to signup with plan parameters
+        // If no user is found, redirect to plans page with plan parameters
         if (!currentUser) {
           const params = new URLSearchParams({
-            plan: planParam,
-            frequency: billingParam,
-            redirectToCheckout: 'true'
+            frequency: billingParam
           });
-          router.push(`/auth/signup?${params.toString()}`);
+          router.push(`/plans/${planParam}?${params.toString()}`);
           return;
         }
       } catch (error) {

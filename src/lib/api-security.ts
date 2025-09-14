@@ -186,7 +186,7 @@ export function validateApiKey(req: NextRequest): boolean {
 // CORS configuration
 export function setCorsHeaders(response: NextResponse, origin?: string) {
   const allowedOrigins = [
-    'http://localhost:3000',
+    'http://localhost:3001',
     'https://yourdomain.com',
     process.env.NEXT_PUBLIC_APP_URL
   ].filter(Boolean)

@@ -83,7 +83,7 @@ UPSTASH_REDIS_REST_TOKEN=your-redis-token
 
 3. **Test Webhook:**
    ```bash
-   stripe listen --forward-to localhost:3000/api/webhooks/stripe
+   stripe listen --forward-to localhost:3001/api/webhooks/stripe
    ```
 
 ### 3. Vercel Deployment
@@ -228,7 +228,7 @@ vercel ls
 vercel logs
 
 # Test webhook locally
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
+stripe listen --forward-to localhost:3001/api/webhooks/stripe
 
 # Run security audit
 npm audit
