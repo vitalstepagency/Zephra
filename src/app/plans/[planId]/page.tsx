@@ -145,20 +145,29 @@ export default function PlanSignUpPage() {
     setIsLoading(true)
     setStep('loading')
     
+    // Log form submission for debugging
+    console.log('Submitting signup form:', { email, name, planId: planDetails?.id, frequency })
+    
     try {
       // First create the account via API
-      const response = await fetch('/api/auth/signup', {
+      const response = await fetch('/api/auth/simple-signup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: email.trim().toLowerCase(), 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
           password, 
           name: name.trim(),
           planId: planDetails?.id
-        })
+        }),
       })
       
-      if (response.ok) {
+      const responseData = await response.json()
+      
+      if (response.ok && responseData.success) {
+        console.log('Account created successfully:', responseData)
+        
         // Store credentials in localStorage for session restoration and automatic sign-in after checkout
         localStorage.setItem('newUserEmail', email.trim().toLowerCase())
         localStorage.setItem('newUserPassword', password)
@@ -184,6 +193,8 @@ export default function PlanSignUpPage() {
           redirect: false
         })
         
+        console.log('Sign in result:', result)
+        
         if (result?.ok) {
           setStep('success')
           console.log('Sign-in successful, proceeding to checkout')
@@ -194,7 +205,7 @@ export default function PlanSignUpPage() {
               planDetails.priceIds.monthly : 
               planDetails.priceIds.yearly
             
-            // Create checkout session directly
+            // Create checkout session
             const checkoutResponse = await fetch('/api/stripe/create-checkout-session', {
               method: 'POST',
               headers: {
@@ -206,9 +217,12 @@ export default function PlanSignUpPage() {
                 planId: planDetails.id,
                 priceId: priceId,
                 successUrl: `${window.location.origin}/onboarding?session_id={CHECKOUT_SESSION_ID}`,
-                cancelUrl: `${window.location.origin}/plans/${planId}`
+                cancelUrl: `${window.location.origin}/plans/${planId}`,
+                userId: responseData.userId // Include the user ID from the signup response
               }),
             })
+            
+            console.log('Checkout response status:', checkoutResponse.status)
             
             const data = await checkoutResponse.json()
             

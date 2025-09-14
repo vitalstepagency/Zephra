@@ -35,7 +35,7 @@ export function getPriceId(plan: string, frequency: 'monthly' | 'yearly'): strin
     throw new Error(`Invalid plan: ${plan}`)
   }
   
-  return frequency === 'monthly' ? pricingPlan.monthlyPriceId : pricingPlan.yearlyPriceId
+  return pricingPlan.priceIds[frequency]
 }
 
 /**

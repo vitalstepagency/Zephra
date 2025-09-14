@@ -70,7 +70,7 @@ export function AuthTrigger({
         // Store plan and frequency in localStorage for the checkout redirect
         localStorage.setItem('selected_plan', normalizedPlan)
         localStorage.setItem('selected_frequency', frequency)
-        localStorage.setItem('redirect_to_checkout', 'true')
+        localStorage.setItem('redirect_to_checkout', redirectToCheckout ? 'true' : 'false')
         
         // Clear any redirect counts and old format keys to prevent loops
         localStorage.removeItem('redirectCount')

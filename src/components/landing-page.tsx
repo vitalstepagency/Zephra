@@ -8,7 +8,8 @@ import {
   BarChart3, Sparkles, Globe, MessageSquare, Mail, Smartphone,
   Eye, MousePointer, Layers, Gauge, ChevronDown, Plus, Minus
 } from 'lucide-react';
-import { PRICING_PLANS } from '@/lib/stripe/config';
+import { PRICING_PLANS } from '@/lib/stripe/config'
+import { assertExists } from '@/lib/utils';
 import { AuthTrigger } from '@/components/auth/auth-trigger';
 
 const fadeInUp = {
@@ -97,9 +98,14 @@ export default function LandingPage() {
               <button onClick={scrollToPricing} className="text-slate-300 hover:text-white transition-colors duration-200">Pricing</button>
               <a href="#faq" className="text-slate-300 hover:text-white transition-colors duration-200">FAQ</a>
               <a href="/auth/signin" className="text-slate-300 hover:text-white transition-colors duration-200">Sign In</a>
-              <button onClick={scrollToPricing} className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl font-medium hover:from-indigo-700 hover:to-blue-700 transition-all duration-300">
+              <AuthTrigger
+                className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl font-medium hover:from-indigo-700 hover:to-blue-700 transition-all duration-300"
+                plan="pro"
+                frequency="monthly"
+                redirectToCheckout={true}
+              >
                 Join Zephra
-              </button>
+              </AuthTrigger>
             </nav>
 
             <button className="md:hidden text-slate-300 hover:text-white">
@@ -154,6 +160,9 @@ export default function LandingPage() {
                 <AuthTrigger
                   scrollToPricing={scrollToPricing}
                   className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl font-bold text-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-2xl shadow-indigo-500/25"
+                  plan="pro"
+                  frequency="monthly"
+                  redirectToCheckout={true}
                 >
                   Get Started Free
                 </AuthTrigger>
@@ -690,27 +699,41 @@ export default function LandingPage() {
                 variants={fadeInUp}
                 whileHover={{ y: -5, scale: 1.02 }}
               >
-                <h4 className="text-2xl font-bold text-white mb-2">{PRICING_PLANS.starter.name}</h4>
-                <div className="mb-4">
-                  <span className="text-4xl font-black text-white">
-                    ${billingFrequency === 'monthly' ? PRICING_PLANS.starter.monthlyPrice : PRICING_PLANS.starter.yearlyPrice}
-                  </span>
-                  <span className="text-slate-400 ml-2">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
-                  {billingFrequency === 'yearly' && (
-                    <div className="text-sm text-emerald-400 mt-1">
-                      Save ${(PRICING_PLANS.starter.monthlyPrice * 12) - PRICING_PLANS.starter.yearlyPrice} per year
-                    </div>
-                  )}
-                </div>
-                <p className="text-slate-400 text-sm mb-6">{PRICING_PLANS.starter.description}</p>
-                <ul className="text-slate-300 space-y-3 mb-8">
-                  {PRICING_PLANS.starter.features.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                {(() => {
+                  // Check if starter plan exists before using it
+                  if (!PRICING_PLANS.starter) {
+                    console.error('Starter plan is missing');
+                    return <div>Starter plan details unavailable</div>;
+                  }
+                  
+                  const starterPlan = PRICING_PLANS.starter;
+                  return (
+                    <>
+                      <h4 className="text-2xl font-bold text-white mb-2">{starterPlan.name}</h4>
+                      <div className="mb-4">
+                        <span className="text-4xl font-black text-white">
+                          ${billingFrequency === 'monthly' ? starterPlan.monthlyPrice : starterPlan.yearlyPrice}
+                        </span>
+                        <span className="text-slate-400 ml-2">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
+                        {billingFrequency === 'yearly' && (
+                          <div className="text-sm text-emerald-400 mt-1">
+                            Save ${(starterPlan.monthlyPrice * 12) - starterPlan.yearlyPrice} per year
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-slate-400 text-sm mb-6">{starterPlan.description}</p>
+                      <ul className="text-slate-300 space-y-3 mb-8">
+                        {starterPlan.features.map((feature, index) => (
+                          <li key={index} className="flex items-center">
+                            <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  );
+                })()}
+
                 <AuthTrigger
                   className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300 inline-block text-center"
                   plan="starter"
@@ -732,27 +755,40 @@ export default function LandingPage() {
                     ⭐ Most Popular
                   </span>
                 </div>
-                <h4 className="text-2xl font-bold text-white mb-2">{PRICING_PLANS.pro.name}</h4>
-                <div className="mb-4">
-                  <span className="text-4xl font-black text-white">
-                    ${billingFrequency === 'monthly' ? PRICING_PLANS.pro.monthlyPrice : PRICING_PLANS.pro.yearlyPrice}
-                  </span>
-                  <span className="text-slate-400 ml-2">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
-                  {billingFrequency === 'yearly' && (
-                    <div className="text-sm text-emerald-400 mt-1">
-                      Save ${(PRICING_PLANS.pro.monthlyPrice * 12) - PRICING_PLANS.pro.yearlyPrice} per year
-                    </div>
-                  )}
-                </div>
-                <p className="text-slate-400 text-sm mb-6">{PRICING_PLANS.pro.description}</p>
-                <ul className="text-slate-300 space-y-3 mb-8">
-                  {PRICING_PLANS.pro.features.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                {(() => {
+                  // Check if pro plan exists before using it
+                  if (!PRICING_PLANS.pro) {
+                    console.error('Pro plan is missing');
+                    return <div>Pro plan details unavailable</div>;
+                  }
+                  
+                  const proPlan = PRICING_PLANS.pro;
+                  return (
+                    <>
+                      <h4 className="text-2xl font-bold text-white mb-2">{proPlan.name}</h4>
+                      <div className="mb-4">
+                        <span className="text-4xl font-black text-white">
+                          ${billingFrequency === 'monthly' ? proPlan.monthlyPrice : proPlan.yearlyPrice}
+                        </span>
+                        <span className="text-slate-400 ml-2">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
+                        {billingFrequency === 'yearly' && (
+                          <div className="text-sm text-emerald-400 mt-1">
+                            Save ${(proPlan.monthlyPrice * 12) - proPlan.yearlyPrice} per year
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-slate-400 text-sm mb-6">{proPlan.description}</p>
+                      <ul className="text-slate-300 space-y-3 mb-8">
+                        {proPlan.features.map((feature, index) => (
+                          <li key={index} className="flex items-center">
+                            <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  );
+                })()}
                 <AuthTrigger
                   className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl font-medium hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 inline-block text-center"
                   plan="pro"
@@ -769,30 +805,44 @@ export default function LandingPage() {
                 variants={fadeInUp}
                 whileHover={{ y: -5, scale: 1.02 }}
               >
-                <h4 className="text-2xl font-bold text-white mb-2">{PRICING_PLANS.enterprise.name}</h4>
-                <div className="mb-4">
-                  <span className="text-4xl font-black text-white">
-                    ${billingFrequency === 'monthly' ? PRICING_PLANS.enterprise.monthlyPrice : PRICING_PLANS.enterprise.yearlyPrice}
-                  </span>
-                  <span className="text-slate-400 ml-2">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
-                  {billingFrequency === 'yearly' && (
-                    <div className="text-sm text-emerald-400 mt-1">
-                      Save ${(PRICING_PLANS.enterprise.monthlyPrice * 12) - PRICING_PLANS.enterprise.yearlyPrice} per year
-                    </div>
-                  )}
-                </div>
-                <p className="text-slate-400 text-sm mb-6">{PRICING_PLANS.enterprise.description}</p>
-                <ul className="text-slate-300 space-y-3 mb-8">
-                  {PRICING_PLANS.enterprise.features.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                {(() => {
+                  // Check if enterprise plan exists before using it
+                  if (!PRICING_PLANS.enterprise) {
+                    console.error('Enterprise plan is missing');
+                    return <div>Enterprise plan details unavailable</div>;
+                  }
+                  
+                  const enterprisePlan = PRICING_PLANS.enterprise;
+                  return (
+                    <>
+                      <h4 className="text-2xl font-bold text-white mb-2">{enterprisePlan.name}</h4>
+                      <div className="mb-4">
+                        <span className="text-4xl font-black text-white">
+                          ${billingFrequency === 'monthly' ? enterprisePlan.monthlyPrice : enterprisePlan.yearlyPrice}
+                        </span>
+                        <span className="text-slate-400 ml-2">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
+                        {billingFrequency === 'yearly' && (
+                          <div className="text-sm text-emerald-400 mt-1">
+                            Save ${(enterprisePlan.monthlyPrice * 12) - enterprisePlan.yearlyPrice} per year
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-slate-400 text-sm mb-6">{enterprisePlan.description}</p>
+                      <ul className="text-slate-300 space-y-3 mb-8">
+                        {enterprisePlan.features.map((feature, index) => (
+                          <li key={index} className="flex items-center">
+                            <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  );
+                })()}
+
                 <AuthTrigger
                   className="w-full px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300 inline-block text-center"
-                  plan="elite"
+                  plan="enterprise"
                   frequency={billingFrequency}
                   redirectToCheckout={true}
                 >

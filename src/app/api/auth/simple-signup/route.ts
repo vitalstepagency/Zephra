@@ -107,7 +107,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { 
-        message: 'Account created successfully',
+        success: true,
+        message: 'User created successfully',
+        userId: authUser.user.id,
+        email: authUser.user.email,
         user: {
           id: authUser.user.id,
           email: authUser.user.email,

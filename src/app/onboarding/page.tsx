@@ -98,8 +98,6 @@ function OnboardingContent() {
     
     // Don't redirect immediately if we have a session_id
     // This allows time for session restoration to complete
-    // Don't redirect immediately if we have a session_id or plan parameter
-    // This allows time for session restoration to complete
     if (!session && !sessionId && !plan) {
       console.log('No session, sessionId, or plan - redirecting to signin')
       router.push('/auth/signin')
@@ -167,8 +165,11 @@ function OnboardingContent() {
       restoreSession()
     }
     
-    // Check payment status and onboarding completion
-    checkUserStatus()
+    // Check payment status and onboarding completion regardless of session state
+    // This ensures we verify payments even if session restoration fails
+    setTimeout(() => {
+      checkUserStatus()
+    }, 500) // Small delay to allow session restoration to complete
   }, [session, status, router, sessionId, searchParams, email, signIn])
   
   const checkUserStatus = async () => {
@@ -176,17 +177,21 @@ function OnboardingContent() {
       // If coming from successful checkout, assume payment is verified
       if (checkoutSuccess) {
         setPaymentVerified(true)
+        console.log('Payment verified from checkout success parameter')
       } else if (sessionId) {
         // If coming from Stripe checkout with session ID, verify payment
         // Use a more permissive API endpoint that doesn't require authentication
+        console.log('Verifying payment with session ID:', sessionId)
         const paymentResponse = await fetch(`/api/stripe/verify-payment?session_id=${sessionId}`)
         if (paymentResponse.ok) {
           const data = await paymentResponse.json()
+          console.log('Payment verification response:', data)
           setPaymentVerified(data.status === 'complete')
         }
       } else {
         // Check if user has active subscription
         setPaymentVerified(true) // Assume verified if no session_id
+        console.log('No session ID, assuming payment verified')
       }
       
       // Only check onboarding completion if we have a session

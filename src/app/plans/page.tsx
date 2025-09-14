@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle, ArrowRight, Shield } from 'lucide-react';
 import { PRICING_PLANS } from '@/lib/stripe/config';
+import { assertExists } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 const fadeInUp = {
@@ -97,29 +98,54 @@ export default function PlansPage() {
               </div>
               
               <div className="mb-6">
-                <div className="text-4xl font-bold text-white">
-                  ${billingFrequency === 'monthly' ? PRICING_PLANS.starter.monthlyPrice : PRICING_PLANS.starter.yearlyPrice}
-                  <span className="text-slate-400 text-lg font-normal ml-1">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
-                </div>
-                {billingFrequency === 'yearly' && (
-                  <div className="text-sm text-emerald-400 mt-1">
-                    Save ${(PRICING_PLANS.starter.monthlyPrice * 12) - PRICING_PLANS.starter.yearlyPrice} per year
-                  </div>
-                )}
+                {/* Use assertExists to ensure TypeScript knows these properties exist */}
+                {(() => {
+                  // Check if starter plan exists before using it
+                  if (!PRICING_PLANS.starter) {
+                    console.error('Starter plan is missing');
+                    return <div>Starter plan details unavailable</div>;
+                  }
+                  
+                  const starterPlan = PRICING_PLANS.starter;
+                  return (
+                    <>
+                      <div className="text-4xl font-bold text-white">
+                        ${billingFrequency === 'monthly' ? starterPlan.monthlyPrice : starterPlan.yearlyPrice}
+                        <span className="text-slate-400 text-lg font-normal ml-1">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
+                      </div>
+                      {billingFrequency === 'yearly' && (
+                        <div className="text-sm text-emerald-400 mt-1">
+                          Save ${(starterPlan.monthlyPrice * 12) - starterPlan.yearlyPrice} per year
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
               
               <div className="mb-8 flex-grow">
-                <ul className="space-y-3">
-                  {PRICING_PLANS.starter.features.slice(0, 5).map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircle className="w-5 h-5 text-emerald-400 mr-3 flex-shrink-0 mt-0.5" />
-                      <span className="text-slate-300">{feature}</span>
-                    </li>
-                  ))}
-                  {PRICING_PLANS.starter.features.length > 5 && (
-                    <li className="text-slate-400 text-sm mt-2 pl-8">+ {PRICING_PLANS.starter.features.length - 5} more features</li>
-                  )}
-                </ul>
+                {(() => {
+                  // Check if starter plan exists before using it
+                  if (!PRICING_PLANS.starter) {
+                    console.error('Starter plan is missing');
+                    return <div>Starter plan details unavailable</div>;
+                  }
+                  
+                  const starterPlan = PRICING_PLANS.starter;
+                  return (
+                    <ul className="space-y-3">
+                      {starterPlan.features.slice(0, 5).map((feature, index) => (
+                        <li key={index} className="flex items-start">
+                          <CheckCircle className="w-5 h-5 text-emerald-400 mr-3 flex-shrink-0 mt-0.5" />
+                          <span className="text-slate-300">{feature}</span>
+                        </li>
+                      ))}
+                      {starterPlan.features.length > 5 && (
+                        <li className="text-slate-400 text-sm mt-2 pl-8">+ {starterPlan.features.length - 5} more features</li>
+                      )}
+                    </ul>
+                  );
+                })()}
               </div>
               
               <Button 
@@ -143,29 +169,53 @@ export default function PlansPage() {
               </div>
               
               <div className="mb-6">
-                <div className="text-4xl font-bold text-white">
-                  ${billingFrequency === 'monthly' ? PRICING_PLANS.pro.monthlyPrice : PRICING_PLANS.pro.yearlyPrice}
-                  <span className="text-slate-400 text-lg font-normal ml-1">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
-                </div>
-                {billingFrequency === 'yearly' && (
-                  <div className="text-sm text-emerald-400 mt-1">
-                    Save ${(PRICING_PLANS.pro.monthlyPrice * 12) - PRICING_PLANS.pro.yearlyPrice} per year
-                  </div>
-                )}
+                {(() => {
+                  // Check if pro plan exists before using it
+                  if (!PRICING_PLANS.pro) {
+                    console.error('Pro plan is missing');
+                    return <div>Pro plan details unavailable</div>;
+                  }
+                  
+                  const proPlan = PRICING_PLANS.pro;
+                  return (
+                    <>
+                      <div className="text-4xl font-bold text-white">
+                        ${billingFrequency === 'monthly' ? proPlan.monthlyPrice : proPlan.yearlyPrice}
+                        <span className="text-slate-400 text-lg font-normal ml-1">/{billingFrequency === 'monthly' ? 'month' : 'year'}</span>
+                      </div>
+                      {billingFrequency === 'yearly' && (
+                        <div className="text-sm text-emerald-400 mt-1">
+                          Save ${(proPlan.monthlyPrice * 12) - proPlan.yearlyPrice} per year
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
               
               <div className="mb-8 flex-grow">
-                <ul className="space-y-3">
-                  {PRICING_PLANS.pro.features.slice(0, 5).map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircle className="w-5 h-5 text-emerald-400 mr-3 flex-shrink-0 mt-0.5" />
-                      <span className="text-slate-300">{feature}</span>
-                    </li>
-                  ))}
-                  {PRICING_PLANS.pro.features.length > 5 && (
-                    <li className="text-slate-400 text-sm mt-2 pl-8">+ {PRICING_PLANS.pro.features.length - 5} more features</li>
-                  )}
-                </ul>
+                {(() => {
+                  // Check if pro plan exists before using it
+                  if (!PRICING_PLANS.pro) {
+                    console.error('Pro plan is missing');
+                    return <div>Pro plan details unavailable</div>;
+                  }
+                  
+                  const proPlan = PRICING_PLANS.pro;
+                  return (
+                    <ul className="space-y-3">
+                      {proPlan.features.slice(0, 5).map((feature, index) => (
+                        <li key={index} className="flex items-start">
+                          <CheckCircle className="w-5 h-5 text-emerald-400 mr-3 flex-shrink-0 mt-0.5" />
+                          <span className="text-slate-300">{feature}</span>
+                        </li>
+                      ))}
+                      {proPlan.features.length > 5 && (
+                        <li className="text-slate-400 text-sm mt-2 pl-8">+ {proPlan.features.length - 5} more features</li>
+                      )}
+                    </ul>
+                  );
+                })()}
               </div>
               
               <Button 

@@ -13,7 +13,33 @@ export function getStripe() {
 }
 
 // Pricing configuration
-export const PRICING_PLANS = {
+// Define the type for each plan
+type Plan = {
+  name: string;
+  description: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  priceIds: {
+    monthly: string;
+    yearly: string;
+  };
+  features: string[];
+  detailedFeatures: Record<string, {
+    title: string;
+    description: string;
+    items: string[];
+  }>;
+  limits: {
+    campaigns: number;
+    contacts: number;
+    emailsPerMonth: number;
+    funnels: number;
+  };
+  aliases?: string[];
+  popular?: boolean;
+};
+
+export const PRICING_PLANS: Record<string, Plan> = {
   starter: {
     name: 'Basic',
     description: 'Perfect for solo entrepreneurs ready to automate',

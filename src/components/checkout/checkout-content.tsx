@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Shield, Lock, CreditCard, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { PRICING_PLANS } from '@/lib/stripe/config'
+import { assertExists } from '@/lib/utils'
 import { normalizePlanId } from '@/lib/stripe/helpers'
 
 interface CheckoutContentProps {
@@ -13,28 +14,124 @@ interface CheckoutContentProps {
   billingFrequency: string | null
 }
 
-interface PricingPlan {
-  id: string
-  name: string
-  monthlyPrice: number
-  yearlyPrice: number
-  description: string
-  features: readonly string[]
-  popular?: boolean
+// Import the Plan type from config.ts
+type Plan = {
+  name: string;
+  description: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
   priceIds: {
-    readonly monthly: string
-    readonly yearly: string
-  }
-  detailedFeatures?: any
-  limits?: any
+    monthly: string;
+    yearly: string;
+  };
+  features: string[];
+  detailedFeatures: Record<string, {
+    title: string;
+    description: string;
+    items: string[];
+  }>;
+  limits: {
+    campaigns: number;
+    contacts: number;
+    emailsPerMonth: number;
+    funnels: number;
+  };
+  aliases?: string[];
+  popular?: boolean;
+};
+
+interface PricingPlanWithId {
+  id: string;
+  name: string;
+  description: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  priceIds: {
+    monthly: string;
+    yearly: string;
+  };
+  features: string[];
+  detailedFeatures: Record<string, {
+    title: string;
+    description: string;
+    items: string[];
+  }>;
+  limits: {
+    campaigns: number;
+    contacts: number;
+    emailsPerMonth: number;
+    funnels: number;
+  };
+  popular?: boolean;
 }
 
-const pricingPlans: Record<string, PricingPlan> = {
-  starter: { ...PRICING_PLANS.starter, id: 'starter' },
-  pro: { ...PRICING_PLANS.pro, id: 'pro' },
-  professional: { ...PRICING_PLANS.pro, id: 'professional' }, // alias for pro
-  enterprise: { ...PRICING_PLANS.enterprise, id: 'enterprise' },
-  elite: { ...PRICING_PLANS.enterprise, id: 'elite' } // alias for enterprise
+// Check if PRICING_PLANS properties exist
+if (!PRICING_PLANS.starter) throw new Error('Starter plan is missing');
+if (!PRICING_PLANS.pro) throw new Error('Pro plan is missing');
+if (!PRICING_PLANS.enterprise) throw new Error('Enterprise plan is missing');
+
+// Create plan objects with id
+const pricingPlans: Record<string, PricingPlanWithId> = {
+  starter: {
+    id: 'starter',
+    name: PRICING_PLANS.starter.name,
+    description: PRICING_PLANS.starter.description,
+    monthlyPrice: PRICING_PLANS.starter.monthlyPrice,
+    yearlyPrice: PRICING_PLANS.starter.yearlyPrice,
+    priceIds: PRICING_PLANS.starter.priceIds,
+    features: PRICING_PLANS.starter.features,
+    detailedFeatures: PRICING_PLANS.starter.detailedFeatures,
+    limits: PRICING_PLANS.starter.limits,
+    popular: PRICING_PLANS.starter.popular || false
+  },
+  pro: {
+    id: 'pro',
+    name: PRICING_PLANS.pro.name,
+    description: PRICING_PLANS.pro.description,
+    monthlyPrice: PRICING_PLANS.pro.monthlyPrice,
+    yearlyPrice: PRICING_PLANS.pro.yearlyPrice,
+    priceIds: PRICING_PLANS.pro.priceIds,
+    features: PRICING_PLANS.pro.features,
+    detailedFeatures: PRICING_PLANS.pro.detailedFeatures,
+    limits: PRICING_PLANS.pro.limits,
+    popular: PRICING_PLANS.pro.popular || false
+  },
+  professional: {
+    id: 'professional',
+    name: PRICING_PLANS.pro.name,
+    description: PRICING_PLANS.pro.description,
+    monthlyPrice: PRICING_PLANS.pro.monthlyPrice,
+    yearlyPrice: PRICING_PLANS.pro.yearlyPrice,
+    priceIds: PRICING_PLANS.pro.priceIds,
+    features: PRICING_PLANS.pro.features,
+    detailedFeatures: PRICING_PLANS.pro.detailedFeatures,
+    limits: PRICING_PLANS.pro.limits,
+    popular: PRICING_PLANS.pro.popular || false
+  },
+  enterprise: {
+    id: 'enterprise',
+    name: PRICING_PLANS.enterprise.name,
+    description: PRICING_PLANS.enterprise.description,
+    monthlyPrice: PRICING_PLANS.enterprise.monthlyPrice,
+    yearlyPrice: PRICING_PLANS.enterprise.yearlyPrice,
+    priceIds: PRICING_PLANS.enterprise.priceIds,
+    features: PRICING_PLANS.enterprise.features,
+    detailedFeatures: PRICING_PLANS.enterprise.detailedFeatures,
+    limits: PRICING_PLANS.enterprise.limits,
+    popular: PRICING_PLANS.enterprise.popular || false
+  },
+  elite: {
+    id: 'elite',
+    name: PRICING_PLANS.enterprise.name,
+    description: PRICING_PLANS.enterprise.description,
+    monthlyPrice: PRICING_PLANS.enterprise.monthlyPrice,
+    yearlyPrice: PRICING_PLANS.enterprise.yearlyPrice,
+    priceIds: PRICING_PLANS.enterprise.priceIds,
+    features: PRICING_PLANS.enterprise.features,
+    detailedFeatures: PRICING_PLANS.enterprise.detailedFeatures,
+    limits: PRICING_PLANS.enterprise.limits,
+    popular: PRICING_PLANS.enterprise.popular || false
+  }
 }
 
 export function CheckoutContent({ user, planId, billingFrequency }: CheckoutContentProps) {
@@ -76,12 +173,12 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
   })
   
   // Initialize selected plan and billing frequency
-  const [selectedPlan, setSelectedPlan] = useState<PricingPlan>(() => {
-    const validPlanKeys = Object.keys(pricingPlans) as (keyof typeof pricingPlans)[]
+  const [selectedPlan, setSelectedPlan] = useState<PricingPlanWithId>(() => {
+    const validPlanKeys = Object.keys(pricingPlans) as (keyof typeof pricingPlans)[];
     const planKey: keyof typeof pricingPlans = validPlanKeys.includes(selectedPlanId as keyof typeof pricingPlans) 
       ? (selectedPlanId as keyof typeof pricingPlans) 
-      : 'pro'
-    return pricingPlans[planKey]!
+      : 'pro';
+    return pricingPlans[planKey]!;
   })
   
   const [selectedBillingFrequency, setBillingFrequency] = useState<'monthly' | 'yearly'>

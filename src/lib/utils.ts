@@ -54,6 +54,16 @@ export function throttle<T extends (...args: any[]) => any>(
   };
 }
 
+/**
+ * Asserts that a value exists (is not null or undefined)
+ * Useful for TypeScript to narrow types
+ */
+export function assertExists<T>(value: T | null | undefined, message = 'Value is null or undefined'): asserts value is T {
+  if (value === null || value === undefined) {
+    throw new Error(message);
+  }
+}
+
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

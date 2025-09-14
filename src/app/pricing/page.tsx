@@ -8,29 +8,48 @@ import Link from 'next/link'
 
 // Import pricing plans from the Stripe config
 import { PRICING_PLANS } from '@/lib/stripe/config'
+import { assertExists } from '@/lib/utils'
+
+// Check if pricing plans exist before using them
+if (!PRICING_PLANS.starter) {
+  console.error('Starter plan is missing');
+}
+
+if (!PRICING_PLANS.pro) {
+  console.error('Pro plan is missing');
+}
+
+if (!PRICING_PLANS.enterprise) {
+  console.error('Enterprise plan is missing');
+}
+
+// Get pricing plans
+const starterPlan = PRICING_PLANS.starter || { name: 'Basic', monthlyPrice: 0, description: 'Plan details unavailable', features: [] };
+const proPlan = PRICING_PLANS.pro || { name: 'Pro', monthlyPrice: 0, description: 'Plan details unavailable', features: [] };
+const enterprisePlan = PRICING_PLANS.enterprise || { name: 'Elite', monthlyPrice: 0, description: 'Plan details unavailable', features: [] };
 
 const plans = [
   {
-    name: PRICING_PLANS.starter.name,
-    price: PRICING_PLANS.starter.monthlyPrice,
-    description: PRICING_PLANS.starter.description,
-    features: PRICING_PLANS.starter.features,
+    name: starterPlan.name,
+    price: starterPlan.monthlyPrice,
+    description: starterPlan.description,
+    features: starterPlan.features,
     popular: false,
     cta: 'Get Started'
   },
   {
-    name: PRICING_PLANS.pro.name,
-    price: PRICING_PLANS.pro.monthlyPrice,
-    description: PRICING_PLANS.pro.description,
-    features: PRICING_PLANS.pro.features,
+    name: proPlan.name,
+    price: proPlan.monthlyPrice,
+    description: proPlan.description,
+    features: proPlan.features,
     popular: true,
     cta: 'Get Started'
   },
   {
-    name: PRICING_PLANS.enterprise.name,
-    price: PRICING_PLANS.enterprise.monthlyPrice,
-    description: PRICING_PLANS.enterprise.description,
-    features: PRICING_PLANS.enterprise.features,
+    name: enterprisePlan.name,
+    price: enterprisePlan.monthlyPrice,
+    description: enterprisePlan.description,
+    features: enterprisePlan.features,
     popular: false,
     cta: 'Contact Sales'
   }
