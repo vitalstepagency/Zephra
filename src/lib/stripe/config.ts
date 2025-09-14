@@ -231,12 +231,14 @@ export const getPlanDetails = (plan: PricingPlan) => {
 // Helper function to check if user has access to feature
 export const hasFeatureAccess = (userPlan: PricingPlan, feature: string) => {
   const plan = getPlanDetails(userPlan)
-  return (plan.features as readonly string[]).some(f => f === feature)
+  return plan?.features ? (plan.features as readonly string[]).some(f => f === feature) : false
 }
 
 // Helper function to check usage limits
 export const checkUsageLimit = (userPlan: PricingPlan, resource: 'campaigns' | 'contacts' | 'emailsPerMonth' | 'funnels', currentUsage: number) => {
   const plan = getPlanDetails(userPlan)
+  if (!plan) return { allowed: false, remaining: 0 } // Plan not found
+  
   const limit = plan.limits[resource]
   
   if (limit === -1) return { allowed: true, remaining: -1 } // unlimited
