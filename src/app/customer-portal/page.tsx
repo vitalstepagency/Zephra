@@ -13,7 +13,7 @@ export default function CustomerPortalPage() {
   useEffect(() => {
     // Redirect to login if not authenticated
     if (status === 'unauthenticated') {
-      router.push('/auth/signin?callbackUrl=/customer-portal')
+      router.push('/?signin=true&callbackUrl=/customer-portal')
       return
     }
 

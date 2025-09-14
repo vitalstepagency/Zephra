@@ -94,11 +94,7 @@ const protectedRoutes = [
   '/settings'
 ]
 
-// Define auth routes (should redirect to dashboard if already authenticated)
-const authRoutes = [
-  '/auth/signin',
-  '/auth/signup'
-]
+// Auth is handled via modals, no dedicated auth routes needed
 
 export default withAuth(
   async function middleware(req: NextRequestWithAuth) {
@@ -153,10 +149,7 @@ export default withAuth(
       }
     }
 
-    // If user is authenticated and trying to access auth pages, redirect to dashboard
-    if (token && authRoutes.some(route => pathname.startsWith(route))) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
+    // Auth is handled via modals, no dedicated auth routes to check
 
     // If user is not authenticated and trying to access protected routes
     if (!token && protectedRoutes.some(route => pathname.startsWith(route))) {
@@ -174,8 +167,8 @@ export default withAuth(
       if (pathname.startsWith('/onboarding') && !hasSessionId && !hasEmail) {
         return NextResponse.redirect(new URL('/', req.url))
       }
-      // For other protected routes, redirect to signin
-      return NextResponse.redirect(new URL('/auth/signin', req.url))
+      // For other protected routes, redirect to home page with auth modal
+      return NextResponse.redirect(new URL('/?auth=signin', req.url))
     }
 
     // Add security headers to all responses
@@ -207,8 +200,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - payment-verification (allow unauthenticated access for session restoration)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|payment-verification).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }

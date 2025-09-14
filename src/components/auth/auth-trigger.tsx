@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { User, Loader2 } from 'lucide-react'
 import { getCurrentUser } from '@/lib/supabase/client'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { normalizePlanId } from '@/lib/stripe/helpers'
+import { AuthModal } from './auth-modal'
 
 interface AuthTriggerProps {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
@@ -31,7 +33,6 @@ export function AuthTrigger({
 }: AuthTriggerProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<SupabaseUser | null>(null)
-  const [planId, setPlanId] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -41,97 +42,43 @@ export function AuthTrigger({
         setUser(currentUser)
       } catch (error) {
         console.error('Error checking user:', error)
-        // Don't set user to null on error, keep it undefined to avoid infinite loading
       }
     }
     checkUser()
   }, [])
 
-  const handleClick = async () => {
+  const handleGetStarted = async () => {
     setIsLoading(true)
     
     try {
       // Normalize plan ID to handle aliases
       const normalizedPlan = normalizePlanId(plan)
       
+      // Clear localStorage to prevent redirect loops
+      localStorage.removeItem('redirectCount')
+      localStorage.removeItem('redirectToCheckout')
+      
       if (user) {
-        // If user is already logged in, redirect directly to checkout
+        // User is logged in - go directly to checkout
         const params = new URLSearchParams({
           plan: normalizedPlan,
-          billing: frequency
+          frequency: frequency
         })
         router.push(`/checkout?${params.toString()}`)
       } else {
-        // If not logged in, redirect to plan-specific sign-up page
-        const params = new URLSearchParams({
-          frequency: frequency
-        })
-        
-        // Store plan and frequency in localStorage for the checkout redirect
+        // User is not logged in - go to plan signup page
         localStorage.setItem('selected_plan', normalizedPlan)
         localStorage.setItem('selected_frequency', frequency)
         localStorage.setItem('redirect_to_checkout', redirectToCheckout ? 'true' : 'false')
         
-        // Clear any redirect counts and old format keys to prevent loops
-        localStorage.removeItem('redirectCount')
-        localStorage.removeItem('redirectToCheckout')
-        localStorage.removeItem('selectedPlan')
-        localStorage.removeItem('billingFrequency')
-        
+        const params = new URLSearchParams({ frequency })
         router.push(`/plans/${normalizedPlan}?${params.toString()}`)
       }
     } catch (error) {
-      console.error('Error in handleClick:', error)
-      // Default fallback - go to plan-specific sign-up page
+      console.error('Error in handleGetStarted:', error)
       router.push(`/plans/${plan}`)
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  // Check if we're on a plan page
-  useEffect(() => {
-    const path = window.location.pathname
-    const planMatch = path.match(/\/plans\/([^\/]+)/)
-    if (planMatch && planMatch[1]) {
-      setPlanId(planMatch[1])
-    }
-  }, [])
-
-  const handleGetStarted = () => {
-    // Clear any existing redirect counts and flags to start fresh
-    localStorage.removeItem('redirectCount')
-    
-    // Set redirect flag and plan selection if needed
-    if (redirectToCheckout) {
-      localStorage.setItem('redirect_to_checkout', 'true')
-      localStorage.setItem('selected_plan', plan)
-      localStorage.setItem('selected_frequency', frequency)
-      console.log('Setting redirect_to_checkout flag and plan details')
-    } else {
-      localStorage.removeItem('redirect_to_checkout')
-      localStorage.removeItem('redirectToCheckout') // Clear old format too
-    }
-    
-    if (planId) {
-      // If we're on a plan page, redirect to the plan-specific signup
-      const params = new URLSearchParams()
-      params.append('frequency', frequency || 'monthly')
-      // Don't add redirectToCheckout to URL params, use localStorage instead
-      const destination = `/plans/${planId}?${params.toString()}`
-      console.log(`Navigating to: ${destination}`)
-      router.push(destination)
-    } else if (plan) {
-      // Otherwise redirect to the plan-specific signup page
-      const params = new URLSearchParams()
-      params.append('frequency', frequency || 'monthly')
-      // Don't add redirectToCheckout to URL params, use localStorage instead
-      const destination = `/plans/${plan}?${params.toString()}`
-      console.log(`Navigating to: ${destination}`)
-      router.push(destination)
-    } else {
-      console.log('Navigating to general plans page')
-      router.push('/plans')
     }
   }
 
@@ -153,17 +100,50 @@ export function AuthTrigger({
 }
 
 export function SignInTrigger({ variant = 'outline', size = 'default', className }: AuthTriggerProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
+  const { data: session, status } = useSession()
+
+  if (status === 'loading') {
+    return (
+      <Button variant={variant} size={size} className={className} disabled>
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Loading...
+      </Button>
+    )
+  }
+
+  if (session) {
+    return (
+      <Button
+        variant="outline"
+        size={size}
+        onClick={() => router.push('/dashboard')}
+        className="flex items-center gap-2"
+      >
+        <User className="w-4 h-4" />
+        Dashboard
+      </Button>
+    )
+  }
 
   return (
-    <Button
-      variant={variant}
-      size={size}
-      className={className}
-      onClick={() => router.push('/auth/signin')}
-    >
-      Sign In
-    </Button>
+    <>
+      <Button
+        variant={variant}
+        size={size}
+        className={className}
+        onClick={() => setIsModalOpen(true)}
+      >
+        Sign In
+      </Button>
+      
+      <AuthModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        defaultMode="signin"
+      />
+    </>
   )
 }
 

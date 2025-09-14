@@ -97,10 +97,9 @@ function OnboardingContent() {
     if (status === 'loading') return
     
     // Don't redirect immediately if we have a session_id
-    // This allows time for session restoration to complete
+    // Redirect to signin if no session or session data
     if (!session && !sessionId && !plan) {
-      console.log('No session, sessionId, or plan - redirecting to signin')
-      router.push('/auth/signin')
+      router.push('/?signin=true')
       return
     }
     
@@ -108,15 +107,12 @@ function OnboardingContent() {
     if (!session && (sessionId || plan) && email) {
       const restoreSession = async () => {
         try {
-          console.log('Attempting to restore session in onboarding with email:', email)
-          
           // Check if we have stored credentials from the signup process
           const storedEmail = localStorage.getItem('newUserEmail')
           const storedPassword = localStorage.getItem('newUserPassword')
           
           // If we have stored credentials, use them for sign in
           if (storedEmail && storedPassword && storedEmail === email) {
-            console.log('Using stored credentials for sign in')
             const response = await signIn('credentials', {
               email: storedEmail,
               password: storedPassword,
@@ -124,16 +120,14 @@ function OnboardingContent() {
             })
             
             if (!response?.error) {
-              console.log('Session restored successfully with stored credentials')
               // Clear stored credentials after successful sign in
               localStorage.removeItem('newUserEmail')
               localStorage.removeItem('newUserPassword')
             } else {
-              console.error('Failed to sign in with stored credentials, falling back to session ID')
               // Fall back to using sessionId as password
               await signIn('credentials', {
                 email: email,
-                password: sessionId || 'temp-password', // Use sessionId as a temporary password or a placeholder
+                password: sessionId || 'temp-password',
                 redirect: false,
               })
             }
@@ -141,20 +135,12 @@ function OnboardingContent() {
             // Sign in with the email from URL params
             const response = await signIn('credentials', {
               email: email,
-              password: sessionId || 'temp-password', // Use sessionId as a temporary password or a placeholder
+              password: sessionId || 'temp-password',
               redirect: false,
             })
             
-            if (response?.error) {
-              console.error('Failed to restore session in onboarding:', response.error)
-              // Don't redirect immediately - we'll still check payment status
-              // If we have a plan but failed to restore session, try to redirect to signup
-              if (plan && !sessionId) {
-                console.log('Redirecting to signup with plan:', plan)
-                router.push(`/auth/signup?plan=${plan}&redirectToCheckout=${redirectToCheckout}`)
-              }
-            } else {
-              console.log('Session restored successfully in onboarding')
+            if (response?.error && plan && !sessionId) {
+              router.push(`/?signup=true&plan=${plan}&redirectToCheckout=${redirectToCheckout}`)
             }
           }
         } catch (error) {
@@ -165,33 +151,24 @@ function OnboardingContent() {
       restoreSession()
     }
     
-    // Check payment status and onboarding completion regardless of session state
-    // This ensures we verify payments even if session restoration fails
+    // Check payment status and onboarding completion
     setTimeout(() => {
       checkUserStatus()
-    }, 500) // Small delay to allow session restoration to complete
+    }, 500)
   }, [session, status, router, sessionId, searchParams, email, signIn])
   
   const checkUserStatus = async () => {
     try {
-      // If coming from successful checkout, assume payment is verified
-      if (checkoutSuccess) {
+      // If coming from successful checkout or no session ID, assume payment is verified
+      if (checkoutSuccess || !sessionId) {
         setPaymentVerified(true)
-        console.log('Payment verified from checkout success parameter')
       } else if (sessionId) {
         // If coming from Stripe checkout with session ID, verify payment
-        // Use a more permissive API endpoint that doesn't require authentication
-        console.log('Verifying payment with session ID:', sessionId)
-        const paymentResponse = await fetch(`/api/stripe/verify-payment?session_id=${sessionId}`)
+        const paymentResponse = await fetch(`/api/stripe/verify-session?session_id=${sessionId}`)
         if (paymentResponse.ok) {
           const data = await paymentResponse.json()
-          console.log('Payment verification response:', data)
-          setPaymentVerified(data.status === 'complete')
+          setPaymentVerified(data.verified)
         }
-      } else {
-        // Check if user has active subscription
-        setPaymentVerified(true) // Assume verified if no session_id
-        console.log('No session ID, assuming payment verified')
       }
       
       // Only check onboarding completion if we have a session
@@ -278,8 +255,8 @@ function OnboardingContent() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-          <h2 className="text-2xl font-bold text-white mb-4">Verifying Payment</h2>
-          <p className="text-slate-400 mb-6">We're confirming your payment and setting up your account. This usually takes just a few moments.</p>
+          <h2 className="text-2xl font-bold text-white mb-4">Setting Up Your Account</h2>
+          <p className="text-slate-400 mb-6">We're confirming your payment and preparing your Zephra dashboard. This usually takes just a few moments.</p>
           <Button 
             onClick={() => router.push('/dashboard')} 
             variant="outline"

@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import { signIn, getSession } from 'next-auth/react'
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@/components/ui'
-import { Mail, ArrowRight, Sparkles, Shield, Zap, Eye, EyeOff, CheckCircle, Lock, User } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { getSession } from 'next-auth/react'
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@/components/ui'
+import { CheckCircle, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
-import Link from 'next/link'
+import { toast } from 'sonner'
 import { PRICING_PLANS } from '@/lib/stripe/config'
-import { useToast } from '@/hooks/use-toast'
+import { normalizePlanId } from '@/lib/utils'
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -69,42 +69,38 @@ export default function PlanSignUpPage() {
   const [planDetails, setPlanDetails] = useState<any>(null)
   
   useEffect(() => {
-    // Check if user is already logged in
     const checkSession = async () => {
-      const session = await getSession()
-      if (session) {
-        // User is already logged in, redirect to checkout
-        const params = new URLSearchParams({
-          plan: planId,
-          billing: frequency
-        })
-        router.push(`/checkout?${params.toString()}`)
+      try {
+        setIsCheckingSession(true)
+        const session = await getSession()
+        if (session) {
+          // User is already logged in, redirect to checkout
+          const normalizedPlanId = normalizePlanId(params.planId)
+          const params = new URLSearchParams({
+            plan: normalizedPlanId,
+            frequency: frequency
+          })
+          router.push(`/checkout?${params.toString()}`)
+        }
+      } catch (error) {
+        console.error('Error checking session:', error)
+      } finally {
+        setIsCheckingSession(false)
       }
     }
     checkSession()
     
     // Get plan details
-    const plans = PRICING_PLANS as any
-    let plan
-    
-    if (planId === 'starter') {
-      plan = plans.starter
-    } else if (planId === 'pro' || planId === 'professional') {
-      plan = plans.pro
-    } else if (planId === 'enterprise' || planId === 'elite') {
-      plan = plans.enterprise
-    } else {
-      // Default to pro if plan not found
-      plan = plans.pro
-    }
+    const normalizedPlanId = normalizePlanId(params.planId)
+    const plan = PRICING_PLANS[normalizedPlanId] || PRICING_PLANS.pro
     
     setPlanDetails({
       ...plan,
-      id: planId,
+      id: normalizedPlanId,
       price: frequency === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice,
       billingFrequency: frequency
     })
-  }, [planId, frequency, router])
+  }, [params.planId, frequency, router])
   
   const validateForm = () => {
     if (!email) {
@@ -143,14 +139,11 @@ export default function PlanSignUpPage() {
     if (!validateForm()) return
     
     setIsLoading(true)
-    setStep('loading')
-    
-    // Log form submission for debugging
-    console.log('Submitting signup form:', { email, name, planId: planDetails?.id, frequency })
     
     try {
-      // First create the account via API
-      const response = await fetch('/api/auth/simple-signup', {
+      // Create the account via API
+      // Auth is now handled via modal, not dedicated routes
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -165,104 +158,67 @@ export default function PlanSignUpPage() {
       
       const responseData = await response.json()
       
-      if (response.ok && responseData.success) {
-        console.log('Account created successfully:', responseData)
-        
-        // Store credentials in localStorage for session restoration and automatic sign-in after checkout
-        localStorage.setItem('newUserEmail', email.trim().toLowerCase())
-        localStorage.setItem('newUserPassword', password)
-        localStorage.setItem('selectedPlanId', planDetails.id)
-        localStorage.setItem('selectedPlanFrequency', frequency)
-        localStorage.setItem('checkout_email', email.trim().toLowerCase())
-        localStorage.setItem('checkout_name', name.trim())
-        
-        // Clear any old redirect flags to prevent loops
-        localStorage.removeItem('redirectToCheckout')
-        localStorage.removeItem('redirectToOnboarding')
-        localStorage.removeItem('redirectCount')
-        
-        toast({
-          title: 'Account created successfully!',
-          description: 'Preparing checkout...'
-        })
-        
-        // Sign in without redirect
-        const result = await signIn('credentials', {
-          email,
-          password,
-          redirect: false
-        })
-        
-        console.log('Sign in result:', result)
-        
-        if (result?.ok) {
-          setStep('success')
-          console.log('Sign-in successful, proceeding to checkout')
-          
-          try {
-            // Get the current price ID based on plan and frequency
-            const priceId = frequency === 'monthly' ? 
-              planDetails.priceIds.monthly : 
-              planDetails.priceIds.yearly
-            
-            // Create checkout session
-            const checkoutResponse = await fetch('/api/stripe/create-checkout-session', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                email: email.trim().toLowerCase(),
-                name: name.trim(),
-                planId: planDetails.id,
-                priceId: priceId,
-                successUrl: `${window.location.origin}/onboarding?session_id={CHECKOUT_SESSION_ID}`,
-                cancelUrl: `${window.location.origin}/plans/${planId}`,
-                userId: responseData.userId // Include the user ID from the signup response
-              }),
-            })
-            
-            console.log('Checkout response status:', checkoutResponse.status)
-            
-            const data = await checkoutResponse.json()
-            
-            if (!checkoutResponse.ok) {
-              throw new Error(data.error || 'Failed to create checkout session')
-            }
-            
-            // Store session ID for verification after payment
-            if (data.sessionId) {
-              localStorage.setItem('checkoutSessionId', data.sessionId)
-            }
-            
-            if (data.url) {
-              // Redirect to Stripe Checkout
-              window.location.href = data.url
-            } else {
-              throw new Error('Invalid response from server')
-            }
-          } catch (checkoutError) {
-            console.error('Checkout error:', checkoutError)
-            setStep('error')
-            setError(checkoutError instanceof Error ? checkoutError.message : 'Failed to process payment')
-          }
-        } else {
-          throw new Error('Failed to sign in')
-        }
-      } else {
-        const error = await response.json()
-        setStep('error')
-        setError(error.message || 'Sign up failed')
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to create account')
       }
-    } catch (error: any) {
-      console.error('Sign up error:', error)
-      setStep('error')
-      setError(error.message || 'An error occurred during sign up')
-      toast({
-        variant: 'destructive',
-        title: 'Error creating account',
-        description: 'An unexpected error occurred during sign up'
+      
+      // Store necessary information for checkout
+      localStorage.setItem('selected_plan', planDetails.id)
+      localStorage.setItem('selected_frequency', frequency)
+      
+      toast('Account created successfully!')
+      
+      // Sign in without redirect
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false
       })
+      
+      if (!result?.ok) {
+        throw new Error('Failed to sign in')
+      }
+      
+      // Get the price ID based on plan and frequency
+      const priceId = frequency === 'monthly' ? 
+        planDetails.priceIds.monthly : 
+        planDetails.priceIds.yearly
+      
+      // Create checkout session
+      const checkoutResponse = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId,
+          successUrl: `${window.location.origin}/onboarding?session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${window.location.origin}/plans/${planDetails.id}`,
+          trialDays: 7
+        }),
+      })
+      
+      const checkoutData = await checkoutResponse.json()
+      
+      if (!checkoutResponse.ok) {
+        throw new Error(checkoutData.error || 'Failed to create checkout session')
+      }
+      
+      // Store session ID for verification after payment
+      if (checkoutData.sessionId) {
+        localStorage.setItem('checkoutSessionId', checkoutData.sessionId)
+      }
+      
+      if (checkoutData.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = checkoutData.url
+      } else {
+        throw new Error('Invalid response from server')
+      }
+    } catch (error) {
+      console.error('Signup error:', error)
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred')
+      setStep('error')
     } finally {
       setIsLoading(false)
     }
@@ -476,7 +432,7 @@ export default function PlanSignUpPage() {
                 
                 <div className="text-center text-slate-400 text-sm mt-4">
                   Already have an account?{" "}
-                  <Link href="/auth/signin" className="text-indigo-400 hover:text-indigo-300 font-medium">
+                  <Link href="/?signin=true" className="text-indigo-400 hover:text-indigo-300 font-medium">
                     Sign in
                   </Link>
                 </div>

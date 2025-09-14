@@ -117,17 +117,11 @@ export default function CheckoutPage() {
     
     const checkSession = async () => {
       try {
-        console.log('Checkout page - Current auth status:', status)
-        
         // Clear stored credentials after sign-in
         if (status === 'authenticated') {
-          console.log('User is authenticated, clearing temporary credentials')
+          // Clean up localStorage
           localStorage.removeItem('newUserEmail')
           localStorage.removeItem('newUserPassword')
-          
-          // Don't remove redirect flags yet - we need them to trigger checkout
-          // localStorage.removeItem('redirectToCheckout')
-          // localStorage.removeItem('redirect_to_checkout')
           localStorage.removeItem('redirectCount')
           
           // Set the user
@@ -143,52 +137,26 @@ export default function CheckoutPage() {
             
             // Check if we should redirect to Stripe checkout
             const shouldRedirectToCheckout = localStorage.getItem('redirect_to_checkout') === 'true' || 
-                                            localStorage.getItem('redirectToCheckout') === 'true' ||
                                             new URL(window.location.href).searchParams.get('redirectToCheckout') === 'true'
             
             if (shouldRedirectToCheckout) {
-              console.log('Redirect to checkout flag detected, initiating checkout')
-              // Let the component fully render before triggering checkout
+              // Trigger checkout automatically
               setTimeout(() => {
-                console.log('Attempting to click checkout button')
                 const checkoutButton = document.querySelector('#checkout-button') as HTMLButtonElement
                 if (checkoutButton) {
-                  console.log('Checkout button found, clicking')
-                  // Directly trigger the checkout button click
                   checkoutButton.click()
                   
-                  // Clear redirect flags after clicking the button
-                  setTimeout(() => {
-                    console.log('Clearing redirect flags')
-                    localStorage.removeItem('redirectToCheckout')
-                    localStorage.removeItem('redirect_to_checkout')
-                    
-                    // Also remove from URL without page reload
-                    const currentUrl = new URL(window.location.href)
-                    if (currentUrl.searchParams.has('redirectToCheckout')) {
-                      currentUrl.searchParams.delete('redirectToCheckout')
-                      window.history.replaceState({}, '', currentUrl.toString())
-                    }
-                  }, 2000)
-                } else {
-                  console.error('Checkout button not found')
-                  // Try again after a short delay as a fallback
-                  setTimeout(() => {
-                    const retryButton = document.querySelector('#checkout-button') as HTMLButtonElement
-                    if (retryButton) {
-                      console.log('Checkout button found on retry, clicking')
-                      retryButton.click()
-                    } else {
-                      console.error('Checkout button not found after retry')
-                      // Show user-friendly error message
-                      alert('Unable to proceed to checkout automatically. Please try refreshing the page or contact support if the issue persists.')
-                      // Clear redirect flags to prevent loops
-                      localStorage.removeItem('redirectToCheckout')
-                      localStorage.removeItem('redirect_to_checkout')
-                    }
-                  }, 1000)
+                  // Clear redirect flags
+                  localStorage.removeItem('redirect_to_checkout')
+                  
+                  // Clean up URL params
+                  const currentUrl = new URL(window.location.href)
+                  if (currentUrl.searchParams.has('redirectToCheckout')) {
+                    currentUrl.searchParams.delete('redirectToCheckout')
+                    window.history.replaceState({}, '', currentUrl.toString())
+                  }
                 }
-              }, 1000)
+              }, 500)
             }
           } else {
             setUser(null)
@@ -323,7 +291,7 @@ export default function CheckoutPage() {
             if (billingFrequency) localStorage.setItem('selected_frequency', billingFrequency)
             
             // Redirect to signin page
-            router.push(`/auth/signin`)
+            router.push(`/?signin=true`)
             return
           }
         }

@@ -33,12 +33,20 @@ export const getCurrentUser = async () => {
   try {
     const { data: { user }, error } = await supabase.auth.getUser()
     if (error) {
+      if (error.name === 'AuthSessionMissingError') {
+        // This is expected when not logged in, no need to log as error
+        return null
+      }
       console.error('Error getting current user:', error)
       return null
     }
     return user
   } catch (error) {
-    // Handle AuthSessionMissingError gracefully
+    // Handle other errors gracefully
+    if (error instanceof Error && error.name === 'AuthSessionMissingError') {
+      // This is expected when not logged in, no need to log as error
+      return null
+    }
     console.error('Error getting current user:', error)
     return null
   }

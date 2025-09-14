@@ -28,7 +28,7 @@ export class AppError extends Error {
   public readonly severity: ErrorSeverity
   public readonly statusCode: number
   public readonly isOperational: boolean
-  public readonly context?: Record<string, any> | undefined
+  public readonly context?: Record<string, unknown> | undefined
   public readonly timestamp: Date
   public readonly requestId?: string | undefined
 
@@ -38,7 +38,7 @@ export class AppError extends Error {
     severity: ErrorSeverity,
     statusCode: number = 500,
     isOperational: boolean = true,
-    context?: Record<string, any> | undefined,
+    context?: Record<string, unknown> | undefined,
     requestId?: string | undefined
   ) {
     super(message)
@@ -62,7 +62,7 @@ interface ErrorLog {
   type: ErrorType
   severity: ErrorSeverity
   stack?: string | undefined
-  context?: Record<string, any> | undefined
+  context?: Record<string, unknown> | undefined
   user_id?: string | undefined
   request_id?: string | undefined
   ip_address?: string | undefined
@@ -196,7 +196,7 @@ export class ErrorLogger {
 
 // Database transaction rollback helper
 export class TransactionManager {
-  private static transactions = new Map<string, any>()
+  private static transactions = new Map<string, unknown>()
 
   public static async executeWithRollback<T>(
     transactionId: string,
@@ -238,7 +238,7 @@ export class TransactionManager {
 export function formatErrorResponse(
   error: Error | AppError,
   isDevelopment: boolean = process.env.NODE_ENV === 'development'
-): { message: string; code?: string; details?: any } {
+): { message: string; code?: string; details?: unknown } {
   if (error instanceof AppError) {
     return {
       message: error.message,
@@ -260,9 +260,9 @@ export function formatErrorResponse(
 
 // Global error handler for API routes
 export function withErrorHandler(
-  handler: (req: any, context?: any) => Promise<NextResponse>
+  handler: (req: Request, context?: unknown) => Promise<NextResponse>
 ) {
-  return async (req: any, context?: any): Promise<NextResponse> => {
+  return async (req: Request, context?: unknown): Promise<NextResponse> => {
     const requestId = req.headers.get('x-request-id') || crypto.randomUUID()
     
     try {
@@ -296,28 +296,28 @@ export function withErrorHandler(
 
 // Predefined error factories
 export const ErrorFactories = {
-  validation: (message: string, context?: Record<string, any>) =>
+  validation: (message: string, context?: Record<string, unknown>) =>
     new AppError(message, ErrorType.VALIDATION, ErrorSeverity.LOW, 400, true, context),
 
-  authentication: (message: string = 'Authentication required', context?: Record<string, any>) =>
+  authentication: (message: string = 'Authentication required', context?: Record<string, unknown>) =>
     new AppError(message, ErrorType.AUTHENTICATION, ErrorSeverity.MEDIUM, 401, true, context),
 
-  authorization: (message: string = 'Insufficient permissions', context?: Record<string, any>) =>
+  authorization: (message: string = 'Insufficient permissions', context?: Record<string, unknown>) =>
     new AppError(message, ErrorType.AUTHORIZATION, ErrorSeverity.MEDIUM, 403, true, context),
 
-  notFound: (resource: string, context?: Record<string, any>) =>
+  notFound: (resource: string, context?: Record<string, unknown>) =>
     new AppError(`${resource} not found`, ErrorType.BUSINESS_LOGIC, ErrorSeverity.LOW, 404, true, context),
 
-  rateLimit: (message: string = 'Rate limit exceeded', context?: Record<string, any>) =>
+  rateLimit: (message: string = 'Rate limit exceeded', context?: Record<string, unknown>) =>
     new AppError(message, ErrorType.RATE_LIMIT, ErrorSeverity.MEDIUM, 429, true, context),
 
-  database: (message: string, context?: Record<string, any>) =>
+  database: (message: string, context?: Record<string, unknown>) =>
     new AppError(message, ErrorType.DATABASE, ErrorSeverity.HIGH, 500, true, context),
 
-  externalApi: (service: string, message: string, context?: Record<string, any>) =>
+  externalApi: (service: string, message: string, context?: Record<string, unknown>) =>
     new AppError(`${service}: ${message}`, ErrorType.EXTERNAL_API, ErrorSeverity.MEDIUM, 502, true, context),
 
-  security: (message: string, context?: Record<string, any>) =>
+  security: (message: string, context?: Record<string, unknown>) =>
     new AppError(message, ErrorType.SECURITY, ErrorSeverity.HIGH, 403, true, context)
 }
 

@@ -42,8 +42,8 @@ async function verifySessionHandler(request: NextRequest) {
       }
     });
 
-  } catch (error: any) {
-    if (error?.type === 'StripeInvalidRequestError') {
+  } catch (error) {
+    if (error && typeof error === 'object' && 'type' in error && error.type === 'StripeInvalidRequestError') {
       throw ErrorFactories.validation('Invalid session ID');
     }
     

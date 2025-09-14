@@ -1,3 +1,7 @@
+// This file is deprecated and will be removed in a future update.
+// The functionality has been consolidated with verify-session route.
+// Keeping this file temporarily for backward compatibility.
+
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase/server'

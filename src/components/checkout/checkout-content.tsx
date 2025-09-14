@@ -9,7 +9,11 @@ import { assertExists } from '@/lib/utils'
 import { normalizePlanId } from '@/lib/stripe/helpers'
 
 interface CheckoutContentProps {
-  user: any
+  user: {
+    id?: string;
+    email?: string;
+    name?: string;
+  }
   planId: string | null
   billingFrequency: string | null
 }
@@ -220,10 +224,10 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
         frequency: selectedBillingFrequency,
         redirectToCheckout: 'true'
       })
-      console.log(`Redirecting to sign up page: /auth/signup?${params.toString()}`)
+      console.log(`Redirecting to sign up modal: /?signup=true&${params.toString()}`)
       
       // Use window.location for a hard redirect to ensure fresh page load
-      window.location.href = `/auth/signup?${params.toString()}`
+      window.location.href = `/?signup=true&${params.toString()}`
       return
     }
     
@@ -248,27 +252,31 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
       })
       
       // Store user email, name, and billing frequency for session restoration after payment
-      if (user) {
+      if (user && user.email) {
         localStorage.setItem('checkout_email', user.email)
-        localStorage.setItem('checkout_name', user.name || user.email.split('@')[0])
-        localStorage.setItem('billing_frequency', selectedBillingFrequency)
-        localStorage.setItem('selected_plan', selectedPlan.id)
+        // Safely handle potentially undefined user.name
+        const userName = user.name || (user.email ? user.email.split('@')[0] : 'User')
+        localStorage.setItem('checkout_name', userName)
+        // Ensure selectedBillingFrequency and selectedPlan.id are not undefined
+        if (selectedBillingFrequency) {
+          localStorage.setItem('billing_frequency', selectedBillingFrequency)
+        }
+        if (selectedPlan && selectedPlan.id) {
+          localStorage.setItem('selected_plan', selectedPlan.id)
+        }
       }
 
       // Now create the checkout session (user is authenticated)
-      const response = await fetch('/api/stripe/create-checkout-session', {
+      const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: user.email,
-          name: user.name || user.email.split('@')[0],
-          planId: selectedPlan.id,
           priceId: currentPriceId,
-          userId: user.id || '',
           successUrl: `${window.location.origin}/checkout/success`,
-          cancelUrl: `${window.location.origin}/checkout`
+          cancelUrl: `${window.location.origin}/checkout`,
+          trialDays: 7
         }),
       })
       
