@@ -12,10 +12,13 @@ export default function CheckoutSuccessPage() {
   useEffect(() => {
     // Clear checkout-related localStorage items
     localStorage.removeItem('checkout_session_id')
+    localStorage.removeItem('stripe_checkout_session_id')
     localStorage.removeItem('checkout_email')
     localStorage.removeItem('checkout_name')
     localStorage.removeItem('billing_frequency')
     localStorage.removeItem('selected_plan')
+    localStorage.removeItem('selected_frequency')
+    localStorage.removeItem('redirect_to_checkout')
     localStorage.removeItem('redirectToCheckout')
     localStorage.removeItem('redirectCount')
     

@@ -130,6 +130,9 @@ function SignUpContent() {
         const finalPlan = selectedPlan || plan || 'starter'
         const finalFrequency = selectedFrequency || frequency || 'monthly'
         
+        // Set redirect flag for checkout
+        localStorage.setItem('redirect_to_checkout', 'true')
+        
         toast({
           title: 'Account created successfully!',
           description: 'Redirecting to checkout...'
@@ -147,7 +150,7 @@ function SignUpContent() {
           // Redirect to checkout with plan parameters
           const params = new URLSearchParams({
             plan: finalPlan,
-            billing: finalFrequency
+            frequency: finalFrequency
           })
           router.push(`/checkout?${params.toString()}`)
         } else {

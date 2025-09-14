@@ -40,14 +40,15 @@ export default function CheckoutPage() {
       // Get URL params
       const url = new URL(window.location.href)
       const planFromUrl = url.searchParams.get('plan')
-      const billingFromUrl = url.searchParams.get('billing')
+      const frequencyFromUrl = url.searchParams.get('frequency') || url.searchParams.get('billing')
       
       setPlanParam(planFromUrl)
-      setBillingParam(billingFromUrl)
+      setBillingParam(frequencyFromUrl)
       
       // First try to get from URL params
       if (planFromUrl) {
         setPlanId(planFromUrl)
+        localStorage.setItem('selected_plan', planFromUrl)
       } else {
         // Fallback to localStorage - prioritize new key format
         const storedPlan = localStorage.getItem('selected_plan')
@@ -62,13 +63,15 @@ export default function CheckoutPage() {
             setPlanId(oldStoredPlan)
           } else {
             setPlanId('pro') // Default to 'pro' if no plan is specified
+            localStorage.setItem('selected_plan', 'pro')
           }
         }
       }
       
       // Same for billing frequency
-      if (billingFromUrl) {
-        setBillingFrequency(billingFromUrl)
+      if (frequencyFromUrl) {
+        setBillingFrequency(frequencyFromUrl)
+        localStorage.setItem('selected_frequency', frequencyFromUrl)
       } else {
         // Prioritize new key format
         const storedFrequency = localStorage.getItem('selected_frequency')
@@ -83,14 +86,12 @@ export default function CheckoutPage() {
             setBillingFrequency(oldStoredFrequency)
           } else {
             setBillingFrequency('monthly') // Default to monthly if no frequency is specified
+            localStorage.setItem('selected_frequency', 'monthly')
           }
         }
       }
       
-      // Clear all redirect flags to prevent loops
-      localStorage.removeItem('redirect_to_checkout')
-      localStorage.removeItem('redirectToCheckout')
-      localStorage.removeItem('redirectCount')
+      // Don't clear redirect flags here, we need them for the checkout flow
       
       setIsLoading(false)
     }
@@ -112,9 +113,6 @@ export default function CheckoutPage() {
           localStorage.removeItem('redirectToCheckout')
           localStorage.removeItem('redirect_to_checkout')
           localStorage.removeItem('redirectCount')
-          // Ensure all redirect flags are cleared to prevent loops
-          localStorage.removeItem('selected_plan')
-          localStorage.removeItem('selected_frequency')
           
           // Set the user
           const currentSession = session as Session | null;
@@ -126,6 +124,21 @@ export default function CheckoutPage() {
               id: currentSession.user.id
             }
             setUser(sessionUser)
+            
+            // Check if we should redirect to Stripe checkout
+            const shouldRedirectToCheckout = localStorage.getItem('redirect_to_checkout') === 'true' || 
+                                            localStorage.getItem('redirectToCheckout') === 'true'
+            
+            if (shouldRedirectToCheckout) {
+              console.log('Redirect to checkout flag detected, initiating checkout')
+              // Let the component fully render before triggering checkout
+              setTimeout(() => {
+                const checkoutButton = document.querySelector('#checkout-button') as HTMLButtonElement
+                if (checkoutButton) {
+                  checkoutButton.click()
+                }
+              }, 1000)
+            }
           } else {
             setUser(null)
           }

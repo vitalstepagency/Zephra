@@ -77,23 +77,23 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
     
     // User should already be authenticated at this point
     if (!user) {
-      console.log('User not authenticated, redirecting to plans')
+      console.log('User not authenticated, redirecting to sign up')
       
       // Store plan selection for after authentication
-      localStorage.setItem('selectedPlan', selectedPlan.id)
-      localStorage.setItem('billingFrequency', selectedBillingFrequency)
+      localStorage.setItem('selected_plan', selectedPlan.id)
+      localStorage.setItem('selected_frequency', selectedBillingFrequency)
       
       // Set redirect flag but clear any existing redirect count to start fresh
-      localStorage.setItem('redirectToCheckout', 'true')
+      localStorage.setItem('redirect_to_checkout', 'true')
       localStorage.removeItem('redirectCount')
       
       const params = new URLSearchParams({
         plan: selectedPlan.id,
-        billing: selectedBillingFrequency,
+        frequency: selectedBillingFrequency,
         redirectToCheckout: 'true'
       })
-      console.log(`Redirecting to plan page: /plans/${selectedPlan.id}?${params.toString()}`)
-      router.push(`/plans/${selectedPlan.id}?${params.toString()}`)
+      console.log(`Redirecting to sign up page: /auth/signup?${params.toString()}`)
+      router.push(`/auth/signup?${params.toString()}`)
       return
     }
     
@@ -148,19 +148,22 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
       
       // Store session ID for verification after payment
       if (data.sessionId) {
-        localStorage.setItem('checkout_session_id', data.sessionId)
+        localStorage.setItem('stripe_checkout_session_id', data.sessionId)
       }
       
       // Clear plan selection parameters to prevent redirection loops
+      localStorage.removeItem('selected_plan')
+      localStorage.removeItem('selected_frequency')
+      localStorage.removeItem('redirect_to_checkout')
       localStorage.removeItem('selectedPlan')
       localStorage.removeItem('billingFrequency')
       localStorage.removeItem('redirectToCheckout')
       
+      // Redirect to Stripe Checkout
       if (data.url) {
-        // Redirect to Stripe Checkout
         window.location.href = data.url
       } else {
-        throw new Error('Invalid response from server')
+        throw new Error('No checkout URL returned')
       }
     } catch (error) {
       console.error('Checkout error:', error)
@@ -237,6 +240,7 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
           </div>
               
               <button
+                id="checkout-button"
                 type="submit"
                 disabled={isLoading}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors flex items-center justify-center"
