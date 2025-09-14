@@ -11,19 +11,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 export interface CheckoutSessionData {
   email: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   phone?: string;
   company?: string;
   planId: string;
   priceId: string;
+  successUrl: string;
+  cancelUrl: string;
   userId?: string;
 }
 
 export async function createCheckoutSession(data: CheckoutSessionData) {
   try {
     // Input validation
-    if (!data.email || !data.firstName || !data.lastName || !data.planId || !data.priceId) {
+    if (!data.email || !data.name || !data.planId || !data.priceId || !data.successUrl || !data.cancelUrl) {
       throw new Error('Missing required fields');
     }
 
@@ -42,12 +43,13 @@ export async function createCheckoutSession(data: CheckoutSessionData) {
     // Sanitize inputs
     const sanitizedData = {
       email: data.email.trim().toLowerCase(),
-      firstName: data.firstName.trim(),
-      lastName: data.lastName.trim(),
+      name: data.name.trim(),
       phone: data.phone?.trim(),
       company: data.company?.trim(),
       planId: data.planId.trim(),
       priceId: data.priceId.trim(),
+      successUrl: data.successUrl.trim(),
+      cancelUrl: data.cancelUrl.trim(),
       userId: data.userId?.trim()
     };
 
@@ -62,7 +64,7 @@ export async function createCheckoutSession(data: CheckoutSessionData) {
       customer = existingCustomers.data[0];
       // Update customer info if needed
       const updateData: any = {
-        name: `${sanitizedData.firstName} ${sanitizedData.lastName}`,
+        name: sanitizedData.name,
         metadata: {
           company: sanitizedData.company || '',
           planId: sanitizedData.planId,
@@ -76,7 +78,7 @@ export async function createCheckoutSession(data: CheckoutSessionData) {
     } else {
       const createData: any = {
         email: sanitizedData.email,
-        name: `${sanitizedData.firstName} ${sanitizedData.lastName}`,
+        name: sanitizedData.name,
         metadata: {
           company: sanitizedData.company || '',
           planId: sanitizedData.planId,
@@ -100,8 +102,8 @@ export async function createCheckoutSession(data: CheckoutSessionData) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-verification?session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(sanitizedData.email)}&name=${encodeURIComponent(`${sanitizedData.firstName} ${sanitizedData.lastName}`)}&plan=${sanitizedData.planId}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout?plan=${sanitizedData.planId}&error=payment_cancelled`,
+      success_url: sanitizedData.successUrl,
+      cancel_url: sanitizedData.cancelUrl,
       allow_promotion_codes: true,
       billing_address_collection: 'required',
       customer_update: {
@@ -111,8 +113,7 @@ export async function createCheckoutSession(data: CheckoutSessionData) {
       metadata: {
         planId: sanitizedData.planId,
         userId: sanitizedData.userId || '',
-        firstName: sanitizedData.firstName,
-        lastName: sanitizedData.lastName,
+        name: sanitizedData.name,
         company: sanitizedData.company || ''
       },
       subscription_data: {

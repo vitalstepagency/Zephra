@@ -51,21 +51,51 @@ function PaymentVerificationContent() {
       if (authStatus === 'unauthenticated' && sessionId && userEmail) {
         try {
           console.log('Attempting to restore session with email:', userEmail)
-          // Sign in with the email from state (URL params or localStorage)
-          const response = await signIn('credentials', {
-            email: userEmail,
-            password: sessionId, // Use sessionId as a temporary password
-            redirect: false,
-          })
           
-          if (response?.error) {
-            console.error('Failed to restore session:', response.error)
-            // Don't redirect immediately - let the payment verification continue
-            // The user might still be able to complete payment verification
+          // Check if we have stored credentials from the signup process
+          const storedEmail = localStorage.getItem('newUserEmail')
+          const storedPassword = localStorage.getItem('newUserPassword')
+          
+          // If we have stored credentials, use them for sign in
+          if (storedEmail && storedPassword && storedEmail === userEmail) {
+            console.log('Using stored credentials for sign in')
+            const response = await signIn('credentials', {
+              email: storedEmail,
+              password: storedPassword,
+              redirect: false,
+            })
+            
+            if (!response?.error) {
+              console.log('Session restored successfully with stored credentials')
+              // Clear stored credentials after successful sign in
+              localStorage.removeItem('newUserEmail')
+              localStorage.removeItem('newUserPassword')
+            } else {
+              console.error('Failed to sign in with stored credentials, falling back to session ID')
+              // Fall back to using sessionId as password
+              await signIn('credentials', {
+                email: userEmail,
+                password: sessionId, // Use sessionId as a temporary password
+                redirect: false,
+              })
+            }
           } else {
-            console.log('Session restored successfully')
-            // Don't clear localStorage yet - we'll need it for the onboarding redirect
-            // It will be cleared after successful payment verification
+            // Sign in with the email from state (URL params or localStorage)
+            const response = await signIn('credentials', {
+              email: userEmail,
+              password: sessionId, // Use sessionId as a temporary password
+              redirect: false,
+            })
+            
+            if (response?.error) {
+              console.error('Failed to restore session:', response.error)
+              // Don't redirect immediately - let the payment verification continue
+              // The user might still be able to complete payment verification
+            } else {
+              console.log('Session restored successfully')
+              // Don't clear localStorage yet - we'll need it for the onboarding redirect
+              // It will be cleared after successful payment verification
+            }
           }
         } catch (error) {
           console.error('Error restoring session:', error)

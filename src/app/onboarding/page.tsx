@@ -111,23 +111,53 @@ function OnboardingContent() {
       const restoreSession = async () => {
         try {
           console.log('Attempting to restore session in onboarding with email:', email)
-          // Sign in with the email from URL params
-          const response = await signIn('credentials', {
-            email: email,
-            password: sessionId || 'temp-password', // Use sessionId as a temporary password or a placeholder
-            redirect: false,
-          })
           
-          if (response?.error) {
-            console.error('Failed to restore session in onboarding:', response.error)
-            // Don't redirect immediately - we'll still check payment status
-            // If we have a plan but failed to restore session, try to redirect to signup
-            if (plan && !sessionId) {
-              console.log('Redirecting to signup with plan:', plan)
-              router.push(`/auth/signup?plan=${plan}&redirectToCheckout=${redirectToCheckout}`)
+          // Check if we have stored credentials from the signup process
+          const storedEmail = localStorage.getItem('newUserEmail')
+          const storedPassword = localStorage.getItem('newUserPassword')
+          
+          // If we have stored credentials, use them for sign in
+          if (storedEmail && storedPassword && storedEmail === email) {
+            console.log('Using stored credentials for sign in')
+            const response = await signIn('credentials', {
+              email: storedEmail,
+              password: storedPassword,
+              redirect: false,
+            })
+            
+            if (!response?.error) {
+              console.log('Session restored successfully with stored credentials')
+              // Clear stored credentials after successful sign in
+              localStorage.removeItem('newUserEmail')
+              localStorage.removeItem('newUserPassword')
+            } else {
+              console.error('Failed to sign in with stored credentials, falling back to session ID')
+              // Fall back to using sessionId as password
+              await signIn('credentials', {
+                email: email,
+                password: sessionId || 'temp-password', // Use sessionId as a temporary password or a placeholder
+                redirect: false,
+              })
             }
           } else {
-            console.log('Session restored successfully in onboarding')
+            // Sign in with the email from URL params
+            const response = await signIn('credentials', {
+              email: email,
+              password: sessionId || 'temp-password', // Use sessionId as a temporary password or a placeholder
+              redirect: false,
+            })
+            
+            if (response?.error) {
+              console.error('Failed to restore session in onboarding:', response.error)
+              // Don't redirect immediately - we'll still check payment status
+              // If we have a plan but failed to restore session, try to redirect to signup
+              if (plan && !sessionId) {
+                console.log('Redirecting to signup with plan:', plan)
+                router.push(`/auth/signup?plan=${plan}&redirectToCheckout=${redirectToCheckout}`)
+              }
+            } else {
+              console.log('Session restored successfully in onboarding')
+            }
           }
         } catch (error) {
           console.error('Error restoring session in onboarding:', error)

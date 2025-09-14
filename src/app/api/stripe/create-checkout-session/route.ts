@@ -13,12 +13,13 @@ const limiter = rateLimit({
 // Input validation schema
 const checkoutSchema = z.object({
   email: z.string().email('Invalid email format').min(1, 'Email is required'),
-  firstName: z.string().min(1, 'First name is required').max(50, 'First name too long'),
-  lastName: z.string().min(1, 'Last name is required').max(50, 'Last name too long'),
+  name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
   phone: z.string().regex(/^[\+]?[1-9][\d\s\-\(\)]{7,15}$/, 'Invalid phone format').optional(),
   company: z.string().max(100, 'Company name too long').optional(),
   planId: z.string().min(1, 'Plan ID is required'),
   priceId: z.string().min(1, 'Price ID is required'),
+  successUrl: z.string().min(1, 'Success URL is required'),
+  cancelUrl: z.string().min(1, 'Cancel URL is required'),
   userId: z.string().optional()
 });
 
@@ -49,12 +50,13 @@ async function createCheckoutSessionHandler(request: NextRequest) {
     // Sanitize inputs to prevent XSS
     const sanitizedData: CheckoutSessionData = {
       email: validatedData.email.trim().toLowerCase(),
-      firstName: validatedData.firstName.trim().replace(/[<>"'&]/g, ''),
-      lastName: validatedData.lastName.trim().replace(/[<>"'&]/g, ''),
+      name: validatedData.name.trim().replace(/[<>"'&]/g, ''),
       phone: validatedData.phone ? validatedData.phone.trim().replace(/[<>"'&]/g, '') : '',
       company: validatedData.company ? validatedData.company.trim().replace(/[<>"'&]/g, '') : '',
       planId: validatedData.planId.trim(),
       priceId: validatedData.priceId.trim(),
+      successUrl: validatedData.successUrl.trim(),
+      cancelUrl: validatedData.cancelUrl.trim(),
       userId: validatedData.userId ? validatedData.userId.trim() : ''
     };
 

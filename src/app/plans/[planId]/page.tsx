@@ -147,7 +147,7 @@ export default function PlanSignUpPage() {
     
     try {
       // First create the account via API
-      const response = await fetch('/api/auth/simple-signup', {
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -162,21 +162,19 @@ export default function PlanSignUpPage() {
         // Store credentials in localStorage for session restoration and automatic sign-in after checkout
         localStorage.setItem('newUserEmail', email.trim().toLowerCase())
         localStorage.setItem('newUserPassword', password)
-        localStorage.setItem('selected_plan', planId)
-        localStorage.setItem('selected_frequency', frequency)
+        localStorage.setItem('selectedPlanId', planDetails.id)
+        localStorage.setItem('selectedPlanFrequency', frequency)
         localStorage.setItem('checkout_email', email.trim().toLowerCase())
         localStorage.setItem('checkout_name', name.trim())
-        localStorage.setItem('redirect_to_checkout', 'true')
         
         // Clear any old redirect flags to prevent loops
         localStorage.removeItem('redirectToCheckout')
-        localStorage.removeItem('selectedPlan')
-        localStorage.removeItem('billingFrequency')
+        localStorage.removeItem('redirectToOnboarding')
         localStorage.removeItem('redirectCount')
         
         toast({
           title: 'Account created successfully!',
-          description: 'Redirecting to checkout...'
+          description: 'Preparing checkout...'
         })
         
         // Sign in without redirect
@@ -188,16 +186,52 @@ export default function PlanSignUpPage() {
         
         if (result?.ok) {
           setStep('success')
-          console.log('Sign-in successful, redirecting to checkout')
+          console.log('Sign-in successful, proceeding to checkout')
           
-          // Redirect to checkout with plan parameters after a short delay
-          setTimeout(() => {
-            const params = new URLSearchParams({
-              plan: planId,
-              billing: frequency
+          try {
+            // Get the current price ID based on plan and frequency
+            const priceId = frequency === 'monthly' ? 
+              planDetails.priceIds.monthly : 
+              planDetails.priceIds.yearly
+            
+            // Create checkout session directly
+            const checkoutResponse = await fetch('/api/stripe/create-checkout-session', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: email.trim().toLowerCase(),
+                name: name.trim(),
+                planId: planDetails.id,
+                priceId: priceId,
+                successUrl: `${window.location.origin}/onboarding?session_id={CHECKOUT_SESSION_ID}`,
+                cancelUrl: `${window.location.origin}/plans/${planId}`
+              }),
             })
-            router.push(`/checkout?${params.toString()}`)
-          }, 1000)
+            
+            const data = await checkoutResponse.json()
+            
+            if (!checkoutResponse.ok) {
+              throw new Error(data.error || 'Failed to create checkout session')
+            }
+            
+            // Store session ID for verification after payment
+            if (data.sessionId) {
+              localStorage.setItem('checkoutSessionId', data.sessionId)
+            }
+            
+            if (data.url) {
+              // Redirect to Stripe Checkout
+              window.location.href = data.url
+            } else {
+              throw new Error('Invalid response from server')
+            }
+          } catch (checkoutError) {
+            console.error('Checkout error:', checkoutError)
+            setStep('error')
+            setError(checkoutError instanceof Error ? checkoutError.message : 'Failed to process payment')
+          }
         } else {
           throw new Error('Failed to sign in')
         }
