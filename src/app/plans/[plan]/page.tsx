@@ -77,7 +77,7 @@ function PlanSignupContent() {
     'elite': 'enterprise'
   };
   
-  const planKey = planKeyMap[normalizedPlanId];
+  const planKey = planKeyMap[normalizedPlanId] || 'pro';
   const plan = PRICING_PLANS[planKey];
 
   useEffect(() => {
