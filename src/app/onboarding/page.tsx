@@ -72,16 +72,22 @@ function OnboardingContent() {
   const searchParams = useSearchParams()
   const plan = searchParams.get('plan') || 'starter'
   const checkoutSuccess = searchParams.get('checkout') === 'success'
-  const sessionId = searchParams.get('session_id')
-  const redirectToCheckout = searchParams.get('redirectToCheckout') === 'true'
-  const email = searchParams.get('email') || session?.user?.email || ''
-  const userName = searchParams.get('name') || session?.user?.name || ''
+  const userName = session?.user?.name || ''
   
   const [currentStep, setCurrentStep] = useState(1)
   const [direction, setDirection] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
-  const [paymentVerified, setPaymentVerified] = useState(false)
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false)
+  const [formData, setFormData] = useState({
+    businessName: '',
+    industry: '',
+    teamSize: '',
+    currentChallenges: '',
+    primaryGoals: [] as string[],
+    monthlyBudget: '',
+    timelineExpectation: '',
+    monthlyGoal: '',
+    primaryObjective: ''
+  })
   
   // Show loading state while session is loading
   if (!session && status !== 'unauthenticated') {
@@ -94,16 +100,6 @@ function OnboardingContent() {
       </div>
     )
   }
-  
-  // Form data
-  const [formData, setFormData] = useState({
-    businessName: '',
-    industry: '',
-    teamSize: '',
-    currentChallenges: '',
-    monthlyGoal: '',
-    primaryObjective: ''
-  })
 
   useEffect(() => {
     // Redirect to signin if no session, but preserve the current URL as callbackUrl
@@ -114,53 +110,8 @@ function OnboardingContent() {
       return
     }
     
-    console.log('✅ Onboarding: Session found, checking user status')
-    // Check payment status and onboarding completion
-    checkUserStatus()
+    console.log('✅ Onboarding: Session found, user can proceed with onboarding')
   }, [session, status, router])
-  
-  const checkUserStatus = async () => {
-    try {
-      // Verify payment if we have a session_id
-      if (sessionId) {
-        try {
-          const verifyResponse = await fetch(`/api/stripe/verify-session?session_id=${sessionId}`)
-          if (verifyResponse.ok) {
-            const { verified } = await verifyResponse.json()
-            setPaymentVerified(verified)
-          } else {
-            setPaymentVerified(false)
-          }
-        } catch (verifyError) {
-          console.error('Error verifying payment:', verifyError)
-          setPaymentVerified(false)
-        }
-      } else {
-        // If no session_id, assume payment is verified (user came through signin)
-        setPaymentVerified(true)
-      }
-      
-      // Check onboarding completion
-      if (session) {
-        try {
-          const onboardingResponse = await fetch('/api/onboarding')
-          if (onboardingResponse.ok) {
-            const { completed } = await onboardingResponse.json()
-            setOnboardingCompleted(completed)
-            
-            // If already completed, redirect to dashboard
-            if (completed) {
-              router.push('/dashboard?welcome=true')
-            }
-          }
-        } catch (onboardingError) {
-          console.error('Error checking onboarding status:', onboardingError)
-        }
-      }
-    } catch (error) {
-      console.error('Error checking user status:', error)
-    }
-  }
 
   const nextStep = () => {
     if (currentStep < steps.length) {
@@ -204,7 +155,7 @@ function OnboardingContent() {
     }
   }
 
-  const updateFormData = (field: string, value: string) => {
+  const updateFormData = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -212,25 +163,8 @@ function OnboardingContent() {
 
   // Loading state is already handled by the early return above
 
-  // Show payment verification message if payment not verified (but not for checkout success)
-  if ((sessionId && !paymentVerified) && !checkoutSuccess) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-          <h2 className="text-2xl font-bold text-white mb-4">Setting Up Your Account</h2>
-          <p className="text-slate-400 mb-6">We're confirming your payment and preparing your Zephra dashboard. This usually takes just a few moments.</p>
-          <Button 
-            onClick={() => router.push('/dashboard')} 
-            variant="outline"
-            className="bg-slate-800 border-slate-600 text-white hover:bg-slate-700"
-          >
-            Go to Dashboard
-          </Button>
-        </div>
-      </div>
-    )
-  }
+  // Show welcome message for checkout success
+  const showWelcomeMessage = checkoutSuccess
 
   if (!session) return null
 
