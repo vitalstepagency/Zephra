@@ -194,6 +194,8 @@ export default function PlanSignUpPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${responseData.userId}`,
+          'X-User-Email': email.trim().toLowerCase()
         },
         body: JSON.stringify({
           priceId,

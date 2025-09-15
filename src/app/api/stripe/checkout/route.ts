@@ -20,13 +20,23 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
   
   try {
-    // Get Supabase client and check authentication
-    const supabase = createSupabaseServerClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    // Get authorization header for user authentication
+    const authHeader = req.headers.get('authorization')
+    const userEmail = req.headers.get('x-user-email')
     
-    if (authError || !user) {
+    if (!authHeader || !userEmail) {
       return NextResponse.json(
         { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+    
+    // Extract user ID from auth header (format: "Bearer user_id")
+    const userId = authHeader.replace('Bearer ', '')
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Invalid authentication' },
         { status: 401 }
       )
     }
@@ -65,13 +75,13 @@ export async function POST(req: NextRequest) {
         type: 'SUSPICIOUS_REQUEST',
         ip,
         path: '/api/stripe/checkout',
-        details: { userId: user.id, priceId, action: 'checkout_attempt' }
+        details: { userId, priceId, action: 'checkout_attempt' }
       })
 
       // Create or retrieve Stripe customer
       let customer
       const existingCustomers = await stripe.customers.list({
-        email: user.email!,
+        email: userEmail,
         limit: 1
       })
 
@@ -79,10 +89,10 @@ export async function POST(req: NextRequest) {
         customer = existingCustomers.data[0]
       } else {
         customer = await stripe.customers.create({
-          email: user.email!,
-          name: user.user_metadata?.full_name || user.email!,
+          email: userEmail,
+          name: userEmail.split('@')[0] || 'User',
           metadata: {
-            userId: user.id
+            userId
           }
         })
       }
@@ -101,13 +111,13 @@ export async function POST(req: NextRequest) {
         subscription_data: {
           trial_period_days: trialDays,
           metadata: {
-            userId: user.id
+            userId
           }
         },
         success_url: successUrl || `${req.nextUrl.origin}/auth/signin?checkout=success`,
-        cancel_url: cancelUrl || `${req.nextUrl.origin}/?canceled=true`,
+        cancel_url: cancelUrl || `${req.nextUrl.origin}/plans`,
         metadata: {
-          userId: user.id
+          userId
         }
       })
 
@@ -116,7 +126,7 @@ export async function POST(req: NextRequest) {
         type: 'SUSPICIOUS_REQUEST',
         ip,
         path: '/api/stripe/checkout',
-        details: { userId: user.id, priceId, action: 'checkout_success', sessionId: checkoutSession.id }
+        details: { userId, priceId, action: 'checkout_success', sessionId: checkoutSession.id }
       })
 
       return NextResponse.json({ 
