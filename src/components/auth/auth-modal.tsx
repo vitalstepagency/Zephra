@@ -97,7 +97,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
           // Check if we're coming from checkout success
           const url = window.location.href
           const isCheckoutSuccess = url.includes('checkout=success')
-          // Redirect to onboarding if coming from checkout, otherwise dashboard
+          // Always redirect to onboarding after checkout success
           router.push(isCheckoutSuccess ? '/onboarding' : '/dashboard')
         }, 1500)
       }

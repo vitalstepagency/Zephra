@@ -98,6 +98,7 @@ function OnboardingContent() {
     
     // Redirect to signin if no session
     if (!session) {
+      // Use the custom signin page to avoid NextAuth's default redirect
       router.push('/auth/signin?checkout=success')
       return
     }

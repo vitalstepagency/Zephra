@@ -123,8 +123,8 @@ function SignInContent() {
                   if (result?.error) {
                     setSubscriptionError(result.error);
                   } else if (result?.ok) {
-                    // Redirect directly to onboarding after successful authentication
-                    // This bypasses the intermediate redirect to /api/auth/signin
+                    // Always redirect to onboarding after successful authentication
+                    // This ensures proper handling of checkout success flow
                     router.push('/onboarding');
                   }
                 } catch (error) {
