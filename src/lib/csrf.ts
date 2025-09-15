@@ -103,15 +103,15 @@ export function getCSPHeaders(): Record<string, string> {
   return {
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://checkout.stripe.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://checkout.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https: blob:",
-      "connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co",
+      "connect-src 'self' https://api.stripe.com https://*.supabase.co https://www.google-analytics.com https://vitals.vercel-insights.com wss://*.supabase.co",
       "frame-src 'self' https://js.stripe.com https://checkout.stripe.com",
       "object-src 'none'",
       "base-uri 'self'",
-      "form-action 'self'",
+      "form-action 'self' https://checkout.stripe.com",
       "frame-ancestors 'none'",
       "upgrade-insecure-requests"
     ].join('; '),
