@@ -320,6 +320,16 @@ export default function PlanSignUpPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <img 
+                      src="/zephra-logo.png" 
+                      alt="Zephra Logo" 
+                      className="h-8 w-auto"
+                    />
+                    <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                      Zephra
+                    </span>
+                  </div>
                   <CardTitle className="text-2xl font-bold text-white">Create your account</CardTitle>
                   <CardDescription className="text-slate-300">
                     Sign up for the {planDetails.name} plan

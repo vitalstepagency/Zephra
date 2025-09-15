@@ -84,9 +84,9 @@ export default function LandingPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
               <img 
-                src="/zephra.png" 
+                src="/zephra-logo.png" 
                 alt="Zephra Logo" 
-                className="h-8 w-8"
+                className="h-8 w-auto"
               />
               <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                 Zephra

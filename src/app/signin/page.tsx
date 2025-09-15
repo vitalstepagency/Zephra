@@ -167,9 +167,11 @@ function SignInContent() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">Z</span>
-              </div>
+              <img 
+                src="/zephra-logo.png" 
+                alt="Zephra Logo" 
+                className="h-10 w-auto"
+              />
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Zephra
               </span>
