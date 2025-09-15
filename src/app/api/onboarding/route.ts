@@ -112,11 +112,20 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Check if onboarding is completed based on whether user has filled out onboarding data
+    // Not just subscription status, as new users with active subscriptions still need onboarding
+    const hasOnboardingData = data && (
+      data.full_name || 
+      data.business_name || 
+      data.industry || 
+      data.team_size
+    )
+    
     return NextResponse.json(
       { 
         success: true, 
         data: data || null,
-        completed: !!data && data.subscription_status === 'active'
+        completed: !!hasOnboardingData
       },
       { status: 200 }
     )
