@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
+        user_id: session.user.id,
         email: session.user.email,
         name: session.user.name,
         onboarding_completed: true,

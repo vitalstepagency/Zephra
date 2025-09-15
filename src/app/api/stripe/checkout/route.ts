@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
             userId
           }
         },
-        success_url: successUrl || `${req.nextUrl.origin}/auth/signin?checkout=success`,
+        success_url: successUrl || `${req.nextUrl.origin}/signin?checkout=success`,
         cancel_url: cancelUrl || `${req.nextUrl.origin}/plans`,
         metadata: {
           userId

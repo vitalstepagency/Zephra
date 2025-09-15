@@ -289,7 +289,7 @@ export default function CheckoutPage() {
             if (billingFrequency) localStorage.setItem('selected_frequency', billingFrequency)
             
             // Redirect to signin page
-            router.push(`/?signin=true`)
+            router.push(`/signin`)
             return
           }
         }

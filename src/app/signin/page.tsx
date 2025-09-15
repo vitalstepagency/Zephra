@@ -7,11 +7,13 @@ import { Button, Input, Label } from '@/components/ui'
 import { Eye, EyeOff, ArrowRight, CheckCircle, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 function SignInContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const supabase = createClientComponentClient()
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,15 +25,46 @@ function SignInContent() {
   // Get URL parameters
   const sessionId = searchParams.get('session_id')
   const fromCheckout = searchParams.get('from') === 'checkout'
-  const baseRedirect = searchParams.get('redirect') || '/onboarding'
   
-  // Build redirect URL with session_id if available
-  const redirectTo = sessionId ? `${baseRedirect}?session_id=${sessionId}` : baseRedirect
+  // Function to check onboarding completion and redirect accordingly
+  const checkOnboardingAndRedirect = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('user_id', userId)
+        .single()
+      
+      if (error) {
+        console.error('Error fetching profile:', error)
+        // If no profile exists, redirect to onboarding
+        const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
+        router.push(redirectUrl)
+        return
+      }
+      
+      // Redirect based on onboarding completion status
+      if (profile?.onboarding_completed) {
+        // User has completed onboarding, go to dashboard
+        const redirectUrl = sessionId ? `/dashboard?session_id=${sessionId}` : '/dashboard'
+        router.push(redirectUrl)
+      } else {
+        // User hasn't completed onboarding, go to onboarding
+        const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
+        router.push(redirectUrl)
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error)
+      // Default to onboarding on error
+      const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
+      router.push(redirectUrl)
+    }
+  }
   
   useEffect(() => {
-    // If user is already signed in, redirect them
-    if (session && status === 'authenticated') {
-      router.push(redirectTo)
+    // If user is already signed in, check onboarding status and redirect
+    if (session && status === 'authenticated' && session.user?.id) {
+      checkOnboardingAndRedirect(session.user.id)
     }
     
     // Pre-fill email if available from URL or localStorage
@@ -43,7 +76,7 @@ function SignInContent() {
     } else if (storedEmail) {
       setEmail(storedEmail)
     }
-  }, [session, status, router, redirectTo, searchParams])
+  }, [session, status, router, searchParams])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,9 +127,17 @@ function SignInContent() {
       // Show success state briefly before redirect
       setStep('success')
       
-      // Redirect after a brief delay
-      setTimeout(() => {
-        router.push(redirectTo)
+      // Get the session to access user ID for onboarding check
+      setTimeout(async () => {
+        // Refresh session to get user data
+        const { data: sessionData } = await fetch('/api/auth/session').then(res => res.json())
+        if (sessionData?.user?.id) {
+          await checkOnboardingAndRedirect(sessionData.user.id)
+        } else {
+          // Fallback to onboarding if no user ID
+          const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
+          router.push(redirectUrl)
+        }
       }, 1500)
       
     } catch (error) {

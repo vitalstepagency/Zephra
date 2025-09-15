@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Bot, User as UserIcon, Sparkles } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+// Removed Card components as we're using custom styling
 
 interface Message {
   id: string
@@ -222,60 +221,93 @@ export function AIChat({ businessName, industry, currentChallenges, onComplete }
   }
   
   return (
-    <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-700/50 shadow-2xl h-full flex flex-col">
-      <CardHeader className="text-center pb-2">
-        <CardTitle className="text-xl text-white flex items-center justify-center gap-2">
-          <Sparkles className="w-5 h-5 text-indigo-400" />
-          Zephra AI Assistant
-        </CardTitle>
-        <CardDescription className="text-slate-400">
-          Ask me anything about your marketing strategy
-        </CardDescription>
-      </CardHeader>
+    <div className="h-full flex flex-col bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+      {/* Header */}
+      <div className="relative px-8 py-6 border-b border-white/10 bg-gradient-to-r from-slate-800/50 to-slate-700/50">
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10" />
+        <div className="relative flex items-center justify-center gap-3">
+          <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <div className="text-center">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+              Zephra AI
+            </h2>
+            <p className="text-sm text-slate-400 font-medium">
+              Your intelligent marketing assistant
+            </p>
+          </div>
+        </div>
+      </div>
       
-      <CardContent className="flex-grow flex flex-col p-4 overflow-hidden">
-        <div className="flex-grow overflow-y-auto mb-4 pr-2 space-y-4">
+      {/* Chat Content */}
+      <div className="flex-grow flex flex-col p-6 overflow-hidden relative">
+        {/* Background Effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 pointer-events-none" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Messages Container */}
+        <div className="relative flex-grow overflow-y-auto mb-6 pr-2 space-y-6 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
           <AnimatePresence>
             {messages.map((message) => (
               <motion.div
                 key={message.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div 
-                  className={`flex max-w-[80%] ${message.sender === 'user' 
-                    ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm' 
-                    : 'bg-slate-800 text-slate-100 rounded-2xl rounded-tl-sm'}`}
-                >
-                  <div className="p-3 flex gap-2">
-                    <div className="flex-shrink-0 mt-1">
-                      {message.sender === 'ai' 
-                        ? <Bot className="w-5 h-5 text-indigo-400" /> 
-                        : <UserIcon className="w-5 h-5 text-white" />}
-                    </div>
-                    <div>
-                      <p className="text-sm">{message.content}</p>
+                <div className={`flex max-w-[85%] ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'} gap-3`}>
+                  {/* Avatar */}
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg ${
+                    message.sender === 'user' 
+                      ? 'bg-gradient-to-br from-indigo-500 to-purple-600' 
+                      : 'bg-gradient-to-br from-slate-700 to-slate-600 border border-white/10'
+                  }`}>
+                    {message.sender === 'ai' 
+                      ? <Bot className="w-5 h-5 text-white" /> 
+                      : <UserIcon className="w-5 h-5 text-white" />}
+                  </div>
+                  
+                  {/* Message Bubble */}
+                  <div className={`relative px-5 py-4 rounded-3xl shadow-lg backdrop-blur-sm border ${
+                    message.sender === 'user'
+                      ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white border-white/20 rounded-br-lg'
+                      : 'bg-gradient-to-br from-slate-800/90 to-slate-700/90 text-slate-100 border-white/10 rounded-bl-lg'
+                  }`}>
+                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    
+                    {/* Message timestamp */}
+                    <div className={`text-xs mt-2 opacity-70 ${
+                      message.sender === 'user' ? 'text-white/80' : 'text-slate-400'
+                    }`}>
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                 </div>
               </motion.div>
             ))}
             
+            {/* Typing Indicator */}
             {isTyping && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
                 className="flex justify-start"
               >
-                <div className="bg-slate-800 text-slate-100 rounded-2xl rounded-tl-sm p-4">
-                  <div className="flex items-center gap-2">
-                    <Bot className="w-5 h-5 text-indigo-400" />
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg bg-gradient-to-br from-slate-700 to-slate-600 border border-white/10">
+                    <Bot className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="relative px-5 py-4 rounded-3xl rounded-bl-lg shadow-lg backdrop-blur-sm border bg-gradient-to-br from-slate-800/90 to-slate-700/90 border-white/10">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-slate-300">Zephra is thinking</span>
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -286,54 +318,69 @@ export function AIChat({ businessName, industry, currentChallenges, onComplete }
           </AnimatePresence>
         </div>
         
+        {/* Suggestions */}
         {suggestions.length > 0 && (
-          <div className="mb-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <p className="text-xs text-slate-400 mb-3 font-medium">Suggested questions:</p>
             <div className="flex flex-wrap gap-2">
               {suggestions.map((suggestion, index) => (
-                <Button 
-                  key={index} 
-                  variant="outline" 
-                  size="sm" 
+                <motion.button
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white text-xs py-1 h-auto"
+                  className="px-4 py-2 bg-gradient-to-r from-slate-800/80 to-slate-700/80 border border-white/10 rounded-2xl text-slate-300 hover:text-white hover:border-indigo-400/50 hover:bg-gradient-to-r hover:from-slate-700/80 hover:to-slate-600/80 text-xs transition-all duration-200 backdrop-blur-sm shadow-lg"
                 >
                   {suggestion}
-                </Button>
+                </motion.button>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
         
-        <div className="flex gap-2">
-          <div className="relative flex-grow">
-            <textarea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder:text-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none h-12 max-h-32 overflow-y-auto"
-              style={{ minHeight: '48px' }}
-              rows={1}
-            />
+        {/* Input Area */}
+        <div className="relative">
+          <div className="flex gap-3 p-4 bg-gradient-to-r from-slate-800/50 to-slate-700/50 rounded-3xl border border-white/10 backdrop-blur-sm shadow-lg">
+            <div className="relative flex-grow">
+              <textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask Zephra anything about your marketing..."
+                className="w-full bg-transparent text-white placeholder:text-slate-400 resize-none focus:outline-none text-sm leading-relaxed"
+                style={{ minHeight: '24px', maxHeight: '120px' }}
+                rows={1}
+              />
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim()}
+              className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send className="w-4 h-4 text-white" />
+            </motion.button>
           </div>
-          <Button 
-            onClick={handleSendMessage} 
-            className="bg-indigo-600 hover:bg-indigo-700 text-white h-12 w-12 rounded-lg p-0 flex items-center justify-center"
-          >
-            <Send className="w-5 h-5" />
-          </Button>
+          
+          {/* Continue Button */}
+          <div className="mt-6 text-center">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleComplete}
+              className="px-6 py-2 text-slate-400 hover:text-white text-sm font-medium transition-colors duration-200"
+            >
+              Continue to Dashboard →
+            </motion.button>
+          </div>
         </div>
-        
-        <div className="mt-4 text-center">
-          <Button 
-            onClick={handleComplete}
-            variant="ghost" 
-            className="text-slate-400 hover:text-white text-sm"
-          >
-            Continue to Dashboard
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

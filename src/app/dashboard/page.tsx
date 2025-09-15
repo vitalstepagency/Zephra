@@ -29,7 +29,7 @@ function DashboardContent() {
 
   useEffect(() => {
     if (status === 'loading') return // Still loading
-    if (!session) router.push('/?signin=true')
+    if (!session) router.push('/signin')
     
     // Show success message if user just completed payment
     if (success === 'true' && plan) {

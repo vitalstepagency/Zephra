@@ -190,7 +190,7 @@ export default function PlanSignUpPage() {
         },
         body: JSON.stringify({
           priceId,
-          successUrl: `${window.location.origin}/auth/signin?checkout=success&session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(email.trim().toLowerCase())}`,
+          successUrl: `${window.location.origin}/signin?checkout=success&session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(email.trim().toLowerCase())}`,
           cancelUrl: `${window.location.origin}/plans/${planDetails.id}`,
           trialDays: 7
         }),
@@ -430,7 +430,7 @@ export default function PlanSignUpPage() {
                 
                 <div className="text-center text-slate-400 text-sm mt-4">
                   Already have an account?{" "}
-                  <Link href="/?signin=true" className="text-indigo-400 hover:text-indigo-300 font-medium">
+                  <Link href="/signin" className="text-indigo-400 hover:text-indigo-300 font-medium">
                     Sign in
                   </Link>
                 </div>
