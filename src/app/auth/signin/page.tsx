@@ -35,25 +35,12 @@ function SignInContent() {
     setIsLoading(true)
     setSubscriptionError('')
     try {
-      const result = await signIn(provider, { 
-        redirect: false,
+      await signIn(provider, { 
         callbackUrl: checkoutSuccess ? '/onboarding?checkout=success' : '/onboarding'
       })
-      
-      if (result?.ok) {
-        // Use NextAuth's redirect handling
-        if (checkoutSuccess) {
-          window.location.href = '/onboarding?checkout=success'
-        } else {
-          router.push('/onboarding')
-        }
-      } else if (result?.error) {
-        setSubscriptionError(result.error)
-      }
     } catch (error) {
       console.error('Sign in error:', error)
       setSubscriptionError('An error occurred during sign in')
-    } finally {
       setIsLoading(false)
     }
   }
@@ -116,28 +103,15 @@ function SignInContent() {
                 }
                 
                 try {
-                  // Let NextAuth handle the redirect using the redirect callback
-                  const result = await signIn('credentials', {
+                  // Let NextAuth handle the redirect automatically
+                  await signIn('credentials', {
                     email,
                     password,
-                    redirect: false,
                     callbackUrl: checkoutSuccess ? '/onboarding?checkout=success' : '/onboarding'
                   });
-                  
-                  if (result?.error) {
-                    setSubscriptionError(result.error);
-                  } else if (result?.ok) {
-                    // Use NextAuth's redirect handling
-                    if (checkoutSuccess) {
-                      window.location.href = '/onboarding?checkout=success';
-                    } else {
-                      router.push('/onboarding');
-                    }
-                  }
                 } catch (error) {
                   console.error('Sign in error:', error);
                   setSubscriptionError('An error occurred during sign in');
-                } finally {
                   setIsLoading(false);
                 }
               }}>

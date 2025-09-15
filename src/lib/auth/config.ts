@@ -132,8 +132,9 @@ export const authOptions: NextAuthOptions = {
       return baseUrl
     },
   },
-  // Remove the custom pages configuration to prevent the redundant redirect
-  pages: {},
+  pages: {
+    signIn: '/auth/signin',
+  },
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
