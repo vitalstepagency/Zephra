@@ -12,17 +12,50 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials, req) {
-        console.log('🚨🚨🚨 AUTHORIZE FUNCTION CALLED! 🚨🚨🚨')
+        console.log('🚨 AUTHORIZE FUNCTION CALLED! 🚨')
         console.log('📧 Email:', credentials?.email)
-        console.log('🔑 Password:', credentials?.password)
-        console.log('📋 All credentials:', JSON.stringify(credentials, null, 2))
         
-        // Always return test user for now
-        console.log('✅✅✅ Returning test user!')
-        return {
-          id: 'test-user-id',
-          email: credentials?.email || 'test@test.com',
-          name: 'Test User'
+        if (!credentials?.email || !credentials?.password) {
+          console.log('❌ Missing credentials')
+          return null
+        }
+
+        try {
+          const supabaseAdmin = getSupabaseAdmin()
+          
+          // First, try to authenticate with Supabase Auth
+          const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
+            email: credentials.email,
+            password: credentials.password
+          })
+
+          if (authError || !authData.user) {
+            console.log('❌ Authentication failed:', authError?.message)
+            return null
+          }
+
+          // Get user profile from users table
+          const { data: userProfile, error: profileError } = await supabaseAdmin
+            .from('users')
+            .select('id, email, full_name, subscription_status, stripe_customer_id')
+            .eq('id', authData.user.id)
+            .single()
+
+          if (profileError || !userProfile) {
+            console.log('❌ User profile not found:', profileError?.message)
+            return null
+          }
+
+          console.log('✅ User authenticated successfully:', userProfile.email)
+          
+          return {
+            id: userProfile.id,
+            email: userProfile.email,
+            name: userProfile.full_name || userProfile.email.split('@')[0]
+          }
+        } catch (error) {
+          console.error('❌ Authorization error:', error)
+          return null
         }
       }
     })
