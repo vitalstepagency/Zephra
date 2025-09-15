@@ -24,7 +24,11 @@ function SignInContent() {
       if (session) {
         // If user is already authenticated, redirect to onboarding with checkout context
         const redirectUrl = checkoutSuccess ? '/onboarding?checkout=success' : '/onboarding'
+        console.log('🔄 Sign-in page: User already authenticated, redirecting to:', redirectUrl)
         router.push(redirectUrl)
+      } else if (checkoutSuccess) {
+        // If coming from checkout success but no session, stay on sign-in page
+        console.log('🔄 Sign-in page: Checkout success but no session, staying on sign-in page')
       }
     }
     checkSession()
@@ -105,11 +109,17 @@ function SignInContent() {
                 
                 try {
                   // Let NextAuth handle the redirect automatically
-                  await signIn('credentials', {
+                  const callbackUrl = checkoutSuccess ? '/onboarding?checkout=success' : '/onboarding'
+                  console.log('🔄 Sign-in form: Attempting sign-in with callbackUrl:', callbackUrl)
+                  
+                  const result = await signIn('credentials', {
                     email,
                     password,
-                    callbackUrl: checkoutSuccess ? '/onboarding?checkout=success' : '/onboarding'
+                    callbackUrl,
+                    redirect: true
                   });
+                  
+                  console.log('🔄 Sign-in form: Sign-in result:', result)
                 } catch (error) {
                   console.error('Sign in error:', error);
                   setSubscriptionError('An error occurred during sign in');

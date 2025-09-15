@@ -91,27 +91,42 @@ function OnboardingContent() {
   
   // All hooks must be called before any conditional returns
   useEffect(() => {
-    // Redirect to signin if no session, but preserve the current URL as callbackUrl
-    if (status === 'unauthenticated') {
+    // Only redirect to signin if we're definitely unauthenticated and not loading
+    if (status === 'unauthenticated' && !checkoutSuccess) {
       console.log('❌ Onboarding: No session found, redirecting to signin')
       const currentUrl = window.location.pathname + window.location.search
       router.push(`/auth/signin?callbackUrl=${encodeURIComponent(currentUrl)}`)
       return
     }
     
-    console.log('✅ Onboarding: Session found, user can proceed with onboarding')
-  }, [session, status, router])
+    // If coming from checkout success, wait for session to load
+    if (checkoutSuccess && status === 'unauthenticated') {
+      console.log('⏳ Onboarding: Checkout success detected, waiting for session to load...')
+      return
+    }
+    
+    if (session) {
+      console.log('✅ Onboarding: Session found, user can proceed with onboarding')
+    }
+  }, [session, status, router, checkoutSuccess])
   
   // Show loading state while session is loading - moved after all hooks
-  if (!session && status !== 'unauthenticated') {
+  if (!session && (status === 'loading' || (checkoutSuccess && status === 'unauthenticated'))) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4" />
-          <p className="text-white text-lg">Loading your account...</p>
+          <p className="text-white text-lg">
+            {checkoutSuccess ? 'Completing your purchase...' : 'Loading your account...'}
+          </p>
         </div>
       </div>
     )
+  }
+  
+  // If we reach here without a session and not from checkout, redirect to signin
+  if (!session && status === 'unauthenticated' && !checkoutSuccess) {
+    return null // The useEffect will handle the redirect
   }
 
   const nextStep = () => {
