@@ -2,7 +2,6 @@ import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { SupabaseAdapter } from '@auth/supabase-adapter'
 import { getSupabaseAdmin } from '../supabase/server'
-import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
   adapter: SupabaseAdapter({
@@ -25,7 +24,7 @@ export const authOptions: NextAuthOptions = {
           const supabaseAdmin = getSupabaseAdmin()
           
           // Check if this is a session restoration attempt (from payment verification)
-           const isSessionRestoration = credentials.password.includes('cs_');
+           const isSessionRestoration = credentials.password?.startsWith('session_restore_');
            
            let authData;
            
