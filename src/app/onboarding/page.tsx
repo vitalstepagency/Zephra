@@ -96,10 +96,10 @@ function OnboardingContent() {
   useEffect(() => {
     if (status === 'loading') return
     
-    // Redirect to signin if no session
+    // Redirect to signin if no session, but preserve the current URL as callbackUrl
     if (!session) {
-      // Use the custom signin page to avoid NextAuth's default redirect
-      router.push('/auth/signin?checkout=success')
+      const currentUrl = window.location.pathname + window.location.search
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(currentUrl)}`)
       return
     }
     
