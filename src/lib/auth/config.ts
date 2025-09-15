@@ -127,6 +127,12 @@ export const authOptions: NextAuthOptions = {
         return `${baseUrl}/onboarding?checkout=success`
       }
       
+      // Handle onboarding URL (ensure checkout success context is preserved)
+      // This handles cases where IDE or other tools add extra parameters
+      if (url.includes('/onboarding')) {
+        return `${baseUrl}/onboarding?checkout=success`
+      }
+      
       // If it's a relative URL, make it absolute
       if (url.startsWith('/')) {
         return `${baseUrl}${url}`

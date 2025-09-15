@@ -99,7 +99,6 @@ const protectedRoutes = [
 export default withAuth(
   async function middleware(req: NextRequestWithAuth) {
     const { pathname } = req.nextUrl
-    const token = req.nextauth.token
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
     const userAgent = req.headers.get('user-agent') || ''
 
@@ -149,28 +148,6 @@ export default withAuth(
       }
     }
 
-    // Auth is handled via modals, no dedicated auth routes to check
-
-    // If user is not authenticated and trying to access protected routes
-    if (!token && protectedRoutes.some(route => pathname.startsWith(route))) {
-      // Check if the URL has a session_id parameter (coming from payment verification)
-      const hasSessionId = req.nextUrl.searchParams.has('session_id')
-      const hasEmail = req.nextUrl.searchParams.has('email')
-      
-      // Special case for onboarding - allow access with session_id parameter
-      if (pathname.startsWith('/onboarding') && (hasSessionId || hasEmail)) {
-        // Allow access to onboarding with session_id or email (session restoration in progress)
-        return NextResponse.next()
-      }
-      
-      // For onboarding without session_id or email, redirect to main page
-      if (pathname.startsWith('/onboarding') && !hasSessionId && !hasEmail) {
-        return NextResponse.redirect(new URL('/', req.url))
-      }
-      // For other protected routes, redirect to home page with auth modal
-      return NextResponse.redirect(new URL('/?auth=signin', req.url))
-    }
-
     // Add security headers to all responses
     const response = NextResponse.next()
     return addSecurityHeaders(response)
@@ -178,21 +155,21 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        const { pathname, searchParams } = req.nextUrl
-        
-        // Allow access to public routes
-        if (!protectedRoutes.some(route => pathname.startsWith(route))) {
-          return true
-        }
-        
-        // Allow access to onboarding during auth flow (when coming from checkout)
-        if (pathname === '/onboarding' && searchParams.get('checkout') === 'success') {
-          return true
-        }
-        
-        // Require authentication for other protected routes
-        return !!token
-      },
+         const { pathname, searchParams } = req.nextUrl
+         
+         // Allow access to public routes
+         if (!protectedRoutes.some(route => pathname.startsWith(route))) {
+           return true
+         }
+         
+         // Allow access to onboarding during checkout flow
+         if (pathname === '/onboarding' && searchParams.get('checkout') === 'success') {
+           return true
+         }
+         
+         // Require authentication for other protected routes
+         return !!token
+       },
     },
   }
 )
