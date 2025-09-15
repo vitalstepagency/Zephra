@@ -197,7 +197,7 @@ export default function PlanSignUpPage() {
         },
         body: JSON.stringify({
           priceId,
-          successUrl: `${window.location.origin}/verify?session_id={CHECKOUT_SESSION_ID}`,
+          successUrl: `${window.location.origin}/auth/signin?checkout=success`,
           cancelUrl: `${window.location.origin}/plans/${planDetails.id}`,
           trialDays: 7
         }),
