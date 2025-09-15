@@ -98,7 +98,12 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
           const url = window.location.href
           const isCheckoutSuccess = url.includes('checkout=success')
           // Always redirect to onboarding after checkout success
-          router.push(isCheckoutSuccess ? '/onboarding' : '/dashboard')
+          if (isCheckoutSuccess) {
+            // Use direct navigation instead of router.push to avoid NextAuth's redirect handling
+            window.location.href = '/onboarding'
+          } else {
+            router.push('/dashboard')
+          }
         }, 1500)
       }
     } catch (err) {

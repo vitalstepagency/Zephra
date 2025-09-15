@@ -41,8 +41,14 @@ function SignInContent() {
       })
       
       if (result?.ok) {
-        // Direct redirect after successful authentication
-        router.push('/onboarding')
+        // Check if we're coming from checkout success
+        if (checkoutSuccess) {
+          // Use direct navigation instead of router.push to avoid NextAuth's redirect handling
+          window.location.href = '/onboarding'
+        } else {
+          // For normal sign-in, use router
+          router.push('/onboarding')
+        }
       } else if (result?.error) {
         setSubscriptionError(result.error)
       }
@@ -123,9 +129,14 @@ function SignInContent() {
                   if (result?.error) {
                     setSubscriptionError(result.error);
                   } else if (result?.ok) {
-                    // Always redirect to onboarding after successful authentication
-                    // This ensures proper handling of checkout success flow
-                    router.push('/onboarding');
+                    // Check if we're coming from checkout success
+                    if (checkoutSuccess) {
+                      // Use direct navigation instead of router.push to avoid NextAuth's redirect handling
+                      window.location.href = '/onboarding';
+                    } else {
+                      // For normal sign-in, use router
+                      router.push('/onboarding');
+                    }
                   }
                 } catch (error) {
                   console.error('Sign in error:', error);
