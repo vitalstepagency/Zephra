@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams, useParams } from 'next/navigation'
-import { getSession } from 'next-auth/react'
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@/components/ui'
-import { CheckCircle, ArrowRight } from 'lucide-react'
+import { getSession, signIn } from 'next-auth/react'
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Badge } from '@/components/ui'
+import { CheckCircle, ArrowRight, Eye, EyeOff, Shield, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { PRICING_PLANS } from '@/lib/stripe/config'
 import { normalizePlanId } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
+import Link from 'next/link'
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -58,6 +59,7 @@ export default function PlanSignUpPage() {
   
   // Form state
   const [isLoading, setIsLoading] = useState(false)
+  const [isCheckingSession, setIsCheckingSession] = useState(false)
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
@@ -76,12 +78,12 @@ export default function PlanSignUpPage() {
         const session = await getSession()
         if (session) {
           // User is already logged in, redirect to checkout
-          const normalizedPlanId = normalizePlanId(params.planId)
-          const params = new URLSearchParams({
+          const normalizedPlanId = normalizePlanId(params.planId as string)
+          const searchParams = new URLSearchParams({
             plan: normalizedPlanId,
             frequency: frequency
           })
-          router.push(`/checkout?${params.toString()}`)
+          router.push(`/checkout?${searchParams.toString()}`)
         }
       } catch (error) {
         console.error('Error checking session:', error)
@@ -92,7 +94,7 @@ export default function PlanSignUpPage() {
     checkSession()
     
     // Get plan details
-    const normalizedPlanId = normalizePlanId(params.planId)
+    const normalizedPlanId = normalizePlanId(params.planId as string)
     const plan = PRICING_PLANS[normalizedPlanId] || PRICING_PLANS.pro
     
     setPlanDetails({
@@ -167,7 +169,7 @@ export default function PlanSignUpPage() {
       localStorage.setItem('selected_plan', planDetails.id)
       localStorage.setItem('selected_frequency', frequency)
       
-      toast('Account created successfully!')
+      toast({ title: 'Account created successfully!' })
       
       // Sign in without redirect
       const result = await signIn('credentials', {
