@@ -111,13 +111,14 @@ function OnboardingContent() {
   }, [session, status, router, checkoutSuccess])
   
   // Show loading state while session is loading - moved after all hooks
-  if (!session && (status === 'loading' || (checkoutSuccess && status === 'unauthenticated'))) {
+  // Skip loading for checkout success to go directly to onboarding
+  if (!session && status === 'loading' && !checkoutSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4" />
           <p className="text-white text-lg">
-            {checkoutSuccess ? 'Completing your purchase...' : 'Loading your account...'}
+            Loading your account...
           </p>
         </div>
       </div>
@@ -128,6 +129,9 @@ function OnboardingContent() {
   if (!session && status === 'unauthenticated' && !checkoutSuccess) {
     return null // The useEffect will handle the redirect
   }
+
+  // Allow onboarding to proceed even without session if coming from checkout success
+  const canProceedWithOnboarding = session || checkoutSuccess
 
   const nextStep = () => {
     if (currentStep < steps.length) {
@@ -182,7 +186,7 @@ function OnboardingContent() {
   // Show welcome message for checkout success
   const showWelcomeMessage = checkoutSuccess
 
-  if (!session) return null
+  if (!canProceedWithOnboarding) return null
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
