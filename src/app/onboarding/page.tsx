@@ -89,18 +89,7 @@ function OnboardingContent() {
     primaryObjective: ''
   })
   
-  // Show loading state while session is loading
-  if (!session && status !== 'unauthenticated') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4" />
-          <p className="text-white text-lg">Loading your account...</p>
-        </div>
-      </div>
-    )
-  }
-
+  // All hooks must be called before any conditional returns
   useEffect(() => {
     // Redirect to signin if no session, but preserve the current URL as callbackUrl
     if (status === 'unauthenticated') {
@@ -112,6 +101,18 @@ function OnboardingContent() {
     
     console.log('✅ Onboarding: Session found, user can proceed with onboarding')
   }, [session, status, router])
+  
+  // Show loading state while session is loading - moved after all hooks
+  if (!session && status !== 'unauthenticated') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4" />
+          <p className="text-white text-lg">Loading your account...</p>
+        </div>
+      </div>
+    )
+  }
 
   const nextStep = () => {
     if (currentStep < steps.length) {
