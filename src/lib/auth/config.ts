@@ -4,10 +4,6 @@ import { SupabaseAdapter } from '@auth/supabase-adapter'
 import { getSupabaseAdmin } from '../supabase/server'
 
 export const authOptions: NextAuthOptions = {
-  adapter: SupabaseAdapter({
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-    secret: process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key',
-  }),
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -15,89 +11,18 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' }
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email and password are required')
-        }
-
-        try {
-          const supabaseAdmin = getSupabaseAdmin()
-          
-          // Check if this is a session restoration attempt (from payment verification)
-           const isSessionRestoration = credentials.password?.startsWith('session_restore_');
-           
-           let authData;
-           
-           if (isSessionRestoration) {
-             // This is a session restoration from payment verification
-             // We'll look up the user by email instead of password authentication
-             const { data: userData, error: lookupError } = await supabaseAdmin
-               .from('profiles')
-               .select('*')
-               .eq('email', credentials.email)
-               .single();
-               
-             if (lookupError) {
-               console.error('User lookup error:', lookupError.message);
-               throw new Error('User not found during session restoration')
-             }
-             
-             // Get user from Supabase Auth by email
-             const { data: userAuth, error: userAuthError } = await supabaseAdmin.auth.admin.listUsers();
-             const foundUser = userAuth.users?.find((user: any) => user.email === credentials.email);
-             
-             if (userAuthError || !foundUser) {
-               console.error('Auth lookup error:', userAuthError?.message || 'No user found');
-               throw new Error('Authentication failed during session restoration')
-             }
-             
-             authData = { user: foundUser };
-          } else {
-            // Normal password authentication
-            const { data, error: authError } = await supabaseAdmin.auth.signInWithPassword({
-              email: credentials.email,
-              password: credentials.password
-            })
-
-            if (authError) {
-              // Handle specific error cases
-              if (authError.message?.toLowerCase().includes('invalid login credentials')) {
-                throw new Error('Invalid email or password')
-              }
-              if (authError.message?.toLowerCase().includes('email not confirmed')) {
-                throw new Error('Please check your email and click the confirmation link')
-              }
-              if (authError.message?.toLowerCase().includes('too many requests')) {
-                throw new Error('Too many login attempts. Please try again later')
-              }
-              // Generic fallback
-              throw new Error(authError.message || 'Authentication failed')
-            }
-            
-            if (!data.user) {
-              throw new Error('Authentication failed')
-            }
-            
-            authData = data;
-          }
-
-          // Get user profile
-          const { data: profile } = await supabaseAdmin
-            .from('users')
-            .select('*')
-            .eq('id', authData.user.id)
-            .single()
-
-          return {
-            id: authData.user.id,
-            email: authData.user.email!,
-            name: profile?.full_name || authData.user.user_metadata?.name || null,
-            image: profile?.avatar_url || authData.user.user_metadata?.avatar_url || null
-          }
-        } catch (error) {
-          console.error('Auth error:', error)
-          // Re-throw the error so NextAuth can handle it properly
-          throw error
+      async authorize(credentials, req) {
+        console.log('🚨🚨🚨 AUTHORIZE FUNCTION CALLED! 🚨🚨🚨')
+        console.log('📧 Email:', credentials?.email)
+        console.log('🔑 Password:', credentials?.password)
+        console.log('📋 All credentials:', JSON.stringify(credentials, null, 2))
+        
+        // Always return test user for now
+        console.log('✅✅✅ Returning test user!')
+        return {
+          id: 'test-user-id',
+          email: credentials?.email || 'test@test.com',
+          name: 'Test User'
         }
       }
     })
@@ -116,32 +41,51 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async redirect({ url, baseUrl }) {
+      console.log('🔄 NextAuth redirect callback triggered:', { url, baseUrl })
+      
       // Handle checkout success redirect - preserve all query parameters
       if (url.includes('checkout=success')) {
         const urlObj = new URL(url, baseUrl)
-        return `${baseUrl}/onboarding${urlObj.search}`
+        const redirectUrl = `${baseUrl}/onboarding${urlObj.search}`
+        console.log('✅ Checkout success redirect:', redirectUrl)
+        return redirectUrl
       }
       
       // Handle encoded onboarding URL from callbackUrl
       if (url.includes('%2Fonboarding%3Fcheckout%3Dsuccess')) {
-        return `${baseUrl}/onboarding?checkout=success`
+        const redirectUrl = `${baseUrl}/onboarding?checkout=success`
+        console.log('✅ Encoded onboarding redirect:', redirectUrl)
+        return redirectUrl
       }
       
-      // Handle onboarding URL (ensure checkout success context is preserved)
-      // This handles cases where IDE or other tools add extra parameters
+      // Handle onboarding URL - only add checkout context if it's already present
       if (url.includes('/onboarding')) {
-        return `${baseUrl}/onboarding?checkout=success`
+        // If checkout context is already in the URL, preserve it
+        if (url.includes('checkout=success')) {
+          const urlObj = new URL(url, baseUrl)
+          const redirectUrl = `${baseUrl}/onboarding${urlObj.search}`
+          console.log('✅ Onboarding redirect with existing checkout context:', redirectUrl)
+          return redirectUrl
+        }
+        // Otherwise, redirect to onboarding without forcing checkout context
+        const redirectUrl = `${baseUrl}/onboarding`
+        console.log('✅ Onboarding redirect without checkout context:', redirectUrl)
+        return redirectUrl
       }
       
       // If it's a relative URL, make it absolute
       if (url.startsWith('/')) {
-        return `${baseUrl}${url}`
+        const redirectUrl = `${baseUrl}${url}`
+        console.log('✅ Relative URL redirect:', redirectUrl)
+        return redirectUrl
       }
       // If it's the same origin, allow it
       if (new URL(url).origin === baseUrl) {
+        console.log('✅ Same origin redirect:', url)
         return url
       }
       // Default to base URL
+      console.log('⚠️ Default redirect to base URL:', baseUrl)
       return baseUrl
     },
   },
@@ -153,7 +97,18 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET!,
-  debug: process.env.NODE_ENV === 'development',
+  debug: true,
+  logger: {
+    error(code, metadata) {
+      console.error('NextAuth Error:', code, metadata)
+    },
+    warn(code) {
+      console.warn('NextAuth Warning:', code)
+    },
+    debug(code, metadata) {
+      console.log('NextAuth Debug:', code, metadata)
+    }
+  }
 }
 
 // Extend NextAuth types

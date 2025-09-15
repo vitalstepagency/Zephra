@@ -163,12 +163,15 @@ export default withAuth(
          }
          
          // Allow access to onboarding during checkout flow
-         if (pathname === '/onboarding' && searchParams.get('checkout') === 'success') {
-           return true
-         }
+        if (pathname === '/onboarding' && searchParams.get('checkout') === 'success') {
+          console.log('✅ Middleware: Allowing onboarding access due to checkout=success')
+          return true
+        }
          
          // Require authentication for other protected routes
-         return !!token
+          const hasToken = !!token
+          console.log(`🔒 Middleware: ${pathname} - Token present: ${hasToken}`)
+          return hasToken
        },
     },
   }
