@@ -74,7 +74,7 @@ async function registerHandler(request: NextRequest) {
     })
 
   } catch (error) {
-    logger.logError(error, {
+    logger.logError(error as Error, {
       url: '/api/auth/register',
       method: request.method,
       requestId

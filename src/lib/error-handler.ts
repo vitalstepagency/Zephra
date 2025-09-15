@@ -260,9 +260,9 @@ export function formatErrorResponse(
 
 // Global error handler for API routes
 export function withErrorHandler(
-  handler: (req: Request, context?: unknown) => Promise<NextResponse>
+  handler: (req: NextRequest | Request, context?: unknown) => Promise<NextResponse>
 ) {
-  return async (req: Request, context?: unknown): Promise<NextResponse> => {
+  return async (req: NextRequest | Request, context?: unknown): Promise<NextResponse> => {
     const requestId = req.headers.get('x-request-id') || crypto.randomUUID()
     
     try {
@@ -308,8 +308,14 @@ export const ErrorFactories = {
   notFound: (resource: string, context?: Record<string, unknown>) =>
     new AppError(`${resource} not found`, ErrorType.BUSINESS_LOGIC, ErrorSeverity.LOW, 404, true, context),
 
+  conflict: (message: string, context?: Record<string, unknown>) =>
+    new AppError(message, ErrorType.BUSINESS_LOGIC, ErrorSeverity.LOW, 409, true, context),
+
   rateLimit: (message: string = 'Rate limit exceeded', context?: Record<string, unknown>) =>
     new AppError(message, ErrorType.RATE_LIMIT, ErrorSeverity.MEDIUM, 429, true, context),
+
+  internal: (message: string, context?: Record<string, unknown>) =>
+    new AppError(message, ErrorType.SYSTEM, ErrorSeverity.HIGH, 500, true, context),
 
   database: (message: string, context?: Record<string, unknown>) =>
     new AppError(message, ErrorType.DATABASE, ErrorSeverity.HIGH, 500, true, context),

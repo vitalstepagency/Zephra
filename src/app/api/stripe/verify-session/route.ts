@@ -47,7 +47,7 @@ async function verifySessionHandler(request: NextRequest) {
       throw ErrorFactories.validation('Invalid session ID');
     }
     
-    logger.logError(error, {
+    logger.logError(error as Error, {
       url: '/api/stripe/verify-session',
       method: request.method,
       requestId

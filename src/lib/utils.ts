@@ -1,8 +1,38 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+import { PRICING_PLANS } from './stripe/config'
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
+}
+
+/**
+ * Normalizes a plan ID to ensure it matches one of the valid plan IDs in the system.
+ * Handles aliases and case insensitivity.
+ * 
+ * @param planId - The plan ID to normalize
+ * @returns The normalized plan ID that matches a key in PRICING_PLANS
+ */
+export function normalizePlanId(planId: string): string {
+  if (!planId) return 'pro' // Default to pro plan if no ID provided
+  
+  const normalizedInput = planId.toLowerCase().trim()
+  
+  // Direct match with a plan ID
+  if (PRICING_PLANS[normalizedInput]) {
+    return normalizedInput
+  }
+  
+  // Check for aliases
+  for (const [id, plan] of Object.entries(PRICING_PLANS)) {
+    if (plan.aliases?.includes(normalizedInput) || 
+        plan.name.toLowerCase() === normalizedInput) {
+      return id
+    }
+  }
+  
+  // Fallback to pro plan if no match found
+  return 'pro'
 }
 
 export function formatCurrency(amount: number, currency = 'USD'): string {

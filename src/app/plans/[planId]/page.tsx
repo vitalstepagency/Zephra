@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, useParams } from 'next/navigation'
 import { getSession } from 'next-auth/react'
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@/components/ui'
 import { CheckCircle, ArrowRight } from 'lucide-react'
@@ -9,6 +9,7 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { PRICING_PLANS } from '@/lib/stripe/config'
 import { normalizePlanId } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },

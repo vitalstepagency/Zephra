@@ -25,7 +25,7 @@ export default function CheckoutPage() {
   
   
   const [isLoading, setIsLoading] = useState(true)
-  const [user, setUser] = useState<SessionUser | null>(null)
+  const [user, setUser] = useState<{ id?: string; email?: string; name?: string; }>({ id: '', email: '', name: '' })
   
   // Get plan and billing from URL params
   const [planParam, setPlanParam] = useState<string | null>(null)
@@ -127,13 +127,11 @@ export default function CheckoutPage() {
           // Set the user
           const currentSession = session as Session | null;
           if (currentSession?.user) {
-            const sessionUser: SessionUser = {
-              name: currentSession.user.name,
-              email: currentSession.user.email,
-              image: currentSession.user.image,
-              id: currentSession.user.id
-            }
-            setUser(sessionUser)
+            setUser({
+              name: currentSession.user.name || '',
+              email: currentSession.user.email || '',
+              id: currentSession.user.id || ''
+            })
             
             // Check if we should redirect to Stripe checkout
             const shouldRedirectToCheckout = localStorage.getItem('redirect_to_checkout') === 'true' || 
@@ -159,7 +157,7 @@ export default function CheckoutPage() {
               }, 500)
             }
           } else {
-            setUser(null)
+            setUser({ id: '', email: '', name: '' })
           }
           
           return
@@ -299,14 +297,12 @@ export default function CheckoutPage() {
         // We have a session, set the user
         const currentSession = session as Session | null;
         if (currentSession?.user) {
-          // Cast the session user to our SessionUser type
-          const sessionUser: SessionUser = {
-            name: currentSession.user.name,
-            email: currentSession.user.email,
-            image: currentSession.user.image,
-            id: currentSession.user.id
-          }
-          setUser(sessionUser)
+          // Set the user with the correct type
+          setUser({
+            name: currentSession.user.name || '',
+            email: currentSession.user.email || '',
+            id: currentSession.user.id || ''
+          })
           // Clear redirect count since we're successfully authenticated
           localStorage.removeItem('redirectCount')
         }
