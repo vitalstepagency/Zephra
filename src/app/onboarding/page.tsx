@@ -96,82 +96,38 @@ function OnboardingContent() {
   useEffect(() => {
     if (status === 'loading') return
     
-    // Don't redirect immediately if we have a session_id
-    // Redirect to signin if no session or session data
-    if (!session && !sessionId && !plan) {
-      router.push('/?signin=true')
+    // Redirect to signin if no session
+    if (!session) {
+      router.push('/signin?redirect=/onboarding')
       return
     }
     
-    // If we have email and sessionId but no session, try to restore session
-    if (!session && (sessionId || plan) && email) {
-      const restoreSession = async () => {
-        try {
-          // Check if we have stored credentials from the signup process
-          const storedEmail = localStorage.getItem('newUserEmail')
-          const storedPassword = localStorage.getItem('newUserPassword')
-          
-          // If we have stored credentials, use them for sign in
-          if (storedEmail && storedPassword && storedEmail === email) {
-            const response = await signIn('credentials', {
-              email: storedEmail,
-              password: storedPassword,
-              redirect: false,
-            })
-            
-            if (!response?.error) {
-              // Clear stored credentials after successful sign in
-              localStorage.removeItem('newUserEmail')
-              localStorage.removeItem('newUserPassword')
-            } else {
-              // Fall back to using sessionId as password
-              await signIn('credentials', {
-                email: email,
-                password: sessionId || 'temp-password',
-                redirect: false,
-              })
-            }
-          } else {
-            // Sign in with the email from URL params
-            const response = await signIn('credentials', {
-              email: email,
-              password: sessionId || 'temp-password',
-              redirect: false,
-            })
-            
-            if (response?.error && plan && !sessionId) {
-              router.push(`/?signup=true&plan=${plan}&redirectToCheckout=${redirectToCheckout}`)
-            }
-          }
-        } catch (error) {
-          console.error('Error restoring session in onboarding:', error)
-        }
-      }
-      
-      restoreSession()
-    }
-    
     // Check payment status and onboarding completion
-    setTimeout(() => {
-      checkUserStatus()
-    }, 500)
-  }, [session, status, router, sessionId, searchParams, email, signIn])
+    checkUserStatus()
+  }, [session, status, router])
   
   const checkUserStatus = async () => {
     try {
-      // If coming from successful checkout or no session ID, assume payment is verified
-      if (checkoutSuccess || !sessionId) {
-        setPaymentVerified(true)
-      } else if (sessionId) {
-        // If coming from Stripe checkout with session ID, verify payment
-        const paymentResponse = await fetch(`/api/stripe/verify-session?session_id=${sessionId}`)
-        if (paymentResponse.ok) {
-          const data = await paymentResponse.json()
-          setPaymentVerified(data.verified)
+      // Verify payment if we have a session_id
+      if (sessionId) {
+        try {
+          const verifyResponse = await fetch(`/api/stripe/verify-session?session_id=${sessionId}`)
+          if (verifyResponse.ok) {
+            const { verified } = await verifyResponse.json()
+            setPaymentVerified(verified)
+          } else {
+            setPaymentVerified(false)
+          }
+        } catch (verifyError) {
+          console.error('Error verifying payment:', verifyError)
+          setPaymentVerified(false)
         }
+      } else {
+        // If no session_id, assume payment is verified (user came through signin)
+        setPaymentVerified(true)
       }
       
-      // Only check onboarding completion if we have a session
+      // Check onboarding completion
       if (session) {
         try {
           const onboardingResponse = await fetch('/api/onboarding')
