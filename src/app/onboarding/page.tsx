@@ -84,7 +84,7 @@ function OnboardingContent() {
   const [onboardingCompleted, setOnboardingCompleted] = useState(false)
   
   // Show loading state while session is loading
-  if (status === 'loading') {
+  if (!session && status !== 'unauthenticated') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
@@ -106,11 +106,6 @@ function OnboardingContent() {
   })
 
   useEffect(() => {
-    if (status === 'loading') {
-      console.log('🔄 Onboarding: Session loading...')
-      return
-    }
-    
     // Redirect to signin if no session, but preserve the current URL as callbackUrl
     if (status === 'unauthenticated') {
       console.log('❌ Onboarding: No session found, redirecting to signin')
@@ -215,13 +210,7 @@ function OnboardingContent() {
 
   const progress = (currentStep / steps.length) * 100
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-500"></div>
-      </div>
-    )
-  }
+  // Loading state is already handled by the early return above
 
   // Show payment verification message if payment not verified (but not for checkout success)
   if ((sessionId && !paymentVerified) && !checkoutSuccess) {
