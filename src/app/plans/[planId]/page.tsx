@@ -97,12 +97,14 @@ export default function PlanSignUpPage() {
     const normalizedPlanId = normalizePlanId(params.planId as string)
     const plan = PRICING_PLANS[normalizedPlanId] || PRICING_PLANS.pro
     
-    setPlanDetails({
-      ...plan,
-      id: normalizedPlanId,
-      price: frequency === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice,
-      billingFrequency: frequency
-    })
+    if (plan) {
+      setPlanDetails({
+        ...plan,
+        id: normalizedPlanId,
+        price: frequency === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice,
+        billingFrequency: frequency
+      })
+    }
   }, [params.planId, frequency, router])
   
   const validateForm = () => {

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { supabaseAdmin } from './supabase/server'
 
 // Error types for categorization
@@ -259,10 +259,10 @@ export function formatErrorResponse(
 }
 
 // Global error handler for API routes
-export function withErrorHandler(
-  handler: (req: NextRequest | Request, context?: unknown) => Promise<NextResponse>
+export function withErrorHandler<T extends NextRequest | Request>(
+  handler: (req: T, context?: unknown) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest | Request, context?: unknown): Promise<NextResponse> => {
+  return async (req: T, context?: unknown): Promise<NextResponse> => {
     const requestId = req.headers.get('x-request-id') || crypto.randomUUID()
     
     try {
@@ -273,8 +273,8 @@ export function withErrorHandler(
       // Extract request context
       const errorContext = {
         requestId,
-        ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
-        userAgent: req.headers.get('user-agent'),
+        ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
+        userAgent: req.headers.get('user-agent') || undefined,
         url: req.url,
         method: req.method
       }

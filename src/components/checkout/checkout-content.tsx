@@ -255,7 +255,7 @@ export function CheckoutContent({ user, planId, billingFrequency }: CheckoutCont
       if (user && user.email) {
         localStorage.setItem('checkout_email', user.email)
         // Safely handle potentially undefined user.name
-        const userName = user.name || (user.email ? user.email.split('@')[0] : 'User')
+        const userName = user.name || (user.email ? user.email.split('@')[0] : 'User') || 'User'
         localStorage.setItem('checkout_name', userName)
         // Ensure selectedBillingFrequency and selectedPlan.id are not undefined
         if (selectedBillingFrequency) {
