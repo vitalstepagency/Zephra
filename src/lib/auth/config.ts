@@ -116,9 +116,10 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async redirect({ url, baseUrl }) {
-      // Handle checkout success redirect
+      // Handle checkout success redirect - preserve all query parameters
       if (url.includes('checkout=success')) {
-        return `${baseUrl}/onboarding`
+        const urlObj = new URL(url, baseUrl)
+        return `${baseUrl}/onboarding${urlObj.search}`
       }
       // If it's a relative URL, make it absolute
       if (url.startsWith('/')) {
