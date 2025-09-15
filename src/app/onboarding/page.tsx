@@ -98,7 +98,7 @@ function OnboardingContent() {
     
     // Redirect to signin if no session
     if (!session) {
-      router.push('/signin?redirect=/onboarding')
+      router.push('/auth/signin?checkout=success')
       return
     }
     

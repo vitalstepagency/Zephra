@@ -30,16 +30,26 @@ function SignInContent() {
 
   // This function is no longer used as we're using the form directly
   // Keeping it for reference in case we need to revert
+  // Updated to persist authentication token and redirect directly
   const handleSignIn = async (provider: string) => {
     setIsLoading(true)
     setSubscriptionError('')
     try {
-      await signIn(provider, { 
-        redirect: true,
+      const result = await signIn(provider, { 
+        redirect: false,
         callbackUrl: '/onboarding'
       })
+      
+      if (result?.ok) {
+        // Direct redirect after successful authentication
+        router.push('/onboarding')
+      } else if (result?.error) {
+        setSubscriptionError(result.error)
+      }
     } catch (error) {
       console.error('Sign in error:', error)
+      setSubscriptionError('An error occurred during sign in')
+    } finally {
       setIsLoading(false)
     }
   }
@@ -102,6 +112,8 @@ function SignInContent() {
                 }
                 
                 try {
+                  // Use redirect: false to handle the redirection manually
+                  // This prevents the redundant second sign-in page
                   const result = await signIn('credentials', {
                     email,
                     password,
@@ -111,7 +123,8 @@ function SignInContent() {
                   if (result?.error) {
                     setSubscriptionError(result.error);
                   } else if (result?.ok) {
-                    // Redirect to onboarding after successful authentication
+                    // Redirect directly to onboarding after successful authentication
+                    // This bypasses the intermediate redirect to /api/auth/signin
                     router.push('/onboarding');
                   }
                 } catch (error) {

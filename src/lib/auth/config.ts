@@ -117,7 +117,7 @@ export const authOptions: NextAuthOptions = {
       return token
     },
   },
-  // Auth is now handled by the auth-modal component
+  // Remove the custom pages configuration to prevent the redundant redirect
   pages: {},
   session: {
     strategy: 'jwt',

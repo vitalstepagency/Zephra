@@ -94,7 +94,11 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
         setStep('success')
         setTimeout(() => {
           onClose()
-          router.push('/dashboard')
+          // Check if we're coming from checkout success
+          const url = window.location.href
+          const isCheckoutSuccess = url.includes('checkout=success')
+          // Redirect to onboarding if coming from checkout, otherwise dashboard
+          router.push(isCheckoutSuccess ? '/onboarding' : '/dashboard')
         }, 1500)
       }
     } catch (err) {
@@ -173,7 +177,9 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
                 <div className="flex flex-col items-center justify-center py-8">
                   <CheckCircle className="w-12 h-12 text-green-600 mb-4" />
                   <p className="text-gray-900 dark:text-white font-semibold">Success!</p>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">Redirecting to dashboard...</p>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    Redirecting...
+                  </p>
                 </div>
               )}
 
