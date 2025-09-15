@@ -22,12 +22,13 @@ function SignInContent() {
     const checkSession = async () => {
       const session = await getSession()
       if (session) {
-        // If user is already authenticated, redirect to onboarding
-        router.push('/onboarding')
+        // If user is already authenticated, redirect to onboarding with checkout context
+        const redirectUrl = checkoutSuccess ? '/onboarding?checkout=success' : '/onboarding'
+        router.push(redirectUrl)
       }
     }
     checkSession()
-  }, [router])
+  }, [router, checkoutSuccess])
 
   // This function is no longer used as we're using the form directly
   // Keeping it for reference in case we need to revert
