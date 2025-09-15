@@ -83,6 +83,18 @@ function OnboardingContent() {
   const [paymentVerified, setPaymentVerified] = useState(false)
   const [onboardingCompleted, setOnboardingCompleted] = useState(false)
   
+  // Show loading state while session is loading
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4" />
+          <p className="text-white text-lg">Loading your account...</p>
+        </div>
+      </div>
+    )
+  }
+  
   // Form data
   const [formData, setFormData] = useState({
     businessName: '',
@@ -94,15 +106,20 @@ function OnboardingContent() {
   })
 
   useEffect(() => {
-    if (status === 'loading') return
+    if (status === 'loading') {
+      console.log('🔄 Onboarding: Session loading...')
+      return
+    }
     
     // Redirect to signin if no session, but preserve the current URL as callbackUrl
-    if (!session) {
+    if (status === 'unauthenticated') {
+      console.log('❌ Onboarding: No session found, redirecting to signin')
       const currentUrl = window.location.pathname + window.location.search
       router.push(`/auth/signin?callbackUrl=${encodeURIComponent(currentUrl)}`)
       return
     }
     
+    console.log('✅ Onboarding: Session found, checking user status')
     // Check payment status and onboarding completion
     checkUserStatus()
   }, [session, status, router])
