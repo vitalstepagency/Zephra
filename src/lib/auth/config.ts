@@ -121,6 +121,12 @@ export const authOptions: NextAuthOptions = {
         const urlObj = new URL(url, baseUrl)
         return `${baseUrl}/onboarding${urlObj.search}`
       }
+      
+      // Handle encoded onboarding URL from callbackUrl
+      if (url.includes('%2Fonboarding%3Fcheckout%3Dsuccess')) {
+        return `${baseUrl}/onboarding?checkout=success`
+      }
+      
       // If it's a relative URL, make it absolute
       if (url.startsWith('/')) {
         return `${baseUrl}${url}`

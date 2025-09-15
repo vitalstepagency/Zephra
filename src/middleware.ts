@@ -178,14 +178,19 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        const { pathname } = req.nextUrl
+        const { pathname, searchParams } = req.nextUrl
         
         // Allow access to public routes
         if (!protectedRoutes.some(route => pathname.startsWith(route))) {
           return true
         }
         
-        // Require authentication for protected routes
+        // Allow access to onboarding during auth flow (when coming from checkout)
+        if (pathname === '/onboarding' && searchParams.get('checkout') === 'success') {
+          return true
+        }
+        
+        // Require authentication for other protected routes
         return !!token
       },
     },
