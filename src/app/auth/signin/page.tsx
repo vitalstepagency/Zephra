@@ -6,7 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Github, Mail, Chrome, CheckCircle } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Mail, CheckCircle } from 'lucide-react'
 
 function SignInContent() {
   const [isLoading, setIsLoading] = useState(false)
@@ -19,58 +21,25 @@ function SignInContent() {
     const checkSession = async () => {
       const session = await getSession()
       if (session) {
-        // Check if user has active subscription
-        try {
-          const response = await fetch('/api/user/subscription-status')
-          if (response.ok) {
-            const { hasActiveSubscription } = await response.json()
-            if (hasActiveSubscription) {
-              router.push('/onboarding')
-            } else {
-              setSubscriptionError('Please purchase a subscription to access the platform.')
-            }
-          } else {
-            router.push('/dashboard')
-          }
-        } catch (error) {
-          console.error('Error checking subscription:', error)
-          router.push('/dashboard')
-        }
+        // If user is already authenticated, redirect to onboarding
+        router.push('/onboarding')
       }
     }
     checkSession()
   }, [router])
 
+  // This function is no longer used as we're using the form directly
+  // Keeping it for reference in case we need to revert
   const handleSignIn = async (provider: string) => {
     setIsLoading(true)
     setSubscriptionError('')
     try {
-      const result = await signIn(provider, { 
-        redirect: false
+      await signIn(provider, { 
+        redirect: true,
+        callbackUrl: '/onboarding'
       })
-      
-      if (result?.ok) {
-        // Check subscription status after sign in
-        try {
-          const response = await fetch('/api/user/subscription-status')
-          if (response.ok) {
-            const { hasActiveSubscription } = await response.json()
-            if (hasActiveSubscription) {
-              router.push('/onboarding')
-            } else {
-              setSubscriptionError('Please purchase a subscription to access the platform.')
-            }
-          } else {
-            router.push('/dashboard')
-          }
-        } catch (error) {
-          console.error('Error checking subscription after sign in:', error)
-          router.push('/dashboard')
-        }
-      }
     } catch (error) {
       console.error('Sign in error:', error)
-    } finally {
       setIsLoading(false)
     }
   }
@@ -95,7 +64,7 @@ function SignInContent() {
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             {checkoutSuccess 
-              ? 'Sign in to access your new subscription and start your AI marketing journey'
+              ? 'Enter your email and password to access your new subscription'
               : 'Sign in to your account to continue building amazing campaigns'
             }
           </p>
@@ -117,46 +86,72 @@ function SignInContent() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button
-              onClick={() => handleSignIn('google')}
-              disabled={isLoading}
-              className="w-full"
-              variant="outline"
-            >
-              <Chrome className="w-4 h-4 mr-2" />
-              Continue with Google
-            </Button>
+            {/* Google and GitHub sign-in options removed as requested */}
             
-            <Button
-              onClick={() => handleSignIn('github')}
-              disabled={isLoading}
-              className="w-full"
-              variant="outline"
-            >
-              <Github className="w-4 h-4 mr-2" />
-              Continue with GitHub
-            </Button>
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+            <form className="space-y-4" onSubmit={async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                setSubscriptionError('');
+                const formData = new FormData(e.currentTarget);
+                const email = formData.get('email') as string;
+                const password = formData.get('password') as string;
+                
+                if (!email || !password) {
+                  setIsLoading(false);
+                  return;
+                }
+                
+                try {
+                  const result = await signIn('credentials', {
+                    email,
+                    password,
+                    redirect: false
+                  });
+                  
+                  if (result?.error) {
+                    setSubscriptionError(result.error);
+                  } else if (result?.ok) {
+                    // Redirect to onboarding after successful authentication
+                    router.push('/onboarding');
+                  }
+                } catch (error) {
+                  console.error('Sign in error:', error);
+                  setSubscriptionError('An error occurred during sign in');
+                } finally {
+                  setIsLoading(false);
+                }
+              }}>
+                <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  name="email" 
+                  type="email" 
+                  placeholder="you@example.com" 
+                  required 
+                />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input 
+                  id="password" 
+                  name="password" 
+                  type="password" 
+                  placeholder="••••••••" 
+                  required 
+                />
               </div>
-            </div>
-            
-            <Button
-              onClick={() => handleSignIn('email')}
-              disabled={isLoading}
-              className="w-full"
-              variant="default"
-            >
-              <Mail className="w-4 h-4 mr-2" />
-              Continue with Email
-            </Button>
+              
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            </form>
           </CardContent>
         </Card>
         
