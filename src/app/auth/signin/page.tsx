@@ -16,6 +16,7 @@ function SignInContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const checkoutSuccess = searchParams.get('checkout') === 'success'
+  const emailFromUrl = searchParams.get('email') || ''
 
   useEffect(() => {
     const checkSession = async () => {
@@ -152,6 +153,7 @@ function SignInContent() {
                   name="email" 
                   type="email" 
                   placeholder="you@example.com" 
+                  defaultValue={emailFromUrl}
                   required 
                 />
               </div>

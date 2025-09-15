@@ -66,7 +66,7 @@ export function AuthTrigger({
         })
         router.push(`/checkout?${params.toString()}`)
       } else {
-        // User is not logged in - go to plan signup page
+        // User is not logged in - go to account creation page
         localStorage.setItem('selected_plan', normalizedPlan)
         localStorage.setItem('selected_frequency', frequency)
         localStorage.setItem('redirect_to_checkout', redirectToCheckout ? 'true' : 'false')

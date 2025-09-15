@@ -43,16 +43,15 @@ export const authOptions: NextAuthOptions = {
              }
              
              // Get user from Supabase Auth by email
-             const { data: userAuth, error: userAuthError } = await supabaseAdmin.auth.admin.listUsers({
-               filter: { email: credentials.email }
-             });
+             const { data: userAuth, error: userAuthError } = await supabaseAdmin.auth.admin.listUsers();
+             const foundUser = userAuth.users?.find((user: any) => user.email === credentials.email);
              
-             if (userAuthError || !userAuth.users || userAuth.users.length === 0) {
+             if (userAuthError || !foundUser) {
                console.error('Auth lookup error:', userAuthError?.message || 'No user found');
                throw new Error('Authentication failed during session restoration')
              }
              
-             authData = { user: userAuth.users[0] };
+             authData = { user: foundUser };
           } else {
             // Normal password authentication
             const { data, error: authError } = await supabaseAdmin.auth.signInWithPassword({

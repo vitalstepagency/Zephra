@@ -170,19 +170,10 @@ export default function PlanSignUpPage() {
       // Store necessary information for checkout
       localStorage.setItem('selected_plan', planDetails.id)
       localStorage.setItem('selected_frequency', frequency)
+      localStorage.setItem('user_email', email.trim().toLowerCase())
+      localStorage.setItem('user_password', password)
       
       toast({ title: 'Account created successfully!' })
-      
-      // Sign in without redirect
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false
-      })
-      
-      if (!result?.ok) {
-        throw new Error('Failed to sign in')
-      }
       
       // Get the price ID based on plan and frequency
       const priceId = frequency === 'monthly' ? 
@@ -199,7 +190,7 @@ export default function PlanSignUpPage() {
         },
         body: JSON.stringify({
           priceId,
-          successUrl: `${window.location.origin}/auth/signin?checkout=success`,
+          successUrl: `${window.location.origin}/auth/signin?checkout=success&session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(email.trim().toLowerCase())}`,
           cancelUrl: `${window.location.origin}/plans/${planDetails.id}`,
           trialDays: 7
         }),

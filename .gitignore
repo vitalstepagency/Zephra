@@ -48,6 +48,11 @@ next-env.d.ts
 logs
 *.log
 
+# Database cleaning scripts (sensitive)
+scripts/clean-*.js
+scripts/clean-*.sql
+scripts/verify-*.js
+
 # Runtime data
 pids
 *.pid
