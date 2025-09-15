@@ -115,6 +115,22 @@ export const authOptions: NextAuthOptions = {
       }
       return token
     },
+    async redirect({ url, baseUrl }) {
+      // Handle checkout success redirect
+      if (url.includes('checkout=success')) {
+        return `${baseUrl}/onboarding`
+      }
+      // If it's a relative URL, make it absolute
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`
+      }
+      // If it's the same origin, allow it
+      if (new URL(url).origin === baseUrl) {
+        return url
+      }
+      // Default to base URL
+      return baseUrl
+    },
   },
   // Remove the custom pages configuration to prevent the redundant redirect
   pages: {},

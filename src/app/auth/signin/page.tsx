@@ -31,23 +31,20 @@ function SignInContent() {
 
   // This function is no longer used as we're using the form directly
   // Keeping it for reference in case we need to revert
-  // Updated to persist authentication token and redirect directly
   const handleSignIn = async (provider: string) => {
     setIsLoading(true)
     setSubscriptionError('')
     try {
       const result = await signIn(provider, { 
         redirect: false,
-        callbackUrl: '/onboarding'
+        callbackUrl: checkoutSuccess ? '/onboarding?checkout=success' : '/onboarding'
       })
       
       if (result?.ok) {
-        // Check if we're coming from checkout success
+        // Use NextAuth's redirect handling
         if (checkoutSuccess) {
-          // Use direct navigation instead of router.push to avoid NextAuth's redirect handling
-          window.location.href = '/onboarding'
+          window.location.href = '/onboarding?checkout=success'
         } else {
-          // For normal sign-in, use router
           router.push('/onboarding')
         }
       } else if (result?.error) {
@@ -119,23 +116,21 @@ function SignInContent() {
                 }
                 
                 try {
-                  // Use redirect: false to handle the redirection manually
-                  // This prevents the redundant second sign-in page
+                  // Let NextAuth handle the redirect using the redirect callback
                   const result = await signIn('credentials', {
                     email,
                     password,
-                    redirect: false
+                    redirect: false,
+                    callbackUrl: checkoutSuccess ? '/onboarding?checkout=success' : '/onboarding'
                   });
                   
                   if (result?.error) {
                     setSubscriptionError(result.error);
                   } else if (result?.ok) {
-                    // Check if we're coming from checkout success
+                    // Use NextAuth's redirect handling
                     if (checkoutSuccess) {
-                      // Use direct navigation instead of router.push to avoid NextAuth's redirect handling
-                      window.location.href = '/onboarding';
+                      window.location.href = '/onboarding?checkout=success';
                     } else {
-                      // For normal sign-in, use router
                       router.push('/onboarding');
                     }
                   }
