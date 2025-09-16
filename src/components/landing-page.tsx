@@ -86,7 +86,7 @@ export default function LandingPage() {
               <img 
                 src="/zephra-logo.png" 
                 alt="Zephra Logo" 
-                className="h-8 w-auto"
+                className="h-12 w-auto"
               />
               <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                 Zephra

@@ -170,7 +170,7 @@ function SignInContent() {
               <img 
                 src="/zephra-logo.png" 
                 alt="Zephra Logo" 
-                className="h-10 w-auto"
+                className="h-14 w-auto"
               />
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Zephra
