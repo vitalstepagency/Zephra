@@ -157,10 +157,11 @@ function SignInContent() {
           return
         }
         
-        // If there's a callbackUrl that contains 'onboarding', prioritize it immediately
-        if (callbackUrl && callbackUrl.includes('/onboarding')) {
+        // If there's a callbackUrl, use the decoded version
+        if (callbackUrl) {
           console.log('Redirecting to callback URL after sign-in:', callbackUrl)
-          window.location.href = callbackUrl
+          // Use the actual URL from the decoded callback URL
+          window.location.href = decodedCallbackUrl || '/onboarding'
           return
         }
         
