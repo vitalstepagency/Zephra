@@ -22,6 +22,18 @@ function SignInContent() {
   const [error, setError] = useState('')
   const [step, setStep] = useState<'signin' | 'success'>('signin')
   
+  // Check if user is already authenticated and redirect if needed
+  useEffect(() => {
+    if (session?.user) {
+      const callbackUrl = searchParams.get('callbackUrl')
+      if (callbackUrl) {
+        const decodedUrl = decodeURIComponent(callbackUrl)
+        console.log('User already authenticated, redirecting to:', decodedUrl)
+        window.location.href = decodedUrl
+      }
+    }
+  }, [session, searchParams])
+  
   // Get URL parameters
   const sessionId = searchParams.get('session_id')
   const fromCheckout = searchParams.get('from') === 'checkout' || searchParams.get('checkout') === 'success'
@@ -147,21 +159,26 @@ function SignInContent() {
       // Show success state briefly before redirect
       setStep('success')
       
+      // Force immediate redirection to onboarding if callbackUrl contains onboarding
+      if (callbackUrl && decodedCallbackUrl && decodedCallbackUrl.includes('/onboarding')) {
+        console.log('Force redirecting to onboarding page')
+        window.location.replace('/onboarding')
+        return
+      }
+      
       // Get the session to access user ID for onboarding check
       setTimeout(async () => {
         // If coming from checkout, always redirect to onboarding
         if (fromCheckout || sessionId) {
           console.log('Redirecting to onboarding after successful sign-in from checkout')
-          const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
-          window.location.href = redirectUrl
+          window.location.replace('/onboarding')
           return
         }
         
-        // If there's a callbackUrl, use the decoded version
+        // If there's a callbackUrl, force redirect to onboarding if it contains onboarding
         if (callbackUrl) {
-          console.log('Redirecting to callback URL after sign-in:', callbackUrl)
-          // Use the actual URL from the decoded callback URL
-          window.location.href = decodedCallbackUrl || '/onboarding'
+          console.log('Redirecting after sign-in')
+          window.location.replace('/onboarding')
           return
         }
         
