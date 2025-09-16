@@ -27,6 +27,9 @@ function SignInContent() {
   const fromCheckout = searchParams.get('from') === 'checkout' || searchParams.get('checkout') === 'success'
   const callbackUrl = searchParams.get('callbackUrl')
   
+  // Decode callbackUrl if it exists
+  const decodedCallbackUrl = callbackUrl ? decodeURIComponent(callbackUrl) : null
+  
   // Function to check onboarding completion and redirect accordingly
   const checkOnboardingAndRedirect = async (userId: string) => {
     try {
@@ -39,9 +42,10 @@ function SignInContent() {
       }
       
       // If there's a callbackUrl that contains 'onboarding', prioritize it
-      if (callbackUrl && callbackUrl.includes('/onboarding')) {
+      if (callbackUrl) {
         console.log('Redirecting to callback URL:', callbackUrl)
-        window.location.href = callbackUrl
+        // Use the actual URL from the decoded callback URL instead of the encoded parameter
+        window.location.href = decodedCallbackUrl || callbackUrl
         return
       }
       
