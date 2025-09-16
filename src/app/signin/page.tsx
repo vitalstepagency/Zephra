@@ -25,10 +25,18 @@ function SignInContent() {
   // Get URL parameters
   const sessionId = searchParams.get('session_id')
   const fromCheckout = searchParams.get('from') === 'checkout'
+  const callbackUrl = searchParams.get('callbackUrl')
   
   // Function to check onboarding completion and redirect accordingly
   const checkOnboardingAndRedirect = async (userId: string) => {
     try {
+      // If there's a callbackUrl that contains 'onboarding', prioritize it
+      if (callbackUrl && callbackUrl.includes('/onboarding')) {
+        console.log('Redirecting to callback URL:', callbackUrl)
+        window.location.href = callbackUrl
+        return
+      }
+      
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('onboarding_completed')
@@ -129,6 +137,14 @@ function SignInContent() {
       
       // Get the session to access user ID for onboarding check
       setTimeout(async () => {
+        // If there's a callbackUrl that contains 'onboarding', prioritize it immediately
+        if (callbackUrl && callbackUrl.includes('/onboarding')) {
+          console.log('Redirecting to callback URL after sign-in:', callbackUrl)
+          window.location.href = callbackUrl
+          return
+        }
+        
+        // Otherwise, proceed with normal flow
         // Refresh session to get user data
         const { data: sessionData } = await fetch('/api/auth/session').then(res => res.json())
         if (sessionData?.user?.id) {
