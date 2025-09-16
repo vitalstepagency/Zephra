@@ -83,7 +83,10 @@ function SignInContent() {
       if (error) {
         console.error('Error fetching profile:', error)
         // If no profile exists, redirect to onboarding
-        const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
+        const params = new URLSearchParams()
+        if (sessionId) params.set('session_id', sessionId)
+        if (fromCheckout) params.set('fromCheckout', 'true')
+        const redirectUrl = `/onboarding${params.toString() ? '?' + params.toString() : ''}`
         router.push(redirectUrl)
         return
       }
@@ -91,17 +94,25 @@ function SignInContent() {
       // Redirect based on onboarding completion status
       if (profile?.onboarding_completed) {
         // User has completed onboarding, go to dashboard
-        const redirectUrl = sessionId ? `/dashboard?session_id=${sessionId}` : '/dashboard'
+        const params = new URLSearchParams()
+        if (sessionId) params.set('session_id', sessionId)
+        const redirectUrl = `/dashboard${params.toString() ? '?' + params.toString() : ''}`
         router.push(redirectUrl)
       } else {
         // User hasn't completed onboarding, go to onboarding
-        const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
+        const params = new URLSearchParams()
+        if (sessionId) params.set('session_id', sessionId)
+        if (fromCheckout) params.set('fromCheckout', 'true')
+        const redirectUrl = `/onboarding${params.toString() ? '?' + params.toString() : ''}`
         router.push(redirectUrl)
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error)
       // Default to onboarding on error
-      const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
+      const params = new URLSearchParams()
+      if (sessionId) params.set('session_id', sessionId)
+      if (fromCheckout) params.set('fromCheckout', 'true')
+      const redirectUrl = `/onboarding${params.toString() ? '?' + params.toString() : ''}`
       router.push(redirectUrl)
     }
   }
@@ -174,7 +185,8 @@ function SignInContent() {
       
       // Force immediate redirection to onboarding
       console.log('Sign-in successful, redirecting to onboarding')
-      window.location.replace('/onboarding')
+      const onboardingUrl = fromCheckout ? '/onboarding?fromCheckout=true' : '/onboarding'
+      window.location.replace(onboardingUrl)
     } catch (error) {
       console.error('Sign in error:', error)
       setError('An unexpected error occurred. Please try again.')

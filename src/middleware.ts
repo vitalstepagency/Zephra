@@ -169,8 +169,12 @@ export default withAuth(
          // Special handling for onboarding - allow if authenticated OR during checkout flow
          if (pathname === '/onboarding') {
            const isCheckoutFlow = searchParams.get('checkout') === 'success'
-           if (hasToken || isCheckoutFlow) {
-             console.log(`✅ Middleware: Allowing onboarding access - Token: ${hasToken}, Checkout: ${isCheckoutFlow}`)
+           const fromCheckout = searchParams.get('fromCheckout') === 'true'
+           const hasCallbackUrl = req.headers.get('referer')?.includes('/signin?callbackUrl=')
+           
+           // Allow access if user has token, is in checkout flow, or coming from checkout sign-in
+           if (hasToken || isCheckoutFlow || fromCheckout || hasCallbackUrl) {
+             console.log(`✅ Middleware: Allowing onboarding access - Token: ${hasToken}, Checkout: ${isCheckoutFlow}, FromCheckout: ${fromCheckout}, HasCallbackUrl: ${hasCallbackUrl}`)
              return true
            }
          }
