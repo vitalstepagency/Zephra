@@ -24,26 +24,9 @@ function SignInContent() {
   
   // Check if user is already authenticated and redirect if needed
   useEffect(() => {
-    if (session?.user) {
-      const callbackUrl = searchParams.get('callbackUrl')
-      if (callbackUrl) {
-        // Extract the final destination from the callbackUrl if it's nested
-        const decodedUrl = decodeURIComponent(callbackUrl)
-        
-        // Check if the decoded URL contains "onboarding" anywhere
-        if (decodedUrl.includes('/onboarding')) {
-          console.log('Redirecting directly to onboarding page')
-          window.location.replace('/onboarding')
-          return
-        }
-        
-        console.log('User already authenticated, redirecting to:', decodedUrl)
-        window.location.replace(decodedUrl)
-      } else {
-        // Default redirect to onboarding if no callback URL
-        console.log('No callback URL found, redirecting to onboarding')
-        window.location.replace('/onboarding')
-      }
+    if (session?.user?.id) {
+      // Always check onboarding status first, regardless of callbackUrl
+      checkOnboardingAndRedirect(session.user.id)
     }
   }, [session, searchParams])
   
@@ -66,14 +49,7 @@ function SignInContent() {
         return
       }
       
-      // If there's a callbackUrl that contains 'onboarding', prioritize it
-      if (callbackUrl) {
-        console.log('Redirecting to callback URL:', callbackUrl)
-        // Use the actual URL from the decoded callback URL instead of the encoded parameter
-        window.location.href = decodedCallbackUrl || callbackUrl
-        return
-      }
-      
+      // Check onboarding completion status first
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('onboarding_completed')
@@ -93,13 +69,22 @@ function SignInContent() {
       
       // Redirect based on onboarding completion status
       if (profile?.onboarding_completed) {
-        // User has completed onboarding, go to dashboard
-        const params = new URLSearchParams()
-        if (sessionId) params.set('session_id', sessionId)
-        const redirectUrl = `/dashboard${params.toString() ? '?' + params.toString() : ''}`
-        router.push(redirectUrl)
+        // User has completed onboarding
+        // If there's a specific callbackUrl that's not onboarding-related, use it
+        if (callbackUrl && !decodedCallbackUrl?.includes('/onboarding')) {
+          console.log('Redirecting to callback URL for completed user:', decodedCallbackUrl || callbackUrl)
+          window.location.href = decodedCallbackUrl || callbackUrl
+        } else {
+          // Otherwise, go to dashboard
+          console.log('Redirecting completed user to dashboard')
+          const params = new URLSearchParams()
+          if (sessionId) params.set('session_id', sessionId)
+          const redirectUrl = `/dashboard${params.toString() ? '?' + params.toString() : ''}`
+          router.push(redirectUrl)
+        }
       } else {
         // User hasn't completed onboarding, go to onboarding
+        console.log('Redirecting incomplete user to onboarding')
         const params = new URLSearchParams()
         if (sessionId) params.set('session_id', sessionId)
         if (fromCheckout) params.set('fromCheckout', 'true')
@@ -118,11 +103,6 @@ function SignInContent() {
   }
   
   useEffect(() => {
-    // If user is already signed in, check onboarding status and redirect
-    if (session && status === 'authenticated' && session.user?.id) {
-      checkOnboardingAndRedirect(session.user.id)
-    }
-    
     // Pre-fill email if available from URL or localStorage
     const urlEmail = searchParams.get('email')
     const storedEmail = localStorage.getItem('checkout_email') || localStorage.getItem('newUserEmail')
@@ -132,7 +112,7 @@ function SignInContent() {
     } else if (storedEmail) {
       setEmail(storedEmail)
     }
-  }, [session, status, router, searchParams])
+  }, [searchParams])
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

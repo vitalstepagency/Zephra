@@ -126,16 +126,15 @@ export const authOptions: NextAuthOptions = {
         return url
       }
       
-      // CRITICAL FIX: If we're just getting the base URL, it means we need to redirect to onboarding
-      // This happens when sign-in is successful but no specific redirect URL is provided
+      // For base URL redirect, go to sign-in page to handle onboarding logic
       if (url === baseUrl) {
-        console.log('🚨 Base URL redirect detected - redirecting to onboarding')
-        return `${baseUrl}/onboarding`
+        console.log('🔄 Base URL redirect - going to sign-in for onboarding check')
+        return `${baseUrl}/signin`
       }
       
-      // Default to onboarding instead of base URL
-      console.log('⚠️ Default redirect to onboarding:', `${baseUrl}/onboarding`)
-      return `${baseUrl}/onboarding`
+      // Default to sign-in page to handle onboarding logic
+      console.log('⚠️ Default redirect to sign-in for onboarding check')
+      return `${baseUrl}/signin`
     },
   },
   pages: {
