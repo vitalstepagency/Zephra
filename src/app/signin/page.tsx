@@ -45,7 +45,7 @@ function SignInContent() {
       if (fromCheckout || sessionId) {
         console.log('Redirecting to onboarding after checkout:', sessionId)
         const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
-        window.location.href = redirectUrl
+        router.push(redirectUrl)
         return
       }
       
@@ -73,7 +73,25 @@ function SignInContent() {
         // If there's a specific callbackUrl that's not onboarding-related, use it
         if (callbackUrl && !decodedCallbackUrl?.includes('/onboarding')) {
           console.log('Redirecting to callback URL for completed user:', decodedCallbackUrl || callbackUrl)
-          window.location.href = decodedCallbackUrl || callbackUrl
+          // Ensure we use router.push for relative URLs to stay on localhost
+          const targetUrl = decodedCallbackUrl || callbackUrl
+          if (targetUrl.startsWith('/')) {
+            router.push(targetUrl)
+          } else {
+            // Only use window.location.href for absolute URLs that are same origin
+            try {
+              const url = new URL(targetUrl)
+              if (url.origin === window.location.origin) {
+                router.push(targetUrl)
+              } else {
+                console.warn('External redirect blocked:', targetUrl)
+                router.push('/dashboard')
+              }
+            } catch {
+              // If URL parsing fails, treat as relative
+              router.push(targetUrl)
+            }
+          }
         } else {
           // Otherwise, go to dashboard
           console.log('Redirecting completed user to dashboard')
