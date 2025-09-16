@@ -27,9 +27,22 @@ function SignInContent() {
     if (session?.user) {
       const callbackUrl = searchParams.get('callbackUrl')
       if (callbackUrl) {
+        // Extract the final destination from the callbackUrl if it's nested
         const decodedUrl = decodeURIComponent(callbackUrl)
+        
+        // Check if the decoded URL contains "onboarding" anywhere
+        if (decodedUrl.includes('/onboarding')) {
+          console.log('Redirecting directly to onboarding page')
+          window.location.replace('/onboarding')
+          return
+        }
+        
         console.log('User already authenticated, redirecting to:', decodedUrl)
-        window.location.href = decodedUrl
+        window.location.replace(decodedUrl)
+      } else {
+        // Default redirect to onboarding if no callback URL
+        console.log('No callback URL found, redirecting to onboarding')
+        window.location.replace('/onboarding')
       }
     }
   }, [session, searchParams])
@@ -159,40 +172,15 @@ function SignInContent() {
       // Show success state briefly before redirect
       setStep('success')
       
-      // Force immediate redirection to onboarding if callbackUrl contains onboarding
-      if (callbackUrl && decodedCallbackUrl && decodedCallbackUrl.includes('/onboarding')) {
-        console.log('Force redirecting to onboarding page')
-        window.location.replace('/onboarding')
-        return
-      }
-      
-      // Get the session to access user ID for onboarding check
-      setTimeout(async () => {
-        // If coming from checkout, always redirect to onboarding
-        if (fromCheckout || sessionId) {
-          console.log('Redirecting to onboarding after successful sign-in from checkout')
-          window.location.replace('/onboarding')
-          return
-        }
-        
-        // If there's a callbackUrl, force redirect to onboarding if it contains onboarding
-        if (callbackUrl) {
-          console.log('Redirecting after sign-in')
-          window.location.replace('/onboarding')
-          return
-        }
-        
-        // Otherwise, proceed with normal flow
-        // Refresh session to get user data
-        const { data: sessionData } = await fetch('/api/auth/session').then(res => res.json())
-        if (sessionData?.user?.id) {
-          await checkOnboardingAndRedirect(sessionData.user.id)
-        } else {
-          // Fallback to onboarding if no user ID
-          const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
-          router.push(redirectUrl)
-        }
-      }, 1500)
+      // Force immediate redirection to onboarding
+      console.log('Sign-in successful, redirecting to onboarding')
+      window.location.replace('/onboarding')
+    } catch (error) {
+      console.error('Sign in error:', error)
+      setError('An unexpected error occurred. Please try again.')
+      setIsLoading(false)
+    }
+  }
       
     } catch (error) {
       console.error('Sign in error:', error)
