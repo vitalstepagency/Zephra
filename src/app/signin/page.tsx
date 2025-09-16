@@ -24,12 +24,20 @@ function SignInContent() {
   
   // Get URL parameters
   const sessionId = searchParams.get('session_id')
-  const fromCheckout = searchParams.get('from') === 'checkout'
+  const fromCheckout = searchParams.get('from') === 'checkout' || searchParams.get('checkout') === 'success'
   const callbackUrl = searchParams.get('callbackUrl')
   
   // Function to check onboarding completion and redirect accordingly
   const checkOnboardingAndRedirect = async (userId: string) => {
     try {
+      // If coming from checkout, always redirect to onboarding
+      if (fromCheckout || sessionId) {
+        console.log('Redirecting to onboarding after checkout:', sessionId)
+        const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
+        window.location.href = redirectUrl
+        return
+      }
+      
       // If there's a callbackUrl that contains 'onboarding', prioritize it
       if (callbackUrl && callbackUrl.includes('/onboarding')) {
         console.log('Redirecting to callback URL:', callbackUrl)
@@ -137,6 +145,14 @@ function SignInContent() {
       
       // Get the session to access user ID for onboarding check
       setTimeout(async () => {
+        // If coming from checkout, always redirect to onboarding
+        if (fromCheckout || sessionId) {
+          console.log('Redirecting to onboarding after successful sign-in from checkout')
+          const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
+          window.location.href = redirectUrl
+          return
+        }
+        
         // If there's a callbackUrl that contains 'onboarding', prioritize it immediately
         if (callbackUrl && callbackUrl.includes('/onboarding')) {
           console.log('Redirecting to callback URL after sign-in:', callbackUrl)
