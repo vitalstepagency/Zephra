@@ -91,10 +91,18 @@ export const authOptions: NextAuthOptions = {
         return redirectUrl
       }
       
+      // Handle fromCheckout parameter
+      if (url.includes('fromCheckout=true')) {
+        const urlObj = new URL(url, baseUrl)
+        const redirectUrl = `${baseUrl}/onboarding${urlObj.search}`
+        console.log('✅ FromCheckout redirect:', redirectUrl)
+        return redirectUrl
+      }
+      
       // Handle onboarding URL - only add checkout context if it's already present
       if (url.includes('/onboarding')) {
         // If checkout context is already in the URL, preserve it
-        if (url.includes('checkout=success')) {
+        if (url.includes('checkout=success') || url.includes('fromCheckout=true')) {
           const urlObj = new URL(url, baseUrl)
           const redirectUrl = `${baseUrl}/onboarding${urlObj.search}`
           console.log('✅ Onboarding redirect with existing checkout context:', redirectUrl)
@@ -117,9 +125,17 @@ export const authOptions: NextAuthOptions = {
         console.log('✅ Same origin redirect:', url)
         return url
       }
-      // Default to base URL
-      console.log('⚠️ Default redirect to base URL:', baseUrl)
-      return baseUrl
+      
+      // CRITICAL FIX: If we're just getting the base URL, it means we need to redirect to onboarding
+      // This happens when sign-in is successful but no specific redirect URL is provided
+      if (url === baseUrl) {
+        console.log('🚨 Base URL redirect detected - redirecting to onboarding')
+        return `${baseUrl}/onboarding`
+      }
+      
+      // Default to onboarding instead of base URL
+      console.log('⚠️ Default redirect to onboarding:', `${baseUrl}/onboarding`)
+      return `${baseUrl}/onboarding`
     },
   },
   pages: {

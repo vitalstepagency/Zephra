@@ -41,6 +41,8 @@ function DashboardContent() {
   const searchParams = useSearchParams()
   const plan = searchParams.get('plan') || 'starter'
   const checkoutSuccess = searchParams.get('checkout') === 'success'
+  const fromCheckout = searchParams.get('fromCheckout') === 'true'
+  const isFromCheckoutFlow = checkoutSuccess || fromCheckout
   const userName = session?.user?.name || 'User'
   const userEmail = session?.user?.email || ''
   const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase()
@@ -50,14 +52,14 @@ function DashboardContent() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   
   useEffect(() => {
-    if (status === 'unauthenticated' && !checkoutSuccess) {
+    if (status === 'unauthenticated' && !isFromCheckoutFlow) {
       const currentUrl = window.location.pathname + window.location.search
       router.push(`/signin?callbackUrl=${encodeURIComponent(currentUrl)}`)
       return
     }
-  }, [session, status, router, checkoutSuccess])
+  }, [session, status, router, isFromCheckoutFlow])
   
-  if (!session && status === 'loading' && !checkoutSuccess) {
+  if (!session && status === 'loading' && !isFromCheckoutFlow) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
@@ -68,7 +70,7 @@ function DashboardContent() {
     )
   }
   
-  const canProceedWithOnboarding = session || checkoutSuccess
+  const canProceedWithOnboarding = session || isFromCheckoutFlow
   if (!canProceedWithOnboarding) return null
 
   const handleSignOut = async () => {

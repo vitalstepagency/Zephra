@@ -149,19 +149,33 @@ function SignInContent() {
         signInPassword = storedPassword
       }
       
+      // Prepare the callback URL with checkout context
+      let callbackUrl = '/onboarding'
+      if (fromCheckout) {
+        const params = new URLSearchParams()
+        params.set('fromCheckout', 'true')
+        if (sessionId) params.set('session_id', sessionId)
+        callbackUrl = `/onboarding?${params.toString()}`
+      }
+      
+      console.log('🔄 Signing in with callbackUrl:', callbackUrl)
+      
       const result = await signIn('credentials', {
         email,
         password: signInPassword,
-        redirect: false,
+        callbackUrl,
+        redirect: true, // Let NextAuth handle the redirect
       })
       
+      // If we reach here, there was an error (since redirect: true should redirect on success)
       if (result?.error) {
         // If stored password failed, try with entered password
         if (storedPassword && signInPassword === storedPassword && password !== storedPassword) {
           const retryResult = await signIn('credentials', {
             email,
             password,
-            redirect: false,
+            callbackUrl,
+            redirect: true,
           })
           
           if (retryResult?.error) {
@@ -180,13 +194,6 @@ function SignInContent() {
       localStorage.removeItem('newUserEmail')
       localStorage.removeItem('newUserPassword')
       
-      // Show success state briefly before redirect
-      setStep('success')
-      
-      // Force immediate redirection to onboarding
-      console.log('Sign-in successful, redirecting to onboarding')
-      const onboardingUrl = fromCheckout ? '/onboarding?fromCheckout=true' : '/onboarding'
-      window.location.replace(onboardingUrl)
     } catch (error) {
       console.error('Sign in error:', error)
       setError('An unexpected error occurred. Please try again.')
