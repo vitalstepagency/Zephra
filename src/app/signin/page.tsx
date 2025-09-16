@@ -181,13 +181,6 @@ function SignInContent() {
       setIsLoading(false)
     }
   }
-      
-    } catch (error) {
-      console.error('Sign in error:', error)
-      setError('An unexpected error occurred. Please try again.')
-      setIsLoading(false)
-    }
-  }
   
   if (status === 'loading') {
     return (
