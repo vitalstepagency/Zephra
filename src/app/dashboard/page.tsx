@@ -29,8 +29,31 @@ function DashboardContent() {
 
   useEffect(() => {
     if (status === 'loading') return // Still loading
-    if (!session) router.push('/signin')
-    
+
+    if (!session) {
+      router.push('/signin')
+      return
+    }
+
+    // Check if user has completed onboarding
+    const checkOnboardingStatus = async () => {
+      try {
+        const response = await fetch('/api/user/onboarding-status')
+        if (response.ok) {
+          const { onboardingCompleted } = await response.json()
+          if (!onboardingCompleted) {
+            // User hasn't completed onboarding, redirect to onboarding
+            router.push('/onboarding')
+            return
+          }
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error)
+      }
+    }
+
+    checkOnboardingStatus()
+
     // Show success message if user just completed payment
     if (success === 'true' && plan) {
       setShowSuccessMessage(true)

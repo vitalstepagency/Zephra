@@ -87,16 +87,35 @@ async function registerHandler(request: NextRequest) {
       throw ErrorFactories.internal('User creation failed - no user data returned')
     }
 
-    // Create user profile
+    // Create user profile in profiles table
     const { error: profileError } = await supabase
       .from('profiles')
       .insert({
-        id: authUser.user.id,
+        user_id: authUser.user.id,
         email: normalizedEmail,
         name: normalizedName,
+        onboarding_completed: false,
+        subscription_plan: 'starter',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
+
+    // Also create in users table for consistency
+    const { error: usersTableError } = await supabase
+      .from('users')
+      .insert({
+        id: authUser.user.id,
+        email: normalizedEmail,
+        full_name: normalizedName,
+        subscription_tier: 'starter',
+        subscription_status: 'inactive',
+        trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+      })
+
+    if (usersTableError) {
+      console.log('Users table creation error (non-critical):', usersTableError)
+      // Don't fail if users table insert fails - profiles table is sufficient
+    }
 
     if (profileError) {
       logger.logError(profileError, {

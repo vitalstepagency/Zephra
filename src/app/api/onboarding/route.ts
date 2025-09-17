@@ -31,42 +31,46 @@ export async function POST(request: NextRequest) {
       completedAt
     } = body
 
-    // Save onboarding data to Supabase
-    // Update user profile with onboarding data
+    // Update user profile in users table with onboarding data
     const { data, error } = await supabase
       .from('users')
       .update({
         full_name: businessName,
-        subscription_tier: plan as 'free' | 'starter' | 'pro' | 'enterprise',
+        subscription_tier: plan as 'starter' | 'pro' | 'enterprise',
         updated_at: new Date().toISOString()
       })
-      .eq('email', session.user?.email || '')
+      .eq('id', session.user.id)
       .select()
       .single()
 
     if (error) {
-      console.error('Error saving onboarding data:', error)
+      console.error('Error saving onboarding data to users table:', error)
       return NextResponse.json(
         { error: 'Failed to save onboarding data' },
         { status: 500 }
       )
     }
 
-    // Update user profile with onboarding completion
+    // Update profile in profiles table with onboarding completion
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
         user_id: session.user.id,
         email: session.user.email,
-        name: session.user.name,
+        name: businessName, // Use the business name from onboarding
         onboarding_completed: true,
         subscription_plan: plan,
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
       })
 
     if (profileError) {
       console.error('Error updating profile:', profileError)
-      // Don't fail the request if profile update fails
+      return NextResponse.json(
+        { error: 'Failed to update onboarding status' },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json(
@@ -98,35 +102,43 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user's data
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', session.user?.email || '')
+    // Check profile table first for onboarding completion status
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('onboarding_completed, name, subscription_plan')
+      .eq('user_id', session.user.id)
       .single()
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-      console.error('Error fetching onboarding data:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch onboarding data' },
-        { status: 500 }
-      )
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.error('Error fetching profile data:', profileError)
     }
 
-    // Check if onboarding is completed based on whether user has filled out onboarding data
-    // Not just subscription status, as new users with active subscriptions still need onboarding
-    const hasOnboardingData = data && (
-      data.full_name || 
-      data.business_name || 
-      data.industry || 
-      data.team_size
-    )
-    
+    // Get user's data from users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', session.user.id)
+      .single()
+
+    if (userError && userError.code !== 'PGRST116') {
+      console.error('Error fetching user data:', userError)
+    }
+
+    // Determine completion status - prioritize explicit flag from profiles table
+    let completed = false
+    if (profileData?.onboarding_completed === true) {
+      completed = true
+    } else if (userData && userData.full_name) {
+      // Fallback: if user has a full name in users table, consider onboarding done
+      completed = true
+    }
+
     return NextResponse.json(
-      { 
-        success: true, 
-        data: data || null,
-        completed: !!hasOnboardingData
+      {
+        success: true,
+        data: userData || null,
+        profile: profileData || null,
+        completed
       },
       { status: 200 }
     )

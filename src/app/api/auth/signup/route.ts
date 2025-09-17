@@ -78,6 +78,25 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         )
       }
+
+      // Also create profile in profiles table for onboarding tracking
+      const { error: profilesTableError } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+          user_id: authUser.user.id,
+          email,
+          name,
+          onboarding_completed: false,
+          subscription_plan: 'starter',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+
+      if (profilesTableError) {
+        console.error('Profiles table creation error:', profilesTableError)
+        // Don't fail the entire signup if profiles table insert fails
+        // The users table is the primary source of truth
+      }
     }
 
     return NextResponse.json(

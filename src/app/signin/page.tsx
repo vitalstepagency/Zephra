@@ -44,21 +44,6 @@ function SignInContent() {
       // If coming from checkout, always redirect to onboarding
       if (fromCheckout || sessionId) {
         console.log('Redirecting to onboarding after checkout:', sessionId)
-        const redirectUrl = sessionId ? `/onboarding?session_id=${sessionId}` : '/onboarding'
-        window.location.href = redirectUrl
-        return
-      }
-      
-      // Check onboarding completion status first
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('onboarding_completed')
-        .eq('user_id', userId)
-        .single()
-      
-      if (error) {
-        console.error('Error fetching profile:', error)
-        // If no profile exists, redirect to onboarding
         const params = new URLSearchParams()
         if (sessionId) params.set('session_id', sessionId)
         if (fromCheckout) params.set('fromCheckout', 'true')
@@ -66,9 +51,21 @@ function SignInContent() {
         router.push(redirectUrl)
         return
       }
-      
+
+      // Check onboarding completion status using API
+      const response = await fetch('/api/user/onboarding-status')
+
+      if (!response.ok) {
+        console.error('Error fetching onboarding status')
+        // Default to onboarding on error
+        router.push('/onboarding')
+        return
+      }
+
+      const { onboardingCompleted } = await response.json()
+
       // Redirect based on onboarding completion status
-      if (profile?.onboarding_completed) {
+      if (onboardingCompleted) {
         // User has completed onboarding
         // If there's a specific callbackUrl that's not onboarding-related, use it
         if (callbackUrl && !decodedCallbackUrl?.includes('/onboarding')) {
@@ -77,28 +74,17 @@ function SignInContent() {
         } else {
           // Otherwise, go to dashboard
           console.log('Redirecting completed user to dashboard')
-          const params = new URLSearchParams()
-          if (sessionId) params.set('session_id', sessionId)
-          const redirectUrl = `/dashboard${params.toString() ? '?' + params.toString() : ''}`
-          router.push(redirectUrl)
+          router.push('/dashboard')
         }
       } else {
         // User hasn't completed onboarding, go to onboarding
         console.log('Redirecting incomplete user to onboarding')
-        const params = new URLSearchParams()
-        if (sessionId) params.set('session_id', sessionId)
-        if (fromCheckout) params.set('fromCheckout', 'true')
-        const redirectUrl = `/onboarding${params.toString() ? '?' + params.toString() : ''}`
-        router.push(redirectUrl)
+        router.push('/onboarding')
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error)
       // Default to onboarding on error
-      const params = new URLSearchParams()
-      if (sessionId) params.set('session_id', sessionId)
-      if (fromCheckout) params.set('fromCheckout', 'true')
-      const redirectUrl = `/onboarding${params.toString() ? '?' + params.toString() : ''}`
-      router.push(redirectUrl)
+      router.push('/onboarding')
     }
   }
   
